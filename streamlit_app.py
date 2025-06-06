@@ -48,7 +48,23 @@ for item in items:
             item[key] = float(item[key])
 
 # Display table
+import pandas as pd
+
 if items:
-    st.dataframe(items)
+    # Convert to DataFrame
+    df = pd.DataFrame(items)
+
+    # Add Yahoo Finance link to ticker
+    df["ticker"] = df["ticker"].apply(
+        lambda t: f"[{t}](https://finance.yahoo.com/quote/{t})"
+    )
+
+    # Select and reorder columns
+    column_order = ["ticker", "entry_price", "entry_date", "target_price", "stop_loss", "status"]
+    df = df[[col for col in column_order if col in df.columns]]
+
+    # Display with links enabled
+    st.markdown("### 📋 Trade Data")
+    st.write(df.to_markdown(index=False), unsafe_allow_html=True)
 else:
     st.info("No trades found.")
