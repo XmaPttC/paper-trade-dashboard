@@ -6,12 +6,14 @@ import os
 
 st.set_page_config(page_title="Paper Trading Dashboard", layout="wide")
 st.title("📈 Paper Trading Simulator")
+
 st.markdown("""
 ### 📋 Strategy Overview
 
 - **Screener**: [Yahoo Finance “Undervalued Growth Stocks”](https://finance.yahoo.com/screener/predefined/undervalued_growth_stocks)
 - **Upside Filter**: Target price must be at least **25% above** the current market price
 """)
+
 # Load AWS credentials from Streamlit secrets
 aws_access_key = st.secrets["aws_access_key_id"]
 aws_secret_key = st.secrets["aws_secret_access_key"]
