@@ -51,19 +51,33 @@ for item in items:
 import pandas as pd
 
 if items:
-    # Convert to DataFrame
     df = pd.DataFrame(items)
+
+    # Convert Decimals to floats
+    for col in ["entry_price", "target_price", "stop_loss", "exit_price"]:
+        if col in df.columns:
+            df[col] = df[col].astype(float)
+
+    # Add exit date and P&L (only for closed trades)
+    if "status" in df.columns and "exit_price" in df.columns:
+        df["exit_date"] = df.get("exit_date", "")
+        df["pnl"] = df.apply(
+            lambda row: row["exit_price"] - row["entry_price"]
+            if row["status"].startswith("closed") and pd.notnull(row["exit_price"])
+            else None,
+            axis=1
+        )
 
     # Add Yahoo Finance link to ticker
     df["ticker"] = df["ticker"].apply(
         lambda t: f"[{t}](https://finance.yahoo.com/quote/{t})"
     )
 
-    # Select and reorder columns
-    column_order = ["ticker", "entry_price", "entry_date", "target_price", "stop_loss", "status"]
+    # Reorder columns
+    column_order = ["ticker", "entry_price", "entry_date", "target_price", "stop_loss", "status", "exit_date", "pnl"]
     df = df[[col for col in column_order if col in df.columns]]
 
-    # Display with links enabled
+    # Display the table
     st.markdown("### 📋 Trade Data")
     st.write(df.to_markdown(index=False), unsafe_allow_html=True)
 else:
