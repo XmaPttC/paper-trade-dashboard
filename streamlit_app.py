@@ -10,7 +10,7 @@ st.title("📈 Paper Trading Simulator")
 st.markdown("""
 ### 📋 Strategy Overview
 
-- **Screener**: [Yahoo Finance “Undervalued Growth Stocks”](https://finance.yahoo.com/screener/predefined/undervalued_growth_stocks)
+- **Screener**: [Yahoo Finance “Undervalued Growth Stocks Screener”](https://finance.yahoo.com/screener/predefined/undervalued_growth_stocks)
 - **Upside Filter**: Target price must be at least **25% above** the current market price
 """)
 
