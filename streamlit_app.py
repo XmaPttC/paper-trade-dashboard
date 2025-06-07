@@ -7,12 +7,14 @@ from datetime import datetime
 from decimal import Decimal
 
 # ✅ Define AWS region before any boto3 calls
-AWS_REGION = "us-east-1"  # change if you're using a different region
+AWS_REGION = "us-east-1"  # or your actual region
 
-# ✅ Correct way to pass region
-s3 = boto3.client('s3', region_name=AWS_REGION)
-dynamodb = boto3.resource('dynamodb', region_name=AWS_REGION)
+session = boto3.Session(region_name=AWS_REGION)
+
+s3 = session.client('s3')
+dynamodb = session.resource('dynamodb')
 table = dynamodb.Table('paper_trades')
+
 # Constants
 BUCKET = "stock-screener-output-beta"
 TODAY_KEY = f"yahoo-results/{datetime.utcnow().strftime('%Y-%m-%d')}.csv"
