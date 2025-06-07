@@ -6,13 +6,13 @@ from io import StringIO
 from datetime import datetime
 from decimal import Decimal
 
-# AWS clients
-AWS_REGION = "us-east-1"  # or your actual region
+# ✅ Define AWS region before any boto3 calls
+AWS_REGION = "us-east-1"  # change if you're using a different region
 
+# ✅ Correct way to pass region
 s3 = boto3.client('s3', region_name=AWS_REGION)
 dynamodb = boto3.resource('dynamodb', region_name=AWS_REGION)
 table = dynamodb.Table('paper_trades')
-
 # Constants
 BUCKET = "stock-screener-output-beta"
 TODAY_KEY = f"yahoo-results/{datetime.utcnow().strftime('%Y-%m-%d')}.csv"
