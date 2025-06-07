@@ -1,14 +1,23 @@
 import streamlit as st
 import boto3
+import os
 import pandas as pd
 import csv
 from io import StringIO
 from datetime import datetime
 from decimal import Decimal
 
-# ---------- AWS CONFIG ----------
-AWS_REGION = "us-east-1"  # Change this if needed
-session = boto3.session.Session(region_name=AWS_REGION)
+# Read credentials from Streamlit secrets
+AWS_REGION = st.secrets["AWS_DEFAULT_REGION"]
+AWS_ACCESS_KEY_ID = st.secrets["AWS_ACCESS_KEY_ID"]
+AWS_SECRET_ACCESS_KEY = st.secrets["AWS_SECRET_ACCESS_KEY"]
+
+session = boto3.session.Session(
+    aws_access_key_id=AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+    region_name=AWS_REGION
+)
+
 s3 = session.client("s3")
 dynamodb = session.resource("dynamodb")
 table = dynamodb.Table("paper_trades")
