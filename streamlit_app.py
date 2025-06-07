@@ -77,7 +77,7 @@ with tab1:
 
     if screener_data:
         for row in screener_data:
-            col1, col2, col3, col4, col5 = st.columns([2, 2, 2, 2, 2])
+            col1, col2, col3, col4 = st.columns([2, 2, 2, 2])
             with col1:
                 st.markdown(f"[{row['ticker']}](https://finance.yahoo.com/quote/{row['ticker']})")
             with col2:
@@ -85,13 +85,6 @@ with tab1:
             with col3:
                 st.markdown(f"Target: **{row['target']}**")
             with col4:
-                try:
-                    price, target = float(row["price"]), float(row["target"])
-                    upside = round((target - price) / price * 100, 1)
-                    st.markdown(f"Upside: **{upside}%**")
-                except:
-                    st.markdown("Upside: —")
-            with col5:
                 if st.button("Add to Trading Simulation", key=row["ticker"]):
                     added = add_trade(row["ticker"], row["price"], row["target"])
                     if added:
