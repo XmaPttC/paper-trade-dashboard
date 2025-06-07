@@ -7,8 +7,10 @@ from datetime import datetime
 from decimal import Decimal
 
 # AWS clients
-s3 = boto3.client('s3')
-dynamodb = boto3.resource('dynamodb')
+AWS_REGION = "us-east-1"  # or your actual region
+
+s3 = boto3.client('s3', region_name=AWS_REGION)
+dynamodb = boto3.resource('dynamodb', region_name=AWS_REGION)
 table = dynamodb.Table('paper_trades')
 
 # Constants
