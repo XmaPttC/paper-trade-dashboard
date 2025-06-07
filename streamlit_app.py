@@ -6,10 +6,11 @@ from io import StringIO
 from datetime import datetime
 from decimal import Decimal
 
-# ✅ Define AWS region before any boto3 calls
-AWS_REGION = "us-east-1"  # or your actual region
+# ✅ EXPLICIT REGION SETUP
+AWS_REGION = "us-east-1"
 
-session = boto3.Session(region_name=AWS_REGION)
+# ✅ Use session for all services
+session = boto3.session.Session(region_name=AWS_REGION)
 
 s3 = session.client('s3')
 dynamodb = session.resource('dynamodb')
