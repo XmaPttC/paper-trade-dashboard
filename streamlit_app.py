@@ -6,15 +6,16 @@ from io import StringIO
 from datetime import datetime
 from decimal import Decimal
 
-# ✅ EXPLICIT REGION SETUP
-AWS_REGION = "us-east-1"
+# ✅ EXPLICIT SESSION & REGION
+AWS_REGION = "us-east-1"  # Change this to your real region if needed
 
-# ✅ Use session for all services
-session = boto3.session.Session(region_name=AWS_REGION)
+# ✅ Create one session for all AWS access
+session = boto3.Session(region_name=AWS_REGION)
 
-s3 = session.client('s3')
-dynamodb = session.resource('dynamodb')
-table = dynamodb.Table('paper_trades')
+# ✅ Create all clients/resources FROM THAT SESSION
+s3 = session.client("s3")
+dynamodb = session.resource("dynamodb")
+table = dynamodb.Table("paper_trades")
 
 # Constants
 BUCKET = "stock-screener-output-beta"
