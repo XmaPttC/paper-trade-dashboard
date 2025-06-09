@@ -1,30 +1,23 @@
-import streamlit as st
 import boto3
 import pandas as pd
 from datetime import datetime
-from io import StringIO
-import json
-import os
 
-# Force AWS region to avoid NoRegionError
+# Set AWS region
 boto3.setup_default_session(region_name="us-east-1")
 
-# AWS clients
+# S3 setup
 s3 = boto3.client("s3")
-dynamodb = boto3.resource("dynamodb")
-table = dynamodb.Table("PaperTrades")
-
-# Constants
 BUCKET_NAME = "stock-screener-output-beta"
 S3_KEY_PREFIX = "finnhub-results"
 TODAY = datetime.utcnow().strftime("%Y-%m-%d")
 
-# Load screener data
 def load_screener_data():
     try:
         key = f"{S3_KEY_PREFIX}/{TODAY}.csv"
+        print(f"📦 Fetching from S3 → {key}")  # Debug log
         response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
         df = pd.read_csv(response["Body"])
+        print(f"✅ Loaded {len(df)} rows")     # Debug log
         return df
     except Exception as e:
         st.error(f"Failed to load screener data: {e}")
