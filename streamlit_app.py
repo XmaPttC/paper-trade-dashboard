@@ -1,86 +1,111 @@
 import streamlit as st
 import pandas as pd
 import boto3
+import io
 from datetime import datetime
 
-# --- S3 CONFIG ---
-BUCKET_NAME = "stock-screener-output-beta"
-FOLDER = "finnhub-results"
-REGION = "us-east-1"
+st.set_page_config(page_title="Stock Screener", layout="wide")
+st.title("📊 Undervalued Growth Stock Screener")
 
-# --- Load Data from S3 ---
-@st.cache_data
-def load_data():
-    today = datetime.now().strftime("%Y-%m-%d")
-    key = f"{FOLDER}/{today}.csv"
-    s3 = boto3.client("s3", region_name=REGION)
+# --- Utility Functions ---
+def get_today_key():
+    return f"finnhub-results/{datetime.now().strftime('%Y-%m-%d')}.csv"
+
+def format_market_cap(value):
     try:
-        obj = s3.get_object(Bucket=BUCKET_NAME, Key=key)
-        df = pd.read_csv(obj["Body"])
+        value = float(value)
+        if value >= 1_000_000_000:
+            return f"{value / 1_000_000_000:.2f}B"
+        elif value >= 1_000_000:
+            return f"{value / 1_000_000:.0f}M"
+        else:
+            return str(int(value))
+    except:
+        return "N/A"
+
+def load_screener_data():
+    try:
+        s3 = boto3.client("s3")
+        bucket = "stock-screener-output-beta"
+        key = get_today_key()
+        response = s3.get_object(Bucket=bucket, Key=key)
+        df = pd.read_csv(io.BytesIO(response["Body"].read()))
         return df
     except Exception as e:
         st.error(f"Failed to load screener data: {e}")
         return pd.DataFrame()
 
-# --- Initialize Session State ---
-for var in ["show_filters", "show_popup", "filtered_df", "apply_filters"]:
-    if var not in st.session_state:
-        st.session_state[var] = False if "show" in var else None
+# --- UI State Initialization ---
+if "hidden_rows" not in st.session_state:
+    st.session_state.hidden_rows = set()
+if "filters" not in st.session_state:
+    st.session_state.filters = {
+        "pe": (0.0, 30.0),
+        "peg": (0.0, 2.0),
+        "eps_growth": (10.0, 100.0)
+    }
 
-# --- Title ---
-st.title("📊 Stock Screener")
+# --- Filter Controls ---
+with st.expander("🔧 Filter Stocks", expanded=True):
+    st.markdown("**Apply filters by adjusting sliders or typing values**")
 
-# --- Load Data ---
-df = load_data()
-if df.empty:
-    st.info("No screener data available for today.")
-    st.stop()
+    pe_min, pe_max = st.slider("P/E Ratio", 0.0, 100.0, st.session_state.filters["pe"], step=1.0)
+    peg_min, peg_max = st.slider("PEG Ratio", 0.0, 5.0, st.session_state.filters["peg"], step=0.1)
+    eps_min, eps_max = st.slider("EPS Growth %", 0.0, 200.0, st.session_state.filters["eps_growth"], step=1.0)
 
-# --- Default Filter Values ---
-DEFAULTS = {
-    "pe_max": 15.0,
-    "peg_max": 1.0,
-    "eps_min": 20.0
-}
+    if st.button("Apply Filters"):
+        st.session_state.filters = {
+            "pe": (pe_min, pe_max),
+            "peg": (peg_min, peg_max),
+            "eps_growth": (eps_min, eps_max)
+        }
 
-for key, val in DEFAULTS.items():
-    if key not in st.session_state:
-        st.session_state[key] = val
+# --- Load and Filter Data ---
+df = load_screener_data()
+if not df.empty:
+    # Clean and format
+    df["market_cap"] = df["market_cap"].apply(format_market_cap)
+    df = df.dropna(subset=["ticker", "price", "pe", "peg", "eps_growth"])
 
-# --- Filter Area ---
-with st.expander("🔍 Filters"):
-    st.button("Apply Standard Filters", on_click=lambda: st.session_state.update({
-        "pe_max": DEFAULTS["pe_max"],
-        "peg_max": DEFAULTS["peg_max"],
-        "eps_min": DEFAULTS["eps_min"],
-        "apply_filters": True
-    }))
+    # Convert types
+    df["pe"] = df["pe"].astype(float)
+    df["peg"] = df["peg"].astype(float)
+    df["eps_growth"] = df["eps_growth"].astype(float)
 
-    if st.toggle("Change Standard Filters", key="show_popup"):
-        st.markdown("### Customize Standard Filters")
-        st.session_state["pe_max"] = st.slider("Max P/E Ratio", 0.0, 100.0, st.session_state["pe_max"])
-        st.session_state["peg_max"] = st.slider("Max PEG Ratio", 0.0, 5.0, st.session_state["peg_max"])
-        st.session_state["eps_min"] = st.slider("Min EPS Growth (%)", 0.0, 100.0, st.session_state["eps_min"])
-        if st.button("Apply Custom Filters"):
-            st.session_state["apply_filters"] = True
-            st.session_state["show_popup"] = False
-
-# --- Apply Filters ---
-if st.session_state.get("apply_filters"):
-    df = df[
-        (df["pe"] <= st.session_state["pe_max"]) &
-        (df["peg"] <= st.session_state["peg_max"]) &
-        (df["eps_growth"] >= st.session_state["eps_min"])
+    # Apply filters
+    filters = st.session_state.filters
+    df_filtered = df[
+        (df["pe"].between(*filters["pe"])) &
+        (df["peg"].between(*filters["peg"])) &
+        (df["eps_growth"].between(*filters["eps_growth"]))
     ]
-    st.session_state["apply_filters"] = False
 
-# --- Table Display ---
-st.markdown("### Filtered Stocks")
+    # Apply hidden row filter
+    df_filtered = df_filtered[~df_filtered["ticker"].isin(st.session_state.hidden_rows)]
 
-def make_yahoo_link(ticker):
-    return f"[{ticker}](https://finance.yahoo.com/quote/{ticker})"
+    # Sortable table headers
+    sort_column = st.selectbox("Sort by", ["ticker", "price", "pe", "peg", "eps_growth"])
+    df_filtered = df_filtered.sort_values(by=sort_column)
 
-df_display = df.copy()
-df_display["ticker"] = df_display["ticker"].apply(make_yahoo_link)
+    st.markdown("### Filtered Stocks")
+    for _, row in df_filtered.iterrows():
+        cols = st.columns([2, 2, 2, 2, 2, 2, 1, 1])
+        link = f"https://finance.yahoo.com/quote/{row['ticker']}"
+        cols[0].markdown(f"[{row['ticker']}]({link})")
+        cols[1].write(f"${row['price']:.2f}")
+        cols[2].write(f"{row['pe']:.1f}")
+        cols[3].write(f"{row['peg']:.2f}")
+        cols[4].write(f"{row['eps_growth']:.1f}%")
+        cols[5].write(row["market_cap"])
+        if cols[6].button("👁️", key=f"hide_{row['ticker']}"):
+            st.session_state.hidden_rows.add(row["ticker"])
+            st.experimental_rerun()
+        if cols[7].button("➕", key=f"add_{row['ticker']}"):
+            st.success(f"{row['ticker']} added to simulation (dummy)")
 
-st.dataframe(df_display[['ticker', 'price', 'pe', 'peg', 'eps_growth']], use_container_width=True)
+    if st.button("🔄 Show All Hidden Rows"):
+        st.session_state.hidden_rows.clear()
+        st.success("All rows restored!")
+        st.experimental_rerun()
+else:
+    st.info("No screener data available for today.")
