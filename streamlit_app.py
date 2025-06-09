@@ -24,7 +24,7 @@ table = dynamodb.Table("paper_trades")
 
 # ---------- CONSTANTS ----------
 BUCKET = "stock-screener-output-beta"
-TODAY_KEY = "yahoo-results/2025-06-06.csv"  # or any known file
+TODAY_KEY = "finnhub-results/YYYY-MM-DD.csv"  # or any known file
 
 # ---------- HELPERS ----------
 def load_screener_data():
