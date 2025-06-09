@@ -1,6 +1,7 @@
 import boto3
 import pandas as pd
 from datetime import datetime
+import streamlit as st
 
 # Set AWS region
 boto3.setup_default_session(region_name="us-east-1")
