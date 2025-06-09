@@ -1,0 +1,28 @@
+name: Fetch EODHD Fundamentals
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "15 10 * * *"  # Runs daily at 10:15 UTC (~6:15am Eastern)
+
+jobs:
+  run-fundamentals-fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies
+        run: pip install boto3 requests
+
+      - name: Run script
+        run: python scripts/fetch_fundamentals.py
+        env:
+          EODHD_API_KEY: ${{ secrets.EODHD_API_KEY }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
