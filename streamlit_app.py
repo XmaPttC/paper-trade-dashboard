@@ -1,9 +1,9 @@
 import streamlit as st
 import pandas as pd
 
-# ----------------------------
-# Dummy Data Setup
-# ----------------------------
+# -------------------------------
+# Dummy Data for the Screener Table
+# -------------------------------
 data = [
     {"ticker": "AAPL", "price": 185.2, "pe": 29.8, "peg": 2.1, "eps_growth": 18.5, "market_cap": 2800000000000},
     {"ticker": "GOOGL", "price": 128.3, "pe": 26.4, "peg": 1.8, "eps_growth": 20.2, "market_cap": 1800000000000},
@@ -12,85 +12,87 @@ data = [
 ]
 df = pd.DataFrame(data)
 
-# ----------------------------
-# Session State Defaults
-# ----------------------------
+# -------------------------------
+# Session State Initialization
+# -------------------------------
 st.session_state.setdefault("hidden_tickers", set())
 st.session_state.setdefault("sort_by", "ticker")
 st.session_state.setdefault("sort_ascending", True)
 st.session_state.setdefault("show_restore_alert", False)
 st.session_state.setdefault("show_filter_popup", False)
 
-# Default standard filters (editable by user)
+# Default standard filters
 default_filters = {
-    "pe": (0.0, 15.0),
-    "peg": (0.0, 1.0),
-    "eps_growth": 20.0,
-    "market_cap": 300_000_000
+    "pe_range": (0.0, 15.0),
+    "peg_range": (0.0, 1.0),
+    "eps_growth_min": 20.0,
+    "market_cap_min": 300_000_000,
 }
-st.session_state.setdefault("standard_filters", default_filters.copy())
+for k, v in default_filters.items():
+    st.session_state.setdefault(f"standard_{k}", v)
 
-# ----------------------------
-# Title & Layout
-# ----------------------------
+# -------------------------------
+# UI Title
+# -------------------------------
 st.title("📊 Stock Screener")
 
-# ----------------------------
-# Filter Section
-# ----------------------------
-st.subheader("🎛️ Filters")
+# -------------------------------
+# Standard Filter Controls
+# -------------------------------
+st.subheader("Filters")
+col_apply, col_edit = st.columns([2, 3])
+if col_apply.button("✅ Apply Standard Filters"):
+    st.session_state["pe_range"] = st.session_state["standard_pe_range"]
+    st.session_state["peg_range"] = st.session_state["standard_peg_range"]
+    st.session_state["eps_growth_min"] = st.session_state["standard_eps_growth_min"]
+    st.session_state["market_cap_min"] = st.session_state["standard_market_cap_min"]
 
-# Apply standard filters button
-col_std_btn, col_std_link = st.columns([2, 3])
-if col_std_btn.button("Apply Standard Filters"):
-    filters = st.session_state["standard_filters"]
-    st.session_state["pe_range"] = filters["pe"]
-    st.session_state["peg_range"] = filters["peg"]
-    st.session_state["eps_growth_min"] = filters["eps_growth"]
-    st.session_state["market_cap_min"] = filters["market_cap"]
-
-# Change standard filters link
-if col_std_link.button("Change standard filters"):
+if col_edit.button("✏️ Change standard filters"):
     st.session_state["show_filter_popup"] = True
 
-# Filter popup modal
+# -------------------------------
+# Filter Popup
+# -------------------------------
 if st.session_state["show_filter_popup"]:
-    with st.expander("🔧 Edit Standard Filters", expanded=True):
-        pe = st.slider("Standard PE Range", 0.0, 50.0, st.session_state["standard_filters"]["pe"], key="std_pe")
-        peg = st.slider("Standard PEG Range", 0.0, 5.0, st.session_state["standard_filters"]["peg"], key="std_peg")
-        eps = st.slider("Standard Min EPS Growth %", 0.0, 100.0, st.session_state["standard_filters"]["eps_growth"], key="std_eps")
-        mc = st.number_input("Standard Min Market Cap ($)", value=st.session_state["standard_filters"]["market_cap"], key="std_mc")
+    with st.container():
+        st.markdown("### ✏️ Edit Standard Filters")
+        new_pe = st.slider("P/E Ratio", 0.0, 50.0, st.session_state["standard_pe_range"], key="edit_pe")
+        new_peg = st.slider("PEG Ratio", 0.0, 5.0, st.session_state["standard_peg_range"], key="edit_peg")
+        new_eps = st.slider("Min EPS Growth %", 0.0, 100.0, st.session_state["standard_eps_growth_min"], key="edit_eps")
+        new_mcap = st.number_input("Min Market Cap ($)", value=st.session_state["standard_market_cap_min"], key="edit_mcap")
 
-        if st.button("💾 Save Filters"):
-            st.session_state["standard_filters"] = {
-                "pe": pe,
-                "peg": peg,
-                "eps_growth": eps,
-                "market_cap": mc
-            }
-            st.success("Saved!")
+        if st.button("Apply"):
+            st.session_state["standard_pe_range"] = new_pe
+            st.session_state["standard_peg_range"] = new_peg
+            st.session_state["standard_eps_growth_min"] = new_eps
+            st.session_state["standard_market_cap_min"] = new_mcap
+
+            st.session_state["pe_range"] = new_pe
+            st.session_state["peg_range"] = new_peg
+            st.session_state["eps_growth_min"] = new_eps
+            st.session_state["market_cap_min"] = new_mcap
+
             st.session_state["show_filter_popup"] = False
 
-# Live filter inputs
-pe_range = st.slider("P/E Ratio", 0.0, 50.0, st.session_state.get("pe_range", (0.0, 50.0)))
-peg_range = st.slider("PEG Ratio", 0.0, 5.0, st.session_state.get("peg_range", (0.0, 5.0)))
-eps_growth_min = st.slider("Min EPS Growth %", 0.0, 100.0, st.session_state.get("eps_growth_min", 0.0))
-market_cap_min = st.number_input("Min Market Cap ($)", value=st.session_state.get("market_cap_min", 0))
+# -------------------------------
+# Live Filters
+# -------------------------------
+st.session_state.setdefault("pe_range", (0.0, 50.0))
+st.session_state.setdefault("peg_range", (0.0, 5.0))
+st.session_state.setdefault("eps_growth_min", 0.0)
+st.session_state.setdefault("market_cap_min", 0)
 
-# ----------------------------
-# Apply Filters
-# ----------------------------
 filtered_df = df[
-    (df["pe"].between(*pe_range)) &
-    (df["peg"].between(*peg_range)) &
-    (df["eps_growth"] >= eps_growth_min) &
-    (df["market_cap"] >= market_cap_min)
+    (df["pe"].between(*st.session_state["pe_range"])) &
+    (df["peg"].between(*st.session_state["peg_range"])) &
+    (df["eps_growth"] >= st.session_state["eps_growth_min"]) &
+    (df["market_cap"] >= st.session_state["market_cap_min"])
 ]
 filtered_df = filtered_df[~filtered_df["ticker"].isin(st.session_state.hidden_tickers)]
 
-# ----------------------------
-# Restore Panel
-# ----------------------------
+# -------------------------------
+# Table Controls
+# -------------------------------
 if st.session_state.show_restore_alert:
     col_alert, col_dismiss = st.columns([10, 1])
     with col_alert:
@@ -103,9 +105,9 @@ if st.button("👁 Show All Hidden Rows"):
     st.session_state.hidden_tickers.clear()
     st.session_state.show_restore_alert = True
 
-# ----------------------------
-# Sortable Table Header
-# ----------------------------
+# -------------------------------
+# Table Display
+# -------------------------------
 st.markdown("### 📈 Filtered Stock List")
 
 header_cols = st.columns([2, 2, 1, 1, 2, 1, 1])
@@ -122,9 +124,6 @@ for i, (label, key) in enumerate(zip(labels, sort_keys)):
 
 filtered_df = filtered_df.sort_values(by=st.session_state.sort_by, ascending=st.session_state.sort_ascending)
 
-# ----------------------------
-# Display Table Rows
-# ----------------------------
 for _, row in filtered_df.iterrows():
     col1, col2, col3, col4, col5, col6, col7 = st.columns([2, 2, 1, 1, 2, 1, 1])
     ticker = row["ticker"]
