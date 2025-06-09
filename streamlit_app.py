@@ -14,7 +14,7 @@ TODAY = datetime.utcnow().strftime("%Y-%m-%d")
 
 def load_screener_data():
     try:
-        key = f"{S3_KEY_PREFIX}/{TODAY}.csv"
+        key = "finnhub-results/2025-06-08.csv"
         print(f"📦 Fetching from S3 → {key}")  # Debug log
         response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
         df = pd.read_csv(response["Body"])
