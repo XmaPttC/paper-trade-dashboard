@@ -1,128 +1,93 @@
 import streamlit as st
 import boto3
-import os
 import pandas as pd
-import csv
-from io import StringIO
 from datetime import datetime
-from decimal import Decimal
+from io import StringIO
+import json
+import os
 
-# Read credentials from Streamlit secrets
-AWS_REGION = st.secrets["AWS_DEFAULT_REGION"]
-AWS_ACCESS_KEY_ID = st.secrets["AWS_ACCESS_KEY_ID"]
-AWS_SECRET_ACCESS_KEY = st.secrets["AWS_SECRET_ACCESS_KEY"]
+# Force AWS region to avoid NoRegionError
+boto3.setup_default_session(region_name="us-east-1")
 
-session = boto3.session.Session(
-    aws_access_key_id=AWS_ACCESS_KEY_ID,
-    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-    region_name=AWS_REGION
-)
+# AWS clients
+s3 = boto3.client("s3")
+dynamodb = boto3.resource("dynamodb")
+table = dynamodb.Table("PaperTrades")
 
-s3 = session.client("s3")
-dynamodb = session.resource("dynamodb")
-table = dynamodb.Table("paper_trades")
+# Constants
+BUCKET_NAME = "stock-screener-output-beta"
+S3_KEY_PREFIX = "finnhub-results"
+TODAY = datetime.utcnow().strftime("%Y-%m-%d")
 
-# ---------- CONSTANTS ----------
-BUCKET = "stock-screener-output-beta"
-TODAY_KEY = "finnhub-results/YYYY-MM-DD.csv"  # or any known file
-
-# ---------- HELPERS ----------
+# Load screener data
 def load_screener_data():
     try:
-        obj = s3.get_object(Bucket=BUCKET, Key=TODAY_KEY)
-        csv_data = obj["Body"].read().decode("utf-8")
-        reader = csv.DictReader(StringIO(csv_data))
-        return list(reader)
+        key = f"{S3_KEY_PREFIX}/{TODAY}.csv"
+        response = s3.get_object(Bucket=BUCKET_NAME, Key=key)
+        df = pd.read_csv(response["Body"])
+        return df
     except Exception as e:
-        st.error(f"⚠️ Failed to load screener data: {e}")
-        return []
+        st.error(f"Failed to load screener data: {e}")
+        return pd.DataFrame()
 
+# Add a trade to DynamoDB
 def add_trade(ticker, price, target):
     try:
-        if table.get_item(Key={"ticker": ticker}).get("Item"):
-            return False
-        entry_price = float(price)
-        target_price = float(target)
-        stop_loss = round(entry_price * 0.8, 2)
-        table.put_item(Item={
+        trade = {
             "ticker": ticker,
-            "entry_price": Decimal(str(entry_price)),
-            "target_price": Decimal(str(target_price)),
-            "stop_loss": Decimal(str(stop_loss)),
-            "entry_date": datetime.utcnow().strftime("%Y-%m-%d"),
+            "entry_price": str(price),
+            "target_price": str(target),
+            "stop_loss": str(round(price * 0.8, 2)),
+            "entry_date": TODAY,
             "status": "open"
-        })
-        return True
+        }
+        table.put_item(Item=trade)
+        st.success(f"Added {ticker} to simulation.")
     except Exception as e:
-        st.error(f"❌ Failed to add trade: {e}")
-        return False
+        st.error(f"Failed to add trade: {e}")
 
+# Load existing trades
 def load_trades():
     try:
-        return table.scan().get("Items", [])
+        response = table.scan()
+        return pd.DataFrame(response.get("Items", []))
     except Exception as e:
-        st.error(f"⚠️ Failed to load trades: {e}")
-        return []
+        st.error(f"Failed to load trades: {e}")
+        return pd.DataFrame()
 
-# ---------- STREAMLIT UI ----------
-st.set_page_config(page_title="Stock Screener & Simulator", layout="wide")
-st.title("📈 Stock Screener + Paper Trading Dashboard")
+# Dashboard layout
+st.title("📊 Stock Screener & Paper Trading Simulator")
 
-tab1, tab2 = st.tabs(["📊 Screener", "📘 Trading Simulation"])
+tabs = st.tabs(["🧪 Screener", "💼 Trading Simulation"])
 
-# ---------- TAB 1: Screener ----------
-with tab1:
-    st.subheader("📊 Undervalued Growth Stocks")
-    screener_data = load_screener_data()
+# Screener tab
+with tabs[0]:
+    st.subheader("🧪 Screener Results")
+    st.markdown("**Source:** Finnhub API<br>**Criteria:** Market Cap > $300M, P/E < 15, PEG < 1, EPS Growth > 20%", unsafe_allow_html=True)
 
-    if screener_data:
-        for row in screener_data:
-            col1, col2, col3, col4 = st.columns([2, 2, 2, 2])
-            with col1:
-                st.markdown(f"[{row['ticker']}](https://finance.yahoo.com/quote/{row['ticker']})")
-            with col2:
-                st.markdown(f"Price: **{row['price']}**")
-            with col3:
-                st.markdown(f"Target: **{row['target']}**")
-            with col4:
-                if st.button("Add to Trading Simulation", key=row["ticker"]):
-                    added = add_trade(row["ticker"], row["price"], row["target"])
-                    if added:
-                        st.success(f"✅ {row['ticker']} added.")
-                    else:
-                        st.warning(f"⚠️ {row['ticker']} already exists.")
-
+    screener_df = load_screener_data()
+    if not screener_df.empty:
+        for idx, row in screener_df.iterrows():
+            col1, col2, col3, col4, col5 = st.columns([2, 2, 2, 2, 2])
+            ticker = row["ticker"]
+            link = f"https://finance.yahoo.com/quote/{ticker}"
+            col1.markdown(f"[{ticker}]({link})")
+            col2.write(f"${row['price']:.2f}")
+            col3.write(f"Target: ${row['target']:.2f}" if "target" in row else "N/A")
+            if col4.button("Add to Trading Simulation", key=f"add_{ticker}"):
+                add_trade(ticker, float(row["price"]), float(row.get("target", row["price"] * 1.25)))
     else:
         st.info("No screener data available for today.")
 
-# ---------- TAB 2: Simulated Trades ----------
-with tab2:
-    st.subheader("📘 Simulated Trades")
-    items = load_trades()
-
-    if items:
-        df = pd.DataFrame(items)
-        for col in ["entry_price", "target_price", "stop_loss", "exit_price"]:
-            if col in df.columns:
-                df[col] = df[col].astype(float)
-
-        if "exit_price" in df.columns and "status" in df.columns:
-            df["exit_date"] = df.get("exit_date", "")
-            df["pnl"] = df.apply(
-                lambda row: row["exit_price"] - row["entry_price"]
-                if row["status"].startswith("closed") and pd.notnull(row["exit_price"])
-                else None,
-                axis=1,
-            )
-
-        df["ticker"] = df["ticker"].apply(
-            lambda t: f"[{t}](https://finance.yahoo.com/quote/{t})"
-        )
-
-        columns = ["ticker", "entry_price", "entry_date", "target_price", "stop_loss", "status", "exit_date", "pnl"]
-        df = df[[col for col in columns if col in df.columns]]
-
-        st.markdown("### 🧾 Trade Log")
-        st.write(df.to_markdown(index=False), unsafe_allow_html=True)
+# Trading Simulation tab
+with tabs[1]:
+    st.subheader("💼 Simulated Trades")
+    trades_df = load_trades()
+    if not trades_df.empty:
+        trades_df = trades_df[["ticker", "entry_price", "entry_date", "target_price", "stop_loss", "status"]]
+        trades_df["yahoo_link"] = trades_df["ticker"].apply(lambda x: f"https://finance.yahoo.com/quote/{x}")
+        trades_df["ticker"] = trades_df.apply(lambda row: f"[{row['ticker']}]({row['yahoo_link']})", axis=1)
+        trades_df.drop(columns=["yahoo_link"], inplace=True)
+        st.markdown(trades_df.to_markdown(index=False), unsafe_allow_html=True)
     else:
-        st.info("No trades found.")
+        st.info("No trades have been simulated yet.")
