@@ -49,10 +49,16 @@ st.title("📊 Stock Screener Dashboard")
 with st.expander("🎛️ Filter Controls", expanded=True):
     st.markdown("### Apply Filters")
 
+    # Ensure default filter values are safely initialized
+    peg_default = st.session_state.filters.get("peg", 2.0)
+    eps_default = st.session_state.filters.get("eps_growth", 15.0)
+    pe_default = st.session_state.filters.get("pe", 30.0)
+
     col1, col2, col3 = st.columns(3)
-    pe = col1.slider("Max P/E", 0, 100, st.session_state.filters["pe"])
-    peg = col2.slider("Max PEG", 0.0, 5.0, st.session_state.filters["peg"])
-    eps = col3.slider("Min EPS Growth (%)", 0, 100, st.session_state.filters["eps_growth"])
+
+    pe = col1.slider("Max PE", 0.0, 100.0, float(pe_default))
+    peg = col2.slider("Max PEG", 0.0, 5.0, float(peg_default))
+    eps_growth = col3.slider("Min EPS Growth (%)", 0.0, 100.0, float(eps_default))
 
     if st.button("Apply Filters"):
         st.session_state.filters = {"pe": pe, "peg": peg, "eps_growth": eps}
