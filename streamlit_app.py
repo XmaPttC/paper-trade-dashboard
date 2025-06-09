@@ -1,67 +1,86 @@
 import streamlit as st
 import pandas as pd
+import boto3
+from datetime import datetime
 
-# Dummy dataset
-data = [
-    {"ticker": "AAPL", "price": 185.2, "pe": 29.8, "peg": 2.1, "eps_growth": 18.5},
-    {"ticker": "GOOGL", "price": 128.3, "pe": 26.4, "peg": 1.8, "eps_growth": 20.2},
-    {"ticker": "SMCI", "price": 900.5, "pe": 32.7, "peg": 0.9, "eps_growth": 75.0},
-    {"ticker": "MSFT", "price": 320.1, "pe": 34.5, "peg": 2.3, "eps_growth": 15.0},
-    {"ticker": "TSLA", "price": 230.2, "pe": 70.1, "peg": 2.5, "eps_growth": 28.0},
-]
-df = pd.DataFrame(data)
+# --- S3 CONFIG ---
+BUCKET_NAME = "stock-screener-output-beta"
+FOLDER = "finnhub-results"
+REGION = "us-east-1"
 
-# Session state setup
-if "default_filters" not in st.session_state:
-    st.session_state.default_filters = {"pe_max": 40, "peg_max": 2.5, "eps_min": 10}
+# --- Load Data from S3 ---
+@st.cache_data
+def load_data():
+    today = datetime.now().strftime("%Y-%m-%d")
+    key = f"{FOLDER}/{today}.csv"
+    s3 = boto3.client("s3", region_name=REGION)
+    try:
+        obj = s3.get_object(Bucket=BUCKET_NAME, Key=key)
+        df = pd.read_csv(obj["Body"])
+        return df
+    except Exception as e:
+        st.error(f"Failed to load screener data: {e}")
+        return pd.DataFrame()
 
+# --- Initialize Session State ---
+for var in ["show_filters", "show_popup", "filtered_df", "apply_filters"]:
+    if var not in st.session_state:
+        st.session_state[var] = False if "show" in var else None
+
+# --- Title ---
 st.title("📊 Stock Screener")
 
-# --- FILTER SECTION ---
-with st.expander("🔍 Filter Criteria", expanded=True):
-    col1, col2 = st.columns(2)
-    with col1:
-        pe_max = st.slider("Max P/E Ratio", 0, 100, st.session_state.default_filters["pe_max"], step=1)
-        st.number_input("Manual P/E max", value=pe_max, key="pe_input")
-        pe_max = st.session_state.pe_input
+# --- Load Data ---
+df = load_data()
+if df.empty:
+    st.info("No screener data available for today.")
+    st.stop()
 
-    with col2:
-        peg_max = st.slider("Max PEG Ratio", 0.0, 5.0, st.session_state.default_filters["peg_max"], step=0.1)
-        st.number_input("Manual PEG max", value=peg_max, key="peg_input")
-        peg_max = st.session_state.peg_input
+# --- Default Filter Values ---
+DEFAULTS = {
+    "pe_max": 15.0,
+    "peg_max": 1.0,
+    "eps_min": 20.0
+}
 
-    eps_min = st.slider("Min EPS Growth (%)", 0, 100, st.session_state.default_filters["eps_min"], step=1)
-    st.number_input("Manual EPS min", value=eps_min, key="eps_input")
-    eps_min = st.session_state.eps_input
+for key, val in DEFAULTS.items():
+    if key not in st.session_state:
+        st.session_state[key] = val
 
-    st.markdown("---")
-    apply_defaults = st.button("Apply Standard Filters")
-    if apply_defaults:
-        pe_max = st.session_state.default_filters["pe_max"]
-        peg_max = st.session_state.default_filters["peg_max"]
-        eps_min = st.session_state.default_filters["eps_min"]
-        st.experimental_rerun()
+# --- Filter Area ---
+with st.expander("🔍 Filters"):
+    st.button("Apply Standard Filters", on_click=lambda: st.session_state.update({
+        "pe_max": DEFAULTS["pe_max"],
+        "peg_max": DEFAULTS["peg_max"],
+        "eps_min": DEFAULTS["eps_min"],
+        "apply_filters": True
+    }))
 
-    with st.popover("⚙️ Change Standard Filters"):
-        st.markdown("### Set New Defaults")
-        new_pe = st.number_input("New max P/E", value=st.session_state.default_filters["pe_max"], key="new_pe")
-        new_peg = st.number_input("New max PEG", value=st.session_state.default_filters["peg_max"], key="new_peg")
-        new_eps = st.number_input("New min EPS growth", value=st.session_state.default_filters["eps_min"], key="new_eps")
-        if st.button("Save & Apply"):
-            st.session_state.default_filters = {
-                "pe_max": new_pe,
-                "peg_max": new_peg,
-                "eps_min": new_eps
-            }
-            st.success("✅ Standard filters updated.")
-            st.experimental_rerun()
+    if st.toggle("Change Standard Filters", key="show_popup"):
+        st.markdown("### Customize Standard Filters")
+        st.session_state["pe_max"] = st.slider("Max P/E Ratio", 0.0, 100.0, st.session_state["pe_max"])
+        st.session_state["peg_max"] = st.slider("Max PEG Ratio", 0.0, 5.0, st.session_state["peg_max"])
+        st.session_state["eps_min"] = st.slider("Min EPS Growth (%)", 0.0, 100.0, st.session_state["eps_min"])
+        if st.button("Apply Custom Filters"):
+            st.session_state["apply_filters"] = True
+            st.session_state["show_popup"] = False
 
-# Apply filtering logic
-filtered_df = df[
-    (df["pe"] <= pe_max) &
-    (df["peg"] <= peg_max) &
-    (df["eps_growth"] >= eps_min)
-]
+# --- Apply Filters ---
+if st.session_state.get("apply_filters"):
+    df = df[
+        (df["pe"] <= st.session_state["pe_max"]) &
+        (df["peg"] <= st.session_state["peg_max"]) &
+        (df["eps_growth"] >= st.session_state["eps_min"])
+    ]
+    st.session_state["apply_filters"] = False
 
-st.markdown("### 📈 Filtered Results")
-st.dataframe(filtered_df.reset_index(drop=True))
+# --- Table Display ---
+st.markdown("### Filtered Stocks")
+
+def make_yahoo_link(ticker):
+    return f"[{ticker}](https://finance.yahoo.com/quote/{ticker})"
+
+df_display = df.copy()
+df_display["ticker"] = df_display["ticker"].apply(make_yahoo_link)
+
+st.dataframe(df_display[['ticker', 'price', 'pe', 'peg', 'eps_growth']], use_container_width=True)
