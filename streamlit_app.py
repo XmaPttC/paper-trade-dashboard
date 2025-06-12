@@ -119,8 +119,12 @@ st.title("🚀 Undervalued Growth Stocks Screener")
 
 if st.button("Restore All Hidden Rows"):
     st.session_state.hidden_rows.clear()
+    st.session_state.restored = True
+
+# Early in your script (after loading session state)
+if st.session_state.get("restored"):
     st.success("All rows restored.")
-    st.experimental_rerun()
+    st.session_state.restored = False
 
 if not filtered.empty:
     def make_row_html(row):
