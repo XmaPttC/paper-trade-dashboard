@@ -1,72 +1,40 @@
 import streamlit as st
 import pandas as pd
 
-# Dummy stock data
-data = {
-    "Ticker": ["AAPL", "GOOGL", "AMZN", "MSFT", "TSLA"],
-    "Last Price": [190.25, 2750.65, 3450.30, 305.15, 850.50],
-    "PE": [28.3, 30.2, 60.5, 35.0, 70.8],
-    "PEG": [1.9, 1.5, 2.0, 1.7, 2.5],
-    "EPS": [5.11, 90.25, 57.33, 8.69, 12.56],
-    "Market Cap": [2.7e12, 1.8e12, 1.6e12, 2.3e12, 0.85e12]
-}
-df = pd.DataFrame(data)
+st.set_page_config(layout="wide")
 
-# Format Market Cap
-def format_market_cap(val):
-    return f"{val/1e9:.2f}B" if val >= 1e9 else f"{val/1e6:.2f}M"
+# Load placeholder data
+df = pd.read_csv("mock_stock_data.csv")  # Replace with real S3 data
 
-df["Market Cap"] = df["Market Cap"].apply(format_market_cap)
+# Sidebar Filter Panel
+with st.sidebar:
+    st.header("📊 Screener Filters")
 
-# Session state for hidden rows
-if "hidden_rows" not in st.session_state:
-    st.session_state.hidden_rows = set()
+    # Core Filters
+    st.subheader("Core Fundamentals")
+    pe_min = st.number_input("Min P/E", value=0.0)
+    pe_max = st.number_input("Max P/E", value=25.0)
+    peg_max = st.slider("Max PEG", 0.0, 3.0, 1.5)
+    eps_growth_min = st.slider("Min EPS Growth (%)", 0, 100, 20)
 
-# Page styling
-st.markdown("""
-    <style>
-    .main {
-        background-color: #f8f9fa;
-        font-family: "Segoe UI", sans-serif;
-        color: #212529;
-    }
-    .dataframe th {
-        background-color: #dee2e6;
-        font-weight: bold;
-    }
-    </style>
-""", unsafe_allow_html=True)
+    # Analyst Filters
+    use_analyst = st.checkbox("Enable Analyst Ratings Filter")
+    if use_analyst:
+        analyst_rating_max = st.slider("Max Recommendation Mean", 1.0, 5.0, 3.0)
+        min_analysts = st.number_input("Min Analysts", value=3)
 
-st.title("📊 Stock Screener Dashboard")
+    # Price Target
+    use_target = st.checkbox("Enable Price Target Upside Filter")
+    if use_target:
+        target_upside_min = st.slider("Min Upside (%)", 0, 200, 30)
 
-# Filter visible rows
-visible_df = df[~df.index.isin(st.session_state.hidden_rows)]
+    # Buttons
+    if st.button("Apply Filters"):
+        st.session_state["apply_filters"] = True
 
-# Table headers
-cols = st.columns([1.5, 1.5, 1, 1, 1.5, 2, 0.5, 0.5])
-headers = ["Ticker", "Last Price", "PE", "PEG", "EPS", "Market Cap", "", ""]
-for col, header in zip(cols, headers):
-    col.markdown(f"**{header}**")
+# Main Table View
+st.title("🚀 Undervalued Growth Stocks Screener")
 
-# Display rows
-for idx, row in visible_df.iterrows():
-    cols = st.columns([1.5, 1.5, 1, 1, 1.5, 2, 0.5, 0.5])
-    link = f"https://finance.yahoo.com/quote/{row['Ticker']}"
-    cols[0].markdown(f"[{row['Ticker']}]({link})")
-    cols[1].write(f"${row['Last Price']:.2f}")
-    cols[2].write(row["PE"])
-    cols[3].write(row["PEG"])
-    cols[4].write(row["EPS"])
-    cols[5].write(row["Market Cap"])
-
-    if cols[6].button("👁️", key=f"hide_{idx}") and idx not in st.session_state.hidden_rows:
-        st.session_state.hidden_rows.add(idx)
-        st.success(f"{row['Ticker']} hidden — adjust filters to refresh list.")
-
-    if cols[7].button("➕", key=f"add_{idx}"):
-        st.success(f"{row['Ticker']} added to trading simulation.")
-
-# Restore all rows
-if st.button("🔄 Show All Hidden Rows"):
-    st.session_state.hidden_rows.clear()
-    st.success("All hidden rows restored. Adjust filters to refresh list.")
+# Apply dummy filters (to be replaced)
+filtered_df = df  # Apply logic here
+st.dataframe(filtered_df, use_container_width=True)
