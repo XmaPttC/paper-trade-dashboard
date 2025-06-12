@@ -1,111 +1,72 @@
 import streamlit as st
 import pandas as pd
-import datetime
 
-# ---------- Setup ----------
-st.set_page_config(page_title="Stock Dashboard", layout="wide")
-st.markdown(
-    """
-    <style>
-    body {
-        font-family: 'Segoe UI', sans-serif;
-    }
-    .main .block-container {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-    }
-    .stButton>button {
-        border-radius: 6px;
-        padding: 0.4rem 1.2rem;
-    }
-    .metric-label {
-        font-size: 14px;
-        font-weight: 600;
-        margin-bottom: 0.25rem;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+# Dummy stock data
+data = {
+    "Ticker": ["AAPL", "GOOGL", "AMZN", "MSFT", "TSLA"],
+    "Last Price": [190.25, 2750.65, 3450.30, 305.15, 850.50],
+    "PE": [28.3, 30.2, 60.5, 35.0, 70.8],
+    "PEG": [1.9, 1.5, 2.0, 1.7, 2.5],
+    "EPS": [5.11, 90.25, 57.33, 8.69, 12.56],
+    "Market Cap": [2.7e12, 1.8e12, 1.6e12, 2.3e12, 0.85e12]
+}
+df = pd.DataFrame(data)
 
-# ---------- Session State ----------
-if "filters" not in st.session_state:
-    st.session_state.filters = {
-        "pe": (0, 40),
-        "peg": (0.0, 2.0),
-        "eps": (10, 100),
-        "market_cap": (300, 100000)
-    }
+# Format Market Cap
+def format_market_cap(val):
+    return f"{val/1e9:.2f}B" if val >= 1e9 else f"{val/1e6:.2f}M"
 
+df["Market Cap"] = df["Market Cap"].apply(format_market_cap)
+
+# Session state for hidden rows
 if "hidden_rows" not in st.session_state:
     st.session_state.hidden_rows = set()
 
-# ---------- Dummy Data ----------
-def load_dummy_data():
-    return pd.DataFrame([
-        {"ticker": "AAPL", "price": 180.5, "pe": 29, "peg": 1.3, "eps": 12.1, "market_cap": 2500},
-        {"ticker": "TSLA", "price": 195.1, "pe": 72, "peg": 2.5, "eps": 80.5, "market_cap": 600},
-        {"ticker": "NVDA", "price": 430.3, "pe": 35, "peg": 1.8, "eps": 65.3, "market_cap": 1000},
-        {"ticker": "ZM", "price": 62.7, "pe": 22, "peg": 1.0, "eps": 25.4, "market_cap": 400},
-    ])
+# Page styling
+st.markdown("""
+    <style>
+    .main {
+        background-color: #f8f9fa;
+        font-family: "Segoe UI", sans-serif;
+        color: #212529;
+    }
+    .dataframe th {
+        background-color: #dee2e6;
+        font-weight: bold;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-# ---------- Filter Logic ----------
-def filter_dataframe(df):
-    f = st.session_state.filters
-    return df[
-        (df["pe"].between(*f["pe"])) &
-        (df["peg"].between(*f["peg"])) &
-        (df["eps"].between(*f["eps"])) &
-        (df["market_cap"].between(*f["market_cap"]))
-    ]
+st.title("📊 Stock Screener Dashboard")
 
-# ---------- UI Layout ----------
-tab1, tab2 = st.tabs(["📊 Stock Screener", "📈 Trading Simulation"])
+# Filter visible rows
+visible_df = df[~df.index.isin(st.session_state.hidden_rows)]
 
-# ---------- Tab 1: Screener ----------
-with tab1:
-    st.title("📊 Stock Screener")
+# Table headers
+cols = st.columns([1.5, 1.5, 1, 1, 1.5, 2, 0.5, 0.5])
+headers = ["Ticker", "Last Price", "PE", "PEG", "EPS", "Market Cap", "", ""]
+for col, header in zip(cols, headers):
+    col.markdown(f"**{header}**")
 
-    with st.expander("🔧 Filter Settings", expanded=False):
-        st.write("Use these controls to filter the stock list:")
+# Display rows
+for idx, row in visible_df.iterrows():
+    cols = st.columns([1.5, 1.5, 1, 1, 1.5, 2, 0.5, 0.5])
+    link = f"https://finance.yahoo.com/quote/{row['Ticker']}"
+    cols[0].markdown(f"[{row['Ticker']}]({link})")
+    cols[1].write(f"${row['Last Price']:.2f}")
+    cols[2].write(row["PE"])
+    cols[3].write(row["PEG"])
+    cols[4].write(row["EPS"])
+    cols[5].write(row["Market Cap"])
 
-        col1, col2 = st.columns(2)
-        st.session_state.filters["pe"] = col1.slider("PE Ratio", 0, 100, st.session_state.filters["pe"])
-        st.session_state.filters["peg"] = col2.slider("PEG Ratio", 0.0, 5.0, st.session_state.filters["peg"])
+    if cols[6].button("👁️", key=f"hide_{idx}") and idx not in st.session_state.hidden_rows:
+        st.session_state.hidden_rows.add(idx)
+        st.success(f"{row['Ticker']} hidden — adjust filters to refresh list.")
 
-        col3, col4 = st.columns(2)
-        st.session_state.filters["eps"] = col3.slider("EPS Growth (%)", 0, 150, st.session_state.filters["eps"])
-        st.session_state.filters["market_cap"] = col4.slider("Market Cap ($M)", 100, 10000, st.session_state.filters["market_cap"])
+    if cols[7].button("➕", key=f"add_{idx}"):
+        st.success(f"{row['Ticker']} added to trading simulation.")
 
-        st.markdown("---")
-
-    df = load_dummy_data()
-    df = filter_dataframe(df)
-    df = df[~df["ticker"].isin(st.session_state.hidden_rows)]
-
-    if df.empty:
-        st.warning("No results match your filters.")
-    else:
-        for idx, row in df.iterrows():
-            c1, c2, c3, c4, c5, c6, c7 = st.columns([2, 2, 1.5, 1.5, 1.5, 1, 1])
-
-            ticker_link = f"https://finance.yahoo.com/quote/{row['ticker']}"
-            c1.markdown(f"[{row['ticker']}]({ticker_link})")
-            c2.write(f"${row['price']:.2f}")
-            c3.write(f"PE: {row['pe']}")
-            c4.write(f"PEG: {row['peg']}")
-            c5.write(f"EPS: {row['eps']}%")
-            c6.write(f"{row['market_cap']}B")
-
-            if c7.button("👁️", key=f"hide_{row['ticker']}"):
-                st.session_state.hidden_rows.add(row["ticker"])
-                st.experimental_rerun()
-
-        if st.button("🔄 Show All Hidden Rows"):
-            st.session_state.hidden_rows.clear()
-            st.experimental_rerun()
-
-# ---------- Tab 2: Placeholder ----------
-with tab2:
-    st.title("📈 Trading Simulation")
-    st.info("This section will display all simulated trades. Coming soon!")
+# Restore all rows
+if st.button("🔄 Show All Hidden Rows"):
+    st.session_state.hidden_rows.clear()
+    st.success("All hidden rows restored. Adjust filters to refresh list.")
