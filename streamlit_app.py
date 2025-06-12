@@ -8,49 +8,97 @@ st.markdown("<style>body {background-color: #f8f9fa;}</style>", unsafe_allow_htm
 # ---- LOAD DATA ----
 df = pd.read_csv("mock_stock_data.csv")
 
-# Initialize session state for hiding rows
+# ---- INIT STATE ----
 if "hidden_rows" not in st.session_state:
     st.session_state.hidden_rows = set()
+
+if "standard_filters" not in st.session_state:
+    st.session_state.standard_filters = {
+        "pe_min": 0.0,
+        "pe_max": 30.0,
+        "peg_max": 1.5,
+        "eps_min": 20,
+        "rating_max": 3.0,
+        "target_min": 30,
+        "insider_allowed": ["Heavy Buying"]
+    }
 
 # ---- FILTER PANEL ----
 with st.sidebar:
     st.title("📊 Filters")
 
+    # Core Filters
     st.subheader("Core Fundamentals")
     pe_filter = st.checkbox("Enable PE Filter", value=True)
     if pe_filter:
-        pe_min = st.number_input("Min P/E", value=0.0)
-        pe_max = st.number_input("Max P/E", value=30.0)
+        pe_min = st.number_input("Min P/E", value=st.session_state.standard_filters["pe_min"])
+        pe_max = st.number_input("Max P/E", value=st.session_state.standard_filters["pe_max"])
 
     peg_filter = st.checkbox("Enable PEG Filter", value=True)
     if peg_filter:
-        peg_max = st.slider("Max PEG", 0.0, 5.0, 1.5)
+        peg_max = st.slider("Max PEG", 0.0, 5.0, st.session_state.standard_filters["peg_max"])
 
     eps_filter = st.checkbox("Enable EPS Growth Filter", value=True)
     if eps_filter:
-        eps_min = st.slider("Min EPS Growth (%)", 0, 100, 20)
+        eps_min = st.slider("Min EPS Growth (%)", 0, 100, st.session_state.standard_filters["eps_min"])
 
+    # Analyst
     st.subheader("🔍 Analyst Ratings")
     analyst_filter = st.checkbox("Enable Analyst Rating Filter")
     if analyst_filter:
-        rating_max = st.slider("Max Analyst Rating (1=Strong Buy, 5=Sell)", 1.0, 5.0, 3.0)
+        rating_max = st.slider("Max Analyst Rating", 1.0, 5.0, st.session_state.standard_filters["rating_max"])
 
+    # Target
     st.subheader("🎯 Target Price Upside")
     target_filter = st.checkbox("Enable Target Upside Filter")
     if target_filter:
-        target_min = st.slider("Min Upside (%)", 0, 200, 30)
+        target_min = st.slider("Min Upside (%)", 0, 200, st.session_state.standard_filters["target_min"])
 
+    # Insider
     st.subheader("🧑‍💼 Insider Activity")
     insider_filter = st.checkbox("Enable Insider Filter")
     if insider_filter:
-        allowed = st.multiselect("Allowed Activities", ["Heavy Buying", "Net Buying"], default=["Heavy Buying"])
+        allowed = st.multiselect("Allowed Activities", ["Heavy Buying", "Net Buying"], default=st.session_state.standard_filters["insider_allowed"])
 
-    apply = st.button("Apply Filters")
+    # Buttons
+    colA, colB = st.columns(2)
+    if colA.button("Apply Filters"):
+        st.session_state.filters_applied = True
+    if colB.button("Apply Standard Filters"):
+        st.session_state.filters_applied = True
+        pe_min = st.session_state.standard_filters["pe_min"]
+        pe_max = st.session_state.standard_filters["pe_max"]
+        peg_max = st.session_state.standard_filters["peg_max"]
+        eps_min = st.session_state.standard_filters["eps_min"]
+        rating_max = st.session_state.standard_filters["rating_max"]
+        target_min = st.session_state.standard_filters["target_min"]
+        allowed = st.session_state.standard_filters["insider_allowed"]
 
-# ---- APPLY FILTERS ----
+    st.markdown("---")
+    with st.expander("Change Standard Filters"):
+        new_pe_min = st.number_input("PE Min", value=st.session_state.standard_filters["pe_min"], key="new_pe_min")
+        new_pe_max = st.number_input("PE Max", value=st.session_state.standard_filters["pe_max"], key="new_pe_max")
+        new_peg_max = st.slider("PEG Max", 0.0, 5.0, st.session_state.standard_filters["peg_max"], key="new_peg_max")
+        new_eps_min = st.slider("EPS Growth Min", 0, 100, st.session_state.standard_filters["eps_min"], key="new_eps_min")
+        new_rating_max = st.slider("Analyst Rating Max", 1.0, 5.0, st.session_state.standard_filters["rating_max"], key="new_rating_max")
+        new_target_min = st.slider("Target Upside Min", 0, 200, st.session_state.standard_filters["target_min"], key="new_target_min")
+        new_insider_allowed = st.multiselect("Insider Activities", ["Heavy Buying", "Net Buying"], default=st.session_state.standard_filters["insider_allowed"], key="new_insider_allowed")
+        if st.button("Save as Standard Filters"):
+            st.session_state.standard_filters.update({
+                "pe_min": new_pe_min,
+                "pe_max": new_pe_max,
+                "peg_max": new_peg_max,
+                "eps_min": new_eps_min,
+                "rating_max": new_rating_max,
+                "target_min": new_target_min,
+                "insider_allowed": new_insider_allowed
+            })
+            st.success("Standard filters updated.")
+
+# ---- FILTER LOGIC ----
 filtered = df.copy()
 
-if apply:
+if st.session_state.get("filters_applied"):
     if pe_filter:
         filtered = filtered[(filtered["PE"] >= pe_min) & (filtered["PE"] <= pe_max)]
     if peg_filter:
@@ -64,47 +112,35 @@ if apply:
     if insider_filter:
         filtered = filtered[filtered["InsiderActivity"].isin(allowed)]
 
-    st.success(f"Filtered to {len(filtered)} stocks")
-
-# ---- REMOVE HIDDEN ROWS ----
 filtered = filtered[~filtered["Ticker"].isin(st.session_state.hidden_rows)]
 
-# ---- MAIN TABLE ----
+# ---- MAIN VIEW ----
 st.title("🚀 Undervalued Growth Stocks Screener")
 
-def format_link(ticker, url):
-    return f"[{ticker}]({url})"
+if st.button("Restore All Hidden Rows"):
+    st.session_state.hidden_rows.clear()
+    st.success("All rows restored.")
+    st.experimental_rerun()
 
 if not filtered.empty:
-    # Create display DataFrame
-    display_df = filtered.copy()
-    display_df["Ticker"] = display_df.apply(lambda row: format_link(row["Ticker"], row["YahooFinanceLink"]), axis=1)
-    display_df = display_df[["Ticker", "Price", "PE", "PEG", "EPS_Growth", "AnalystRating", "TargetUpside", "SmartScore", "InsiderActivity"]]
-    display_df = display_df.sort_values("SmartScore", ascending=False)
+    def make_row_html(row):
+        ticker_link = f'<a href="{row.YahooFinanceLink}" target="_blank">{row.Ticker}</a>'
+        simulate_btn = f'<button onclick="fetch(\'/_simulate_{row.Ticker}\')">Simulate</button>'
+        hide_btn = f'<button onclick="fetch(\'/_hide_{row.Ticker}\')">Hide</button>'
+        return pd.Series({
+            "Ticker": ticker_link,
+            "Price": f"${row.Price:.2f}",
+            "PE": f"{row.PE:.1f}",
+            "PEG": f"{row.PEG:.2f}",
+            "EPS Growth": f"{row.EPS_Growth:.0f}%",
+            "Rating": f"{row.AnalystRating:.1f}",
+            "Upside": f"{row.TargetUpside:.0f}%",
+            "Smart Score": f"{row.SmartScore:.2f}",
+            "Insider": row.InsiderActivity,
+            "Actions": f"<button onclick=\"window.location.reload();\">🙈 Hide {row.Ticker}</button> <button>📈 Simulate</button>"
+        })
 
-    # Format and display
-    st.dataframe(
-        display_df.style.format({
-            "Price": "${:.2f}",
-            "PE": "{:.1f}",
-            "PEG": "{:.2f}",
-            "EPS_Growth": "{:.0f}%",
-            "TargetUpside": "{:.0f}%",
-            "SmartScore": "{:.2f}"
-        }),
-        use_container_width=True
-    )
-
-    # Row-level actions
-    st.subheader("Row Actions")
-    for ticker in filtered["Ticker"]:
-        cols = st.columns([3, 1, 1])
-        cols[0].markdown(f"**{ticker}**")
-        if cols[1].button("🙈 Hide", key=f"hide_{ticker}"):
-            st.session_state.hidden_rows.add(ticker)
-            st.experimental_rerun()
-        if cols[2].button("📈 Simulate", key=f"sim_{ticker}"):
-            st.success(f"Simulated trade for {ticker}")
-
+    styled = filtered.apply(make_row_html, axis=1)
+    st.write(styled.to_html(escape=False, index=False), unsafe_allow_html=True)
 else:
     st.warning("No stocks matched your filters or all have been hidden.")
