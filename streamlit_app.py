@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # ---- CONFIG & FONT ----
-st.set_page_config(layout="wide", page_title="Growth Stock Screener")
+st.set_page_config(layout="wide", page_title="Growth Stock Dashboard")
 
 st.markdown("""
     <style>
@@ -167,7 +167,7 @@ if apply_filters:
 filtered = filtered[~filtered["Ticker"].isin(st.session_state.hidden_rows)]
 
 # ---- MAIN PANEL ----
-st.title("🚀 Undervalued Growth Stock Screener")
+st.title("🚀 Undervalued Growth Stocks: Dashboard")
 
 if st.button("Restore All Hidden Rows"):
     st.session_state.hidden_rows.clear()
