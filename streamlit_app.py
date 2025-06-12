@@ -1,16 +1,16 @@
 import streamlit as st
 import pandas as pd
 
-# ---- PAGE SETUP ----
+# ---- SETUP ----
 st.set_page_config(layout="wide", page_title="Growth Stock Screener")
 st.markdown("<style>body {background-color: #f8f9fa;}</style>", unsafe_allow_html=True)
 
-# ---- LOAD MOCK DATA ----
+# ---- LOAD DATA ----
 df = pd.read_csv("mock_stock_data.csv")
 
-# Preserve original for reset
-if "original_data" not in st.session_state:
-    st.session_state.original_data = df.copy()
+# Initialize session state for hiding rows
+if "hidden_rows" not in st.session_state:
+    st.session_state.hidden_rows = set()
 
 # ---- FILTER PANEL ----
 with st.sidebar:
@@ -35,17 +35,16 @@ with st.sidebar:
     if analyst_filter:
         rating_max = st.slider("Max Analyst Rating (1=Strong Buy, 5=Sell)", 1.0, 5.0, 3.0)
 
-    st.subheader("🎯 Price Target")
-    target_filter = st.checkbox("Enable Target Price Upside Filter")
+    st.subheader("🎯 Target Price Upside")
+    target_filter = st.checkbox("Enable Target Upside Filter")
     if target_filter:
         target_min = st.slider("Min Upside (%)", 0, 200, 30)
 
     st.subheader("🧑‍💼 Insider Activity")
-    insider_filter = st.checkbox("Enable Insider Activity Filter")
+    insider_filter = st.checkbox("Enable Insider Filter")
     if insider_filter:
-        allowed_activities = st.multiselect("Allowed Activities", ["Heavy Buying", "Net Buying"], default=["Heavy Buying"])
+        allowed = st.multiselect("Allowed Activities", ["Heavy Buying", "Net Buying"], default=["Heavy Buying"])
 
-    # Apply Button
     apply = st.button("Apply Filters")
 
 # ---- APPLY FILTERS ----
@@ -63,28 +62,49 @@ if apply:
     if target_filter:
         filtered = filtered[filtered["TargetUpside"] >= target_min]
     if insider_filter:
-        filtered = filtered[filtered["InsiderActivity"].isin(allowed_activities)]
+        filtered = filtered[filtered["InsiderActivity"].isin(allowed)]
 
     st.success(f"Filtered to {len(filtered)} stocks")
 
-# ---- MAIN VIEW ----
+# ---- REMOVE HIDDEN ROWS ----
+filtered = filtered[~filtered["Ticker"].isin(st.session_state.hidden_rows)]
+
+# ---- MAIN TABLE ----
 st.title("🚀 Undervalued Growth Stocks Screener")
 
-# Row action placeholders
-def render_row(row):
-    simulate_button = st.button("📈 Simulate", key=f"sim_{row.Ticker}")
-    hide_button = st.button("🙈 Hide", key=f"hide_{row.Ticker}")
-    return simulate_button or hide_button
+def format_link(ticker, url):
+    return f"[{ticker}]({url})"
 
-# Show table
 if not filtered.empty:
-    styled = filtered.style.format({
-        "Price": "${:.2f}",
-        "PE": "{:.1f}",
-        "PEG": "{:.2f}",
-        "EPS_Growth": "{:.0f}%",
-        "TargetUpside": "{:.0f}%"
-    })
-    st.dataframe(styled, use_container_width=True)
+    # Create display DataFrame
+    display_df = filtered.copy()
+    display_df["Ticker"] = display_df.apply(lambda row: format_link(row["Ticker"], row["YahooFinanceLink"]), axis=1)
+    display_df = display_df[["Ticker", "Price", "PE", "PEG", "EPS_Growth", "AnalystRating", "TargetUpside", "SmartScore", "InsiderActivity"]]
+    display_df = display_df.sort_values("SmartScore", ascending=False)
+
+    # Format and display
+    st.dataframe(
+        display_df.style.format({
+            "Price": "${:.2f}",
+            "PE": "{:.1f}",
+            "PEG": "{:.2f}",
+            "EPS_Growth": "{:.0f}%",
+            "TargetUpside": "{:.0f}%",
+            "SmartScore": "{:.2f}"
+        }),
+        use_container_width=True
+    )
+
+    # Row-level actions
+    st.subheader("Row Actions")
+    for ticker in filtered["Ticker"]:
+        cols = st.columns([3, 1, 1])
+        cols[0].markdown(f"**{ticker}**")
+        if cols[1].button("🙈 Hide", key=f"hide_{ticker}"):
+            st.session_state.hidden_rows.add(ticker)
+            st.experimental_rerun()
+        if cols[2].button("📈 Simulate", key=f"sim_{ticker}"):
+            st.success(f"Simulated trade for {ticker}")
+
 else:
-    st.warning("No stocks matched your filter criteria.")
+    st.warning("No stocks matched your filters or all have been hidden.")
