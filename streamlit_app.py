@@ -35,7 +35,7 @@ st.markdown("""
 
         /* Data editor/table background */
         .stDataFrame, .stDataEditor {
-            background-color: #BFC9CA !important;
+            background-color: #FAD7A0 !important;
             color: #283747 !important;
         }
 
