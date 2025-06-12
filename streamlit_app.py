@@ -9,6 +9,8 @@ st.markdown("""
     <style>
         html, body, [class*="css"] {
             font-family: 'Lato', sans-serif;
+            background-color: #EAEDED;
+            color: #17202A;
         }
     </style>
 """, unsafe_allow_html=True)
