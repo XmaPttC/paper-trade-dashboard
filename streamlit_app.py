@@ -108,7 +108,7 @@ with st.sidebar:
     # Donut chart
     labels = ["PEG", "EPS", "Rating", "Upside", "Sentiment", "Insider"]
     sizes = [peg_w, eps_w, rating_w, target_w, sentiment_w, insider_w]
-    colors = ['#7fb3d5', '#85c1e9', '#76d7c4', '#73c6b6', '#7dcea0','7dcea0']
+    colors = ['#7fb3d5', '#85c1e9', '#7fb3d5', '#85c1e9', '#7fb3d5','85c1e9']
     fig, ax = plt.subplots()
     ax.pie(
         sizes,
