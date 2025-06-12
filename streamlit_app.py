@@ -7,10 +7,19 @@ st.set_page_config(layout="wide", page_title="Growth Stock Screener")
 
 st.markdown("""
     <style>
-        html, body, [class*="css"] {
+        /* Import font */
+        @import url('https://fonts.googleapis.com/css2?family=Lato&display=swap');
+
+        /* Force global styles */
+        html, body, .stApp {
             font-family: 'Lato', sans-serif;
-            background-color: #EAEDED;
-            color: #17202A;
+            background-color: #EAEDED !important;
+            color: #17202A !important;
+        }
+
+        /* Optional: style headings */
+        h1, h2, h3, h4 {
+            color: #111827 !important;
         }
     </style>
 """, unsafe_allow_html=True)
