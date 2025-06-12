@@ -19,39 +19,41 @@ df = pd.read_csv("mock_stock_data.csv")
 # ---- INIT STATE ----
 if "hidden_rows" not in st.session_state:
     st.session_state.hidden_rows = set()
-
 if "restored" not in st.session_state:
     st.session_state.restored = False
 
-# ---- SIDEBAR FILTERS ----
+# ---- SIDEBAR ----
 with st.sidebar:
     st.title("📊 Filters + Smart Score")
 
     st.subheader("Smart Score Weights")
-    peg_w = st.slider("PEG weight", 0.0, 1.0, 0.3)
-    eps_w = st.slider("EPS Growth weight", 0.0, 1.0, 0.2)
-    rating_w = st.slider("Analyst Rating weight", 0.0, 1.0, 0.3)
-    target_w = st.slider("Target Upside weight", 0.0, 1.0, 0.2)
+    peg_w = st.slider("PEG", 0.0, 1.0, 0.2)
+    eps_w = st.slider("EPS Growth", 0.0, 1.0, 0.15)
+    rating_w = st.slider("Analyst Rating", 0.0, 1.0, 0.2)
+    target_w = st.slider("Target Upside", 0.0, 1.0, 0.15)
+    sentiment_w = st.slider("Sentiment", 0.0, 1.0, 0.15)
+    insider_w = st.slider("Insider Depth", 0.0, 1.0, 0.15)
 
-    # Normalize weights
-    total_w = peg_w + eps_w + rating_w + target_w
-    if total_w == 0: total_w = 1.0
-    peg_w /= total_w
-    eps_w /= total_w
-    rating_w /= total_w
-    target_w /= total_w
+    # Normalize
+    total = peg_w + eps_w + rating_w + target_w + sentiment_w + insider_w
+    peg_w /= total
+    eps_w /= total
+    rating_w /= total
+    target_w /= total
+    sentiment_w /= total
+    insider_w /= total
 
-    # Visualize donut chart
-    labels = ["PEG", "EPS Growth", "Rating", "Upside"]
-    sizes = [peg_w, eps_w, rating_w, target_w]
+    # Donut chart
+    labels = ["PEG", "EPS", "Rating", "Upside", "Sentiment", "Insider"]
+    sizes = [peg_w, eps_w, rating_w, target_w, sentiment_w, insider_w]
     fig, ax = plt.subplots()
     ax.pie(sizes, labels=labels, startangle=140,
            autopct='%1.0f%%', pctdistance=0.85, wedgeprops=dict(width=0.3))
     ax.axis('equal')
     st.pyplot(fig)
 
-    # Core Filters
-    st.subheader("Core Filters")
+    # Filters
+    st.subheader("Fundamental Filters")
     pe_filter = st.checkbox("Enable PE", value=True)
     pe_min = st.number_input("Min PE", value=0.0)
     pe_max = st.number_input("Max PE", value=30.0)
@@ -73,12 +75,14 @@ with st.sidebar:
 
     apply_filters = st.button("Apply Filters")
 
-# ---- SMART SCORE COMPUTATION ----
+# ---- SMART SCORE ----
 df["SmartScore"] = (
     (1 / df["PEG"].clip(lower=0.01)) * peg_w +
     df["EPS_Growth"] * eps_w +
     (5 - df["AnalystRating"]) * rating_w +
-    df["TargetUpside"] * target_w
+    df["TargetUpside"] * target_w +
+    df["SentimentScore"] * sentiment_w +
+    df["InsiderDepth"] * insider_w
 )
 
 # ---- FILTER LOGIC ----
@@ -97,7 +101,6 @@ if apply_filters:
     if insider_filter:
         filtered = filtered[filtered["InsiderActivity"].isin(allowed)]
 
-# ---- HIDE ROWS ----
 filtered = filtered[~filtered["Ticker"].isin(st.session_state.hidden_rows)]
 
 # ---- MAIN PANEL ----
@@ -113,16 +116,13 @@ if st.session_state.restored:
 
 if not filtered.empty:
     display_df = filtered.copy()
-    display_df["Ticker"] = display_df.apply(
-        lambda row: f"[{row['Ticker']}]({row['YahooFinanceLink']})", axis=1
-    )
     display_df = display_df[[
         "Ticker", "Price", "PE", "PEG", "EPS_Growth", "AnalystRating",
-        "TargetUpside", "SmartScore", "InsiderActivity"
+        "TargetUpside", "SentimentScore", "InsiderDepth", "SmartScore"
     ]]
     display_df = display_df.sort_values("SmartScore", ascending=False)
 
-    edited_df = st.data_editor(
+    st.data_editor(
         display_df,
         use_container_width=True,
         hide_index=True,
@@ -133,16 +133,11 @@ if not filtered.empty:
             "PEG": st.column_config.NumberColumn(format="%.2f"),
             "EPS_Growth": st.column_config.NumberColumn(format="%.0f%%"),
             "AnalystRating": st.column_config.NumberColumn(format="%.1f"),
-            "TargetUpside": st.column_config.NumberColumn(format="%.0f%%")
+            "TargetUpside": st.column_config.NumberColumn(format="%.0f%%"),
+            "SentimentScore": st.column_config.NumberColumn(format="%.2f"),
+            "InsiderDepth": st.column_config.NumberColumn(format="%.2f")
         },
         disabled=["Ticker"]
     )
-
-    for ticker in filtered["Ticker"]:
-        col1, col2, _ = st.columns([3, 1, 5])
-        col1.markdown(f"**{ticker}**")
-        if col2.button(f"🙈 Hide {ticker}", key=f"hide_{ticker}"):
-            st.session_state.hidden_rows.add(ticker)
-            st.experimental_rerun()
 else:
     st.warning("No stocks matched your filters or all have been hidden.")
