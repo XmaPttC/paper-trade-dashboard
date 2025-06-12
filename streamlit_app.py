@@ -10,31 +10,68 @@ st.markdown("""
         /* Import custom font */
         @import url('https://fonts.googleapis.com/css2?family=Lato&display=swap');
 
-        /* Apply font and color to main areas */
+        /* Global layout: app body, sidebar, block content */
         html, body, .stApp, .block-container, .sidebar .sidebar-content {
             font-family: 'Lato', sans-serif;
             background-color: #EAEDED !important;
-            color: #212F3D !important;
+            color: #283747 !important;
         }
 
         /* Headings */
         h1, h2, h3, h4 {
-            color: #111827 !important;
-            font-family: 'Lato', sans-serif;
+            color: #283747 !important;
         }
 
-        /* Data editor/table styling */
-        .stDataFrame, .stDataEditor {
-            background-color: #EAEDED !important;
-            color: #212F3D !important;
-        }
-
-        /* Sidebar fix */
+        /* Sidebar area */
         section[data-testid="stSidebar"] {
-            background-color: #EAEDED !important;
-            font-family: 'Lato', sans-serif;
-            color: #212F3D !important;
+            background-color: #BFC9CA !important;
         }
+
+        /* Top menu bar */
+        header[data-testid="stHeader"] {
+            background-color: #EAEDED !important;
+            color: #283747 !important;
+        }
+
+        /* Data editor/table background */
+        .stDataFrame, .stDataEditor {
+            background-color: #BFC9CA !important;
+            color: #283747 !important;
+        }
+
+        /* Fix editor scrollable inner div background */
+        .stDataFrame .css-1siy2j7, .stDataEditor .css-1siy2j7 {
+            background-color: #BFC9CA !important;
+        }
+
+        /* Button styling (e.g. Restore button) */
+        button[kind="secondary"] {
+            background-color: #BFC9CA !important;   /* Tailwind blue-600 */
+            color: 283747 !important;
+            border-radius: 6px !important;
+            padding: 0.5em 1em !important;
+            border: none !important;
+        }
+        button[kind="secondary"]:hover {
+            background-color: #BFC9CA !important;
+        }
+
+        /* Field input color */
+        .stNumberInput input, .stSlider .st-c2 {
+            background-color: #BFC9CA !important;
+            color: #283747 !important;
+        }
+
+        /* Slider track styling */
+        .stSlider > div[data-baseweb="slider"] {
+            background-color: #e0e7ff !important;
+        }
+
+        /* Dropdowns / multiselects */
+        .stSelectbox, .stMultiSelect {
+            background-color: #BFC9CA !important;
+        }
+
     </style>
 """, unsafe_allow_html=True)
 
