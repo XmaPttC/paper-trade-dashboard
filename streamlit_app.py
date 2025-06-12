@@ -7,19 +7,33 @@ st.set_page_config(layout="wide", page_title="Growth Stock Screener")
 
 st.markdown("""
     <style>
-        /* Import font */
+        /* Import custom font */
         @import url('https://fonts.googleapis.com/css2?family=Lato&display=swap');
 
-        /* Force global styles */
-        html, body, .stApp {
+        /* Apply font and color to main areas */
+        html, body, .stApp, .block-container, .sidebar .sidebar-content {
             font-family: 'Lato', sans-serif;
             background-color: #EAEDED !important;
-            color: #17202A !important;
+            color: #212F3D !important;
         }
 
-        /* Optional: style headings */
+        /* Headings */
         h1, h2, h3, h4 {
             color: #111827 !important;
+            font-family: 'Lato', sans-serif;
+        }
+
+        /* Data editor/table styling */
+        .stDataFrame, .stDataEditor {
+            background-color: #EAEDED !important;
+            color: #212F3D !important;
+        }
+
+        /* Sidebar fix */
+        section[data-testid="stSidebar"] {
+            background-color: #EAEDED !important;
+            font-family: 'Lato', sans-serif;
+            color: #212F3D !important;
         }
     </style>
 """, unsafe_allow_html=True)
