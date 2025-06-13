@@ -36,7 +36,7 @@ thead th {
 
 # --- SIDEBAR: Weights + Filters ---
 with st.sidebar:
-    st.header("🎯 Smart Score Weights")
+    st.header("Smart Score Weights")
     peg_w = st.slider("PEG", 0, 100, 20, format="%d%%")
     eps_w = st.slider("EPS Growth", 0, 100, 15, format="%d%%")
     rating_w = st.slider("Analyst Rating", 0, 100, 20, format="%d%%")
@@ -53,7 +53,7 @@ with st.sidebar:
         "Sentiment": sentiment_w / total,
         "Insider": insider_w / total
     }
-    st.subheader("📊 Score Composition")
+    st.subheader("Score Composition")
     labels = list(weights.keys())
     sizes = list(weights.values())
     colors = ['#3b82f6', '#10b981', '#facc15', '#f97316', '#8b5cf6', '#ec4899']
@@ -66,7 +66,7 @@ with st.sidebar:
     st.pyplot(fig)
 
     st.markdown("---")
-    st.subheader("📈 Core Fundamentals")
+    st.subheader("Core Fundamentals")
     pe_filter = st.checkbox("Enable PE Filter", True)
     pe_min = st.number_input("Min PE", value=0.0)
     pe_max = st.number_input("Max PE", value=30.0)
@@ -76,7 +76,7 @@ with st.sidebar:
     eps_min = st.slider("Min EPS Growth", 0, 100, 15)
 
     st.markdown("---")
-    st.subheader("🧠 Analyst Signals")
+    st.subheader("Analyst Signals")
     analyst_filter = st.checkbox("Enable Analyst Rating Filter", True)
     rating_max = st.slider("Max Analyst Rating", 1.0, 5.0, 3.5)
     target_filter = st.checkbox("Enable Target Upside Filter", True)
@@ -120,20 +120,20 @@ df["SmartScore"] = (
 q1, q2, q3 = df["SmartScore"].quantile([0.25, 0.5, 0.75])
 def badge(score):
     if score >= q3:
-        return "🟩 Top Performer"
+        return "Top Quartile"
     elif score >= q2:
-        return "🟨 Above Average"
+        return "Top Half"
     elif score >= q1:
-        return "🟥 Below Average"
+        return "Bottom Half"
     else:
-        return "⬛ Low Tier"
+        return "Bottom Quartile"
 df["Badge"] = df["SmartScore"].apply(badge)
 
 # --- MAIN TABLE ---
-st.title("🚀 Harbourne Terminal")
+st.title("Harbourne Screener Terminal")
 st.data_editor(
     df[[
-        "Ticker", "SmartScore", "Badge", "PE", "PEG", "EPS_Growth",
+        "Ticker", "SmartScore", "Badge", "PE", "PEG", "EPS Growth",
         "AnalystRating", "TargetUpside", "SentimentScore", "InsiderDepth"
     ]],
     use_container_width=True,
