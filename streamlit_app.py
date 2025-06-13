@@ -15,7 +15,7 @@ html, body, .stApp, .block-container {
     color: #f1f5f9 !important;
 }
 section[data-testid="stSidebar"] {
-    background-color: #0b1015 !important;
+    background-color: #121a22 !important;
     color: #f1f5f9 !important;
 }
 div[data-testid="stDataFrameContainer"] {
