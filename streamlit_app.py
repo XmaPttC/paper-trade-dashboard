@@ -64,7 +64,7 @@ st.markdown("""
 
         /* Slider track styling */
         .stSlider > div[data-baseweb="slider"] {
-            background-color: #e0e7ff !important;
+            background-color: #BFC9CA !important;
         }
 
         /* Dropdowns / multiselects */
