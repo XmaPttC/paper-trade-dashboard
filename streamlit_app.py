@@ -65,7 +65,7 @@ with st.sidebar:
         ax.axis('equal')
         st.pyplot(fig)
 
-    with st.expander("⚙️ Core Fundamentals", expanded=True):
+    with st.expander("⚙️ Core Fundamentals"):
         pe_filter = st.checkbox("Enable PE Filter", True)
         pe_min = st.number_input("Min PE", value=0.0)
         pe_max = st.number_input("Max PE", value=30.0)
@@ -74,7 +74,7 @@ with st.sidebar:
         eps_filter = st.checkbox("Enable EPS Growth Filter", True)
         eps_min = st.slider("Min EPS Growth", 0, 100, 15)
 
-    with st.expander("⚙️ Analyst Signals", expanded=True):
+    with st.expander("⚙️ Analyst Signals"):
         analyst_filter = st.checkbox("Enable Analyst Rating Filter", True)
         rating_max = st.slider("Max Analyst Rating", 1.0, 5.0, 3.5)
         target_filter = st.checkbox("Enable Target Upside Filter", True)
