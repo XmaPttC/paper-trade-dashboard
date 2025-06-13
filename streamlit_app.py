@@ -140,26 +140,3 @@ st.data_editor(
     hide_index=True,
     disabled=["Ticker", "Badge"]
 )
-
-# --- AUDIT TABLE ---
-st.markdown("### 🧠 Smart Score Breakdown")
-for _, row in df.iterrows():
-    with st.expander(f"🔍 {row['Ticker']} – {row['Badge']} – Score {row['SmartScore']:.2f}"):
-        factors = {
-            "PEG": 1 / row["PEG"],
-            "EPS": row["EPS_Growth"],
-            "Rating": 5 - row["AnalystRating"],
-            "Upside": row["TargetUpside"],
-            "Sentiment": row["SentimentScore"],
-            "Insider": row["InsiderDepth"]
-        }
-        rows = []
-        for factor, value in factors.items():
-            w = weights[factor]
-            rows.append({
-                "Factor": factor,
-                "Input Value": round(value, 2),
-                "Weight": f"{w*100:.0f}%",
-                "Contribution": f"{value * w:.2f}"
-            })
-        st.table(pd.DataFrame(rows))
