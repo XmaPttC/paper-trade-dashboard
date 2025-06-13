@@ -28,63 +28,94 @@ else:
     font = "#111827"
 
 # Dynamic theme injection
-st.markdown(f"""
+st.set_page_config(layout="wide", page_title="Harbourne Terminal")
+
+st.markdown("""
     <style>
+        /* Custom font */
         @import url('https://fonts.googleapis.com/css2?family=Lato&display=swap');
-        html, body, .stApp, .block-container {{
+
+        html, body, .stApp, .block-container {
             font-family: 'Lato', sans-serif;
-            background-color: {bg} !important;
-            color: {font} !important;
-        }}
-        section[data-testid="stSidebar"] {{
-            background-color: {panel_bg} !important;
-        }}
-        header[data-testid="stHeader"] {{
-            background-color: {bg} !important;
-        }}
-        .stDataEditor {{
-            background-color: #ffffff !important;
-        }}
-        h1, h2, h3 {{
-            color: {font} !important;
-        }}
-        button[kind="secondary"] {{
-            background-color: {accent} !important;
-            color: white !important;
-            border-radius: 6px;
-        }}
+            background-color: #1e293b !important; /* slate-800 */
+            color: #f1f5f9 !important;            /* slate-50 */
+        }
 
-        stDataFrame, .stDataEditor {{
-            border-radius: 0px !important;
-            background-color: {bg} !important;
-        }}
+        h1, h2, h3, h4, h5 {
+            color: #f1f5f9 !important;
+        }
 
-        stDataEditor div[role="table"] {{
-            border-radius: 0px !important;
-            background-color: {bg} !important;
-        }}
-    </style>
-    
-    <style>
-        /* Remove border radius from data editor and its wrapper */
-        .stDataFrame, .stDataEditor {{
-            border-radius: 0px !important;
-        }}
+        section[data-testid="stSidebar"] {
+            background-color: #1e293b !important;
+            color: #f1f5f9 !important;
+        }
 
-        /* Also flatten any table cells that are styled */
-        .stDataEditor div[role="table"] {{
-            border-radius: 0px !important;
-        }}
+        header[data-testid="stHeader"] {
+            background-color: #1e293b !important;
+        }
 
-        /* Optional: remove shadow or border if needed */
-        .stDataFrame, .stDataEditor {{
-            box-shadow: none !important;
-            border: none !important;
-        }}
-        
-        .stDataEditor div[data-testid="stDataFrameRow"]:hover {{
+        /* Buttons */
+        button[kind="secondary"] {
+            background-color: #38bdf8 !important;
+            color: black !important;
+            border-radius: 0px !important;
+        }
+
+        /* Data Editor (st.data_editor) full styling */
+        div[data-testid="stDataFrameContainer"] {
+            background-color: #1e293b !important;
+            color: #f1f5f9 !important;
+            border-radius: 0px !important;
+        }
+
+        div[role="table"] {
+            background-color: #1e293b !important;
+            border-radius: 0px !important;
+            font-family: monospace !important;
+        }
+
+        div[role="gridcell"], div[role="columnheader"] {
+            background-color: #1e293b !important;
+            color: #f1f5f9 !important;
+            font-family: monospace !important;
+        }
+
+        div[role="columnheader"] {
+            background-color: #334155 !important; /* slightly lighter */
+        }
+
+        /* Remove hover styles and round corners */
+        div[data-testid="stDataFrameContainer"] div:hover {
+            background-color: #2e3a4a !important;
+        }
+
+        div[data-testid="stExpander"] > div {
             background-color: #334155 !important;
-        }}
+            border-radius: 0px !important;
+        }
+
+        /* Sliders, number inputs, selects */
+        .stSlider > div, .stNumberInput input, .stSelectbox, .stMultiSelect {
+            background-color: #334155 !important;
+            color: #f1f5f9 !important;
+            border-radius: 0px !important;
+        }
+
+        /* Tables inside expanders (Smart Score audit) */
+        table {
+            background-color: #1e293b !important;
+            color: #f1f5f9 !important;
+            border-collapse: collapse !important;
+        }
+
+        th, td {
+            border: 1px solid #475569 !important;
+            padding: 8px !important;
+        }
+
+        tr:nth-child(even) {
+            background-color: #273141 !important;
+        }
     </style>
 """, unsafe_allow_html=True)
 
