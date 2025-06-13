@@ -1,4 +1,3 @@
-
 import streamlit as st
 st.set_page_config(layout="wide", page_title="Harbourne Terminal")
 
@@ -6,7 +5,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
-# --- DARK THEME CSS ---
+# --- DARK THEME CSS FIXES ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Lato&display=swap');
@@ -18,31 +17,24 @@ html, body, .stApp, .block-container {
 section[data-testid="stSidebar"] {
     background-color: #1e293b !important;
 }
-div[data-testid="stDataFrameContainer"],
-div[role="table"], div[role="gridcell"], div[role="columnheader"] {
+div[data-testid="stDataFrameContainer"] {
+    background-color: #1e293b !important;
+    border-radius: 0px !important;
+}
+div[data-testid="stDataFrameContainer"] * {
     background-color: #1e293b !important;
     color: #f1f5f9 !important;
     border-radius: 0px !important;
     font-family: monospace !important;
 }
-div[role="columnheader"] {
+thead th {
     background-color: #334155 !important;
-}
-table {
-    background-color: #1e293b !important;
     color: #f1f5f9 !important;
-}
-th, td {
-    border: 1px solid #475569 !important;
-    padding: 8px !important;
-}
-tr:nth-child(even) {
-    background-color: #273141 !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# --- SIDEBAR: Weight Sliders + Filters ---
+# --- SIDEBAR: Weights + Filters ---
 with st.sidebar:
     st.header("🎯 Smart Score Weights")
     peg_w = st.slider("PEG", 0, 100, 20, format="%d%%")
@@ -73,16 +65,46 @@ with st.sidebar:
     ax.axis('equal')
     st.pyplot(fig)
 
+    st.markdown("---")
+    st.subheader("📈 Core Fundamentals")
+    pe_filter = st.checkbox("Enable PE Filter", True)
+    pe_min = st.number_input("Min PE", value=0.0)
+    pe_max = st.number_input("Max PE", value=30.0)
+    peg_filter = st.checkbox("Enable PEG Filter", True)
+    peg_max = st.slider("Max PEG", 0.0, 5.0, 2.0)
+    eps_filter = st.checkbox("Enable EPS Growth Filter", True)
+    eps_min = st.slider("Min EPS Growth", 0, 100, 15)
+
+    st.markdown("---")
+    st.subheader("🧠 Analyst Signals")
+    analyst_filter = st.checkbox("Enable Analyst Rating Filter", True)
+    rating_max = st.slider("Max Analyst Rating", 1.0, 5.0, 3.5)
+    target_filter = st.checkbox("Enable Target Upside Filter", True)
+    target_min = st.slider("Min Target Upside", 0, 100, 20)
+
 # --- MOCK DATA ---
 df = pd.DataFrame({
     "Ticker": ["AAPL", "TSLA", "MSFT"],
     "PEG": [1.2, 2.5, 1.8],
+    "PE": [24, 70, 30],
     "EPS_Growth": [18, 35, 20],
     "AnalystRating": [2.2, 3.2, 1.8],
     "TargetUpside": [15, 20, 40],
     "SentimentScore": [0.21, 0.61, 0.85],
     "InsiderDepth": [0.60, 0.02, 0.71],
 })
+
+# --- FILTERING LOGIC ---
+if pe_filter:
+    df = df[(df["PE"] >= pe_min) & (df["PE"] <= pe_max)]
+if peg_filter:
+    df = df[df["PEG"] <= peg_max]
+if eps_filter:
+    df = df[df["EPS_Growth"] >= eps_min]
+if analyst_filter:
+    df = df[df["AnalystRating"] <= rating_max]
+if target_filter:
+    df = df[df["TargetUpside"] >= target_min]
 
 # --- SCORE CALC ---
 df["SmartScore"] = (
@@ -111,15 +133,15 @@ df["Badge"] = df["SmartScore"].apply(badge)
 st.title("🚀 Harbourne Terminal")
 st.data_editor(
     df[[
-        "Ticker", "SmartScore", "Badge", "PEG", "EPS_Growth", "AnalystRating",
-        "TargetUpside", "SentimentScore", "InsiderDepth"
+        "Ticker", "SmartScore", "Badge", "PE", "PEG", "EPS_Growth",
+        "AnalystRating", "TargetUpside", "SentimentScore", "InsiderDepth"
     ]],
     use_container_width=True,
     hide_index=True,
     disabled=["Ticker", "Badge"]
 )
 
-# --- SCORE BREAKDOWN ---
+# --- AUDIT TABLE ---
 st.markdown("### 🧠 Smart Score Breakdown")
 for _, row in df.iterrows():
     with st.expander(f"🔍 {row['Ticker']} – {row['Badge']} – Score {row['SmartScore']:.2f}"):
