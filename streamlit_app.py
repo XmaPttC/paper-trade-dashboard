@@ -131,6 +131,65 @@ with st.sidebar:
     ax.axis('equal')
     st.pyplot(fig)
 
+with st.sidebar:
+    st.header("🎯 Smart Score Weights")
+
+    peg_w = st.slider("PEG", 0, 100, 20, format="%d%%")
+    eps_w = st.slider("EPS Growth", 0, 100, 15, format="%d%%")
+    rating_w = st.slider("Analyst Rating", 0, 100, 20, format="%d%%")
+    target_w = st.slider("Target Upside", 0, 100, 15, format="%d%%")
+    sentiment_w = st.slider("Sentiment", 0, 100, 15, format="%d%%")
+    insider_w = st.slider("Insider Depth", 0, 100, 15, format="%d%%")
+
+    total = peg_w + eps_w + rating_w + target_w + sentiment_w + insider_w
+    if total == 0: total = 1
+    weights = {
+        "PEG": peg_w / total,
+        "EPS": eps_w / total,
+        "Rating": rating_w / total,
+        "Upside": target_w / total,
+        "Sentiment": sentiment_w / total,
+        "Insider": insider_w / total
+    }
+
+    st.subheader("📊 Score Composition")
+    labels = list(weights.keys())
+    sizes = list(weights.values())
+    colors = ['#3b82f6', '#10b981', '#facc15', '#f97316', '#8b5cf6', '#ec4899']
+    fig, ax = plt.subplots(figsize=(3.5, 3.5))
+    fig.patch.set_facecolor("#1e293b")
+    ax.set_facecolor("#1e293b")
+    ax.pie(sizes, labels=labels, colors=colors, startangle=140,
+           autopct='%1.0f%%', pctdistance=0.85, wedgeprops=dict(width=0.3))
+    ax.axis('equal')
+    st.pyplot(fig)
+
+    # --------------------------
+    st.markdown("---")
+    st.subheader("📈 Core Fundamentals")
+    pe_filter = st.checkbox("Enable PE", value=True)
+    pe_min = st.number_input("Min PE", value=0.0)
+    pe_max = st.number_input("Max PE", value=30.0)
+    peg_filter = st.checkbox("Enable PEG", value=True)
+    peg_max = st.slider("Max PEG", 0.0, 5.0, 1.5)
+    eps_filter = st.checkbox("Enable EPS Growth", value=True)
+    eps_min = st.slider("Min EPS Growth", 0, 100, 20)
+
+    st.markdown("---")
+    st.subheader("🧠 Analyst Signals")
+    analyst_filter = st.checkbox("Enable Analyst Rating")
+    rating_max = st.slider("Max Analyst Rating", 1.0, 5.0, 3.0)
+    target_filter = st.checkbox("Enable Target Upside")
+    target_min = st.slider("Min Upside (%)", 0, 200, 30)
+
+    st.markdown("---")
+    st.subheader("🔍 Alt Data")
+    insider_filter = st.checkbox("Enable Insider Filter")
+    allowed = st.multiselect("Insider Activity", ["Heavy Buying", "Net Buying"], default=["Heavy Buying"])
+
+    # Apply filters button (optional)
+    apply_filters = st.button("🔎 Apply Filters")
+
 # -----------------------------------
 # 🧠 SMART SCORE CALCULATION
 # -----------------------------------
