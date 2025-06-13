@@ -68,23 +68,23 @@ if "restored" not in st.session_state:
 
 # ---- SIDEBAR SMART SCORE CONTROL ----
 with st.sidebar.expander("🎯 Smart Score Weighting", expanded=True):
-    peg_w = st.slider("PEG", 0.0, 1.0, 0.2)
-    eps_w = st.slider("EPS Growth", 0.0, 1.0, 0.15)
-    rating_w = st.slider("Analyst Rating", 0.0, 1.0, 0.2)
-    target_w = st.slider("Target Upside", 0.0, 1.0, 0.15)
-    sentiment_w = st.slider("Sentiment", 0.0, 1.0, 0.15)
-    insider_w = st.slider("Insider Depth", 0.0, 1.0, 0.15)
+    peg_w = st.slider("PEG", 0, 100, 20, format="%d%%")
+    eps_w = st.slider("EPS Growth", 0.0, 100, 15, format="%d%%")
+    rating_w = st.slider("Analyst Rating", 0.0, 100, 20, format="%d%%")
+    target_w = st.slider("Target Upside", 0.0, 100, 15, format="%d%%")
+    sentiment_w = st.slider("Sentiment", 0.0, 100, 15, format="%d%%")
+    insider_w = st.slider("Insider Depth", 0.0, 100, 15, format="%d%%")
 
     total = peg_w + eps_w + rating_w + target_w + sentiment_w + insider_w
-    if total == 0: total = 1.0
-    weights = {
-        "PEG": peg_w / total,
-        "EPS": eps_w / total,
-        "Rating": rating_w / total,
-        "Upside": target_w / total,
-        "Sentiment": sentiment_w / total,
-        "Insider": insider_w / total
-    }
+if total == 0: total = 1.0
+weights = {
+    "PEG": peg_w / total,
+    "EPS": eps_w / total,
+    "Rating": rating_w / total,
+    "Upside": target_w / total,
+    "Sentiment": sentiment_w / total,
+    "Insider": insider_w / total
+}
 
     # Presets
     if "score_presets" not in st.session_state:
