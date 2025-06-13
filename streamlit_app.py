@@ -108,8 +108,12 @@ with st.sidebar:
     # Donut chart
     labels = ["PEG", "EPS", "Rating", "Upside", "Sentiment", "Insider"]
     sizes = [peg_w, eps_w, rating_w, target_w, sentiment_w, insider_w]
-    colors = ['#7fb3d5', '#85c1e9', '#7fb3d5', '#85c1e9', '#7fb3d5','85c1e9']
-    fig, ax = plt.subplots()
+    colors = ['#3b82f6', '#10b981', '#facc15', '#f97316', '#8b5cf6', '#ec4899']  # 6 distinct colors
+
+    fig, ax = plt.subplots(figsize=(4, 4))
+    fig.patch.set_facecolor('#f8f9fa')     # Outer background
+    ax.set_facecolor('#ffffff')            # Inner plot background
+
     ax.pie(
         sizes,
         labels=labels,
@@ -119,6 +123,7 @@ with st.sidebar:
         pctdistance=0.85,
         wedgeprops=dict(width=0.3)
     )
+
     ax.axis('equal')
     st.pyplot(fig)
 
