@@ -67,26 +67,30 @@ if "restored" not in st.session_state:
     st.session_state.restored = False
 
 # ---- SIDEBAR SMART SCORE CONTROL ----
+
 with st.sidebar.expander("🎯 Smart Score Weighting", expanded=True):
+    # Percent sliders for each weight
     peg_w = st.slider("PEG", 0, 100, 20, format="%d%%")
-    eps_w = st.slider("EPS Growth", 0.0, 100, 15, format="%d%%")
-    rating_w = st.slider("Analyst Rating", 0.0, 100, 20, format="%d%%")
-    target_w = st.slider("Target Upside", 0.0, 100, 15, format="%d%%")
-    sentiment_w = st.slider("Sentiment", 0.0, 100, 15, format="%d%%")
-    insider_w = st.slider("Insider Depth", 0.0, 100, 15, format="%d%%")
+    eps_w = st.slider("EPS Growth", 0, 100, 15, format="%d%%")
+    rating_w = st.slider("Analyst Rating", 0, 100, 20, format="%d%%")
+    target_w = st.slider("Target Upside", 0, 100, 15, format="%d%%")
+    sentiment_w = st.slider("Sentiment", 0, 100, 15, format="%d%%")
+    insider_w = st.slider("Insider Depth", 0, 100, 15, format="%d%%")
 
+    # Normalize to sum = 1.0
     total = peg_w + eps_w + rating_w + target_w + sentiment_w + insider_w
-if total == 0: total = 1.0
-weights = {
-    "PEG": peg_w / total,
-    "EPS": eps_w / total,
-    "Rating": rating_w / total,
-    "Upside": target_w / total,
-    "Sentiment": sentiment_w / total,
-    "Insider": insider_w / total
-}
+    if total == 0:
+        total = 1
+    weights = {
+        "PEG": peg_w / total,
+        "EPS": eps_w / total,
+        "Rating": rating_w / total,
+        "Upside": target_w / total,
+        "Sentiment": sentiment_w / total,
+        "Insider": insider_w / total
+    }
 
-    # Presets
+    # Preset storage
     if "score_presets" not in st.session_state:
         st.session_state.score_presets = {}
 
@@ -94,12 +98,13 @@ weights = {
     preset_name = st.selectbox("Load Preset", [""] + list(st.session_state.score_presets.keys()))
     if preset_name:
         weights.update(st.session_state.score_presets[preset_name])
+        st.success(f"Preset '{preset_name}' loaded.")
 
     new_name = st.text_input("Name this preset", key="preset_name_input")
     if st.button("💾 Save Preset"):
         if new_name:
             st.session_state.score_presets[new_name] = weights.copy()
-            st.success(f"Preset '{new_name}' saved!")
+            st.success(f"Preset '{new_name}' saved.")
 
     # Donut chart
     labels = list(weights.keys())
