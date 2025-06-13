@@ -70,7 +70,7 @@ if "restored" not in st.session_state:
 
 with st.sidebar.expander("🎯 Smart Score Weighting", expanded=True):
     # Percent sliders for each weight
-    peg_w = st.slider("PEG", 0, 100, 20, format="%d%%")
+    peg_w = st.slider("PEG", 0, 100, 20, format="%d%%", help="Weight for PEG ratio (lower is better)")
     eps_w = st.slider("EPS Growth", 0, 100, 15, format="%d%%")
     rating_w = st.slider("Analyst Rating", 0, 100, 20, format="%d%%")
     target_w = st.slider("Target Upside", 0, 100, 15, format="%d%%")
