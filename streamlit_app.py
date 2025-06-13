@@ -67,24 +67,24 @@ st.markdown(f"""
     
     <style>
         /* Remove border radius from data editor and its wrapper */
-        .stDataFrame, .stDataEditor {
+        .stDataFrame, .stDataEditor {{
             border-radius: 0px !important;
-        }
+        }}
 
         /* Also flatten any table cells that are styled */
-        .stDataEditor div[role="table"] {
+        .stDataEditor div[role="table"] {{
             border-radius: 0px !important;
-        }
+        }}
 
         /* Optional: remove shadow or border if needed */
-        .stDataFrame, .stDataEditor {
+        .stDataFrame, .stDataEditor {{
             box-shadow: none !important;
             border: none !important;
-        }
+        }}
         
-        .stDataEditor div[data-testid="stDataFrameRow"]:hover {
+        .stDataEditor div[data-testid="stDataFrameRow"]:hover {{
             background-color: #334155 !important;
-        }
+        }}
     </style>
 """, unsafe_allow_html=True)
 
