@@ -6,40 +6,56 @@ import matplotlib.pyplot as plt
 st.set_page_config(layout="wide", page_title="Stock Screener Pro")
 
 # 🌈 THEME OVERRIDE
-st.markdown("""
+# ---- THEME & MODE TOGGLE ----
+if "dark_mode" not in st.session_state:
+    st.session_state.dark_mode = False
+
+theme_toggle = st.sidebar.toggle("🌗 Dark Mode", value=st.session_state.dark_mode)
+st.session_state.dark_mode = theme_toggle
+
+# Set color vars
+if st.session_state.dark_mode:
+    bg = "#1f2937"
+    fg = "#f9fafb"
+    accent = "#2563eb"
+    panel_bg = "#374151"
+    font = "#e5e7eb"
+else:
+    bg = "#f9fafb"
+    fg = "#1f2937"
+    accent = "#2563eb"
+    panel_bg = "#f1f5f9"
+    font = "#111827"
+
+# Dynamic theme injection
+st.markdown(f"""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Lato&display=swap');
-        html, body, .stApp, .block-container {
+        html, body, .stApp, .block-container {{
             font-family: 'Lato', sans-serif;
-            background-color: #f9fafb !important;
-            color: #1f2937 !important;
-        }
-        h1, h2, h3 {
-            color: #111827 !important;
-        }
-        section[data-testid="stSidebar"] {
-            background-color: #f1f5f9 !important;
-        }
-        header[data-testid="stHeader"] {
-            background-color: #f9fafb !important;
-        }
-        .stDataEditor {
+            background-color: {bg} !important;
+            color: {font} !important;
+        }}
+        section[data-testid="stSidebar"] {{
+            background-color: {panel_bg} !important;
+        }}
+        header[data-testid="stHeader"] {{
+            background-color: {bg} !important;
+        }}
+        .stDataEditor {{
             background-color: #ffffff !important;
-        }
-        button[kind="secondary"] {
-            background-color: #2563eb !important;
+        }}
+        h1, h2, h3 {{
+            color: {font} !important;
+        }}
+        button[kind="secondary"] {{
+            background-color: {accent} !important;
             color: white !important;
             border-radius: 6px;
-        }
-        button[kind="secondary"]:hover {
-            background-color: #1e40af !important;
-        }
-        .stNumberInput input, .stSelectbox, .stSlider {
-            background-color: #ffffff !important;
-            color: #1f2937 !important;
-        }
+        }}
     </style>
 """, unsafe_allow_html=True)
+
 
 # ---- LOAD DATA ----
 df = pd.read_csv("mock_stock_data.csv")
@@ -51,9 +67,7 @@ if "restored" not in st.session_state:
     st.session_state.restored = False
 
 # ---- SIDEBAR SMART SCORE CONTROL ----
-with st.sidebar:
-    st.title("🎯 Smart Score Weights")
-
+with st.sidebar.expander("🎯 Smart Score Weighting", expanded=True):
     peg_w = st.slider("PEG", 0.0, 1.0, 0.2)
     eps_w = st.slider("EPS Growth", 0.0, 1.0, 0.15)
     rating_w = st.slider("Analyst Rating", 0.0, 1.0, 0.2)
@@ -63,15 +77,37 @@ with st.sidebar:
 
     total = peg_w + eps_w + rating_w + target_w + sentiment_w + insider_w
     if total == 0: total = 1.0
-    peg_w, eps_w, rating_w, target_w, sentiment_w, insider_w = [x/total for x in [peg_w, eps_w, rating_w, target_w, sentiment_w, insider_w]]
+    weights = {
+        "PEG": peg_w / total,
+        "EPS": eps_w / total,
+        "Rating": rating_w / total,
+        "Upside": target_w / total,
+        "Sentiment": sentiment_w / total,
+        "Insider": insider_w / total
+    }
 
-    st.subheader("📊 Score Composition")
-    labels = ["PEG", "EPS", "Rating", "Upside", "Sentiment", "Insider"]
-    sizes = [peg_w, eps_w, rating_w, target_w, sentiment_w, insider_w]
+    # Presets
+    if "score_presets" not in st.session_state:
+        st.session_state.score_presets = {}
+
+    st.markdown("**Presets**")
+    preset_name = st.selectbox("Load Preset", [""] + list(st.session_state.score_presets.keys()))
+    if preset_name:
+        weights.update(st.session_state.score_presets[preset_name])
+
+    new_name = st.text_input("Name this preset", key="preset_name_input")
+    if st.button("💾 Save Preset"):
+        if new_name:
+            st.session_state.score_presets[new_name] = weights.copy()
+            st.success(f"Preset '{new_name}' saved!")
+
+    # Donut chart
+    labels = list(weights.keys())
+    sizes = list(weights.values())
     colors = ['#3b82f6', '#10b981', '#facc15', '#f97316', '#8b5cf6', '#ec4899']
     fig, ax = plt.subplots(figsize=(3.5, 3.5))
-    fig.patch.set_facecolor('#f9fafb')
-    ax.set_facecolor('#ffffff')
+    fig.patch.set_facecolor(bg)
+    ax.set_facecolor("#ffffff")
     ax.pie(sizes, labels=labels, colors=colors, startangle=140,
            autopct='%1.0f%%', pctdistance=0.85, wedgeprops=dict(width=0.3))
     ax.axis('equal')
@@ -162,5 +198,19 @@ if not filtered.empty:
         },
         disabled=["Ticker"]
     )
+
+if not filtered.empty:
+    # Show summary
+    score_vals = filtered["SmartScore"]
+    st.markdown(f"""
+    <div style="position: sticky; top: 70px; background-color: {panel_bg}; padding: 1em; border-radius: 8px; margin-top: 10px; color: {font};">
+        <strong>Summary:</strong><br>
+        Rows: {len(filtered)} |
+        Avg Score: {score_vals.mean():.2f} |
+        Max: {score_vals.max():.2f} |
+        Min: {score_vals.min():.2f}
+    </div>
+    """, unsafe_allow_html=True)
 else:
     st.warning("No stocks matched your filters or all have been hidden.")
+
