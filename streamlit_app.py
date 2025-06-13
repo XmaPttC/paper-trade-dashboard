@@ -204,6 +204,30 @@ if not filtered.empty:
         disabled=["Ticker"]
     )
 
+# ---- SMART SCORE AUDIT TABLE (Top 1 Row) ----
+    st.markdown("### 🧠 Smart Score Audit: Top Row")
+    top_row = filtered.sort_values("SmartScore", ascending=False).iloc[0]
+    audit_rows = []
+    for key in weights.keys():
+        raw = {
+            "PEG": 1 / top_row["PEG"],
+            "EPS": top_row["EPS_Growth"],
+            "Rating": 5 - top_row["AnalystRating"],
+            "Upside": top_row["TargetUpside"],
+            "Sentiment": top_row["SentimentScore"],
+            "Insider": top_row["InsiderDepth"]
+        }[key]
+        weight = weights[key]
+        contribution = raw * weight
+        audit_rows.append({
+            "Factor": key,
+            "Input Value": round(raw, 2),
+            "Weight (%)": f"{weight*100:.0f}%",
+            "Contribution": f"{contribution:.2f}"
+        })
+    audit_df = pd.DataFrame(audit_rows)
+    st.table(audit_df)
+
 if not filtered.empty:
     # Show summary
     score_vals = filtered["SmartScore"]
@@ -218,4 +242,30 @@ if not filtered.empty:
     """, unsafe_allow_html=True)
 else:
     st.warning("No stocks matched your filters or all have been hidden.")
+
+# ---- TICKER LOOKUP PANEL ----
+st.markdown("### 🔍 Ticker Fundamentals Lookup")
+lookup_ticker = st.text_input("Enter a ticker symbol (e.g. AAPL)").upper()
+if lookup_ticker:
+    from matplotlib import pyplot as plt
+    import numpy as np
+    fundamentals = {
+        "AAPL": {"Market Cap": "2.8T", "Shares Outstanding": "15.9B", "EPS (TTM)": "6.05", "52W High": "199.62", "52W Low": "129.04", "P/E Ratio": "28.3"},
+        "TSLA": {"Market Cap": "700B", "Shares Outstanding": "3.2B", "EPS (TTM)": "3.00", "52W High": "299.29", "52W Low": "101.81", "P/E Ratio": "83.1"},
+        "MSFT": {"Market Cap": "3.1T", "Shares Outstanding": "7.4B", "EPS (TTM)": "9.65", "52W High": "366.78", "52W Low": "232.90", "P/E Ratio": "34.7"},
+    }
+
+    if lookup_ticker in fundamentals:
+        st.subheader(f"📄 Fundamentals for {lookup_ticker}")
+        st.table(pd.DataFrame(fundamentals[lookup_ticker], index=[0]).T.rename(columns={0: "Value"}))
+
+        st.subheader(f"📈 Mock Price Chart: {lookup_ticker}")
+        x = np.linspace(0, 30, 100)
+        y = np.sin(x / 3.5) * 15 + 100 + np.random.normal(0, 1, size=100)
+        fig, ax = plt.subplots()
+        ax.plot(x, y, label=lookup_ticker)
+        ax.set_title(f"{lookup_ticker} – Simulated Price")
+        st.pyplot(fig)
+    else:
+        st.error(f"No mock data available for '{lookup_ticker}'. Try AAPL, TSLA, or MSFT.")
 
