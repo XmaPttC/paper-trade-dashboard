@@ -1,5 +1,6 @@
-st.set_page_config(layout="wide", page_title="Harbourne Terminal")
-import streamlit as st
+import streamlit as st  # ✅ Import first
+
+st.set_page_config(layout="wide", page_title="Harbourne Terminal")  # ✅ Then configure page
 import pandas as pd
 import matplotlib.pyplot as plt
 
