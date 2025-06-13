@@ -94,6 +94,43 @@ df = pd.DataFrame({
     "InsiderDepth": [0.60, 0.02, 0.71],
 })
 
+with st.sidebar:
+    st.header("🎯 Smart Score Weights")
+
+    # Percent sliders
+    peg_w = st.slider("PEG", 0, 100, 20, format="%d%%")
+    eps_w = st.slider("EPS Growth", 0, 100, 15, format="%d%%")
+    rating_w = st.slider("Analyst Rating", 0, 100, 20, format="%d%%")
+    target_w = st.slider("Target Upside", 0, 100, 15, format="%d%%")
+    sentiment_w = st.slider("Sentiment", 0, 100, 15, format="%d%%")
+    insider_w = st.slider("Insider Depth", 0, 100, 15, format="%d%%")
+
+    total = peg_w + eps_w + rating_w + target_w + sentiment_w + insider_w
+    if total == 0:
+        total = 1
+
+    weights = {
+        "PEG": peg_w / total,
+        "EPS": eps_w / total,
+        "Rating": rating_w / total,
+        "Upside": target_w / total,
+        "Sentiment": sentiment_w / total,
+        "Insider": insider_w / total
+    }
+
+    # Donut Chart
+    st.subheader("📊 Score Composition")
+    labels = list(weights.keys())
+    sizes = list(weights.values())
+    colors = ['#3b82f6', '#10b981', '#facc15', '#f97316', '#8b5cf6', '#ec4899']
+    fig, ax = plt.subplots(figsize=(3.5, 3.5))
+    fig.patch.set_facecolor("#1e293b")
+    ax.set_facecolor("#1e293b")
+    ax.pie(sizes, labels=labels, colors=colors, startangle=140,
+           autopct='%1.0f%%', pctdistance=0.85, wedgeprops=dict(width=0.3))
+    ax.axis('equal')
+    st.pyplot(fig)
+
 # -----------------------------------
 # 🧠 SMART SCORE CALCULATION
 # -----------------------------------
