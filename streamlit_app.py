@@ -1,9 +1,16 @@
-import streamlit as st  # FIRST: Import streamlit
+# ⛔ NOTHING above this line — not even imports
+
+import streamlit as st
+
+st.set_page_config(layout="wide", page_title="Harbourne Terminal")
+
+# ✅ Now do everything else
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
+# ... any other imports
 
-st.set_page_config(layout="wide", page_title="Harbourne Terminal")  # SECOND: Set page config (no earlier Streamlit calls!)
-
+# Now safe to start markdown, sidebar, CSS, etc.
 # ---- CONFIG & THEME ----
 st.set_page_config(layout="wide", page_title="Harbourne Terminal")
 
