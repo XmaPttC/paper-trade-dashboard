@@ -15,11 +15,11 @@ st.session_state.dark_mode = theme_toggle
 
 # Set color vars
 if st.session_state.dark_mode:
-    bg = "#1f2937"
-    fg = "#f9fafb"
-    accent = "#2563eb"
-    panel_bg = "#374151"
-    font = "#e5e7eb"
+    bg = "#1e293b"         # Slate-800
+    panel_bg = "#334155"   # Slate-700
+    fg = "#f1f5f9"          # Slate-50
+    accent = "#38bdf8"      # Sky-400
+    font = "FFFFFF"
 else:
     bg = "#f9fafb"
     fg = "#1f2937"
@@ -174,6 +174,22 @@ if apply_filters:
 
 filtered = filtered[~filtered["Ticker"].isin(st.session_state.hidden_rows)]
 
+# ---- SMART SCORE BADGE SYSTEM ----
+scores = filtered["SmartScore"]
+q1, q2, q3 = scores.quantile([0.25, 0.5, 0.75])
+
+def badge(score):
+    if score >= q3:
+        return "🟩 Top Performer"
+    elif score >= q2:
+        return "🟨 Above Average"
+    elif score >= q1:
+        return "🟥 Below Average"
+    else:
+        return "⬛ Low Tier"
+
+filtered["Badge"] = filtered["SmartScore"].apply(badge)
+
 # ---- MAIN PANEL ----
 st.title("🚀 Undervalued Growth Stock Screener")
 if st.session_state.restored:
@@ -186,8 +202,14 @@ if not filtered.empty:
         "TargetUpside", "SentimentScore", "InsiderDepth", "SmartScore"
     ]].sort_values("SmartScore", ascending=False)
 
+    st.markdown("### 📊 Screener Results")
+    display_df = filtered.sort_values("SmartScore", ascending=False)
+
     st.data_editor(
-        display_df,
+        display_df[[
+            "Ticker", "SmartScore", "Badge", "Price", "PE", "PEG", "EPS_Growth",
+            "AnalystRating", "TargetUpside", "SentimentScore", "InsiderDepth"
+        ]],
         use_container_width=True,
         hide_index=True,
         column_config={
@@ -201,32 +223,31 @@ if not filtered.empty:
             "SentimentScore": st.column_config.NumberColumn(format="%.2f"),
             "InsiderDepth": st.column_config.NumberColumn(format="%.2f")
         },
-        disabled=["Ticker"]
-    )
+        disabled=["Ticker", "Badge"]
+)
 
 # ---- SMART SCORE AUDIT TABLE (Top 1 Row) ----
-    st.markdown("### 🧠 Smart Score Audit: Top Row")
-    top_row = filtered.sort_values("SmartScore", ascending=False).iloc[0]
-    audit_rows = []
-    for key in weights.keys():
-        raw = {
-            "PEG": 1 / top_row["PEG"],
-            "EPS": top_row["EPS_Growth"],
-            "Rating": 5 - top_row["AnalystRating"],
-            "Upside": top_row["TargetUpside"],
-            "Sentiment": top_row["SentimentScore"],
-            "Insider": top_row["InsiderDepth"]
-        }[key]
-        weight = weights[key]
-        contribution = raw * weight
-        audit_rows.append({
-            "Factor": key,
-            "Input Value": round(raw, 2),
-            "Weight (%)": f"{weight*100:.0f}%",
-            "Contribution": f"{contribution:.2f}"
-        })
-    audit_df = pd.DataFrame(audit_rows)
-    st.table(audit_df)
+    st.markdown("### 🧠 Smart Score Breakdown (All Rows)")
+for _, row in display_df.iterrows():
+    with st.expander(f"🔍 {row['Ticker']} – {row['Badge']} – Score {row['SmartScore']:.2f}"):
+        factors = {
+            "PEG": 1 / row["PEG"],
+            "EPS": row["EPS_Growth"],
+            "Rating": 5 - row["AnalystRating"],
+            "Upside": row["TargetUpside"],
+            "Sentiment": row["SentimentScore"],
+            "Insider": row["InsiderDepth"]
+        }
+        rows = []
+        for factor, value in factors.items():
+            w = weights[factor]
+            rows.append({
+                "Factor": factor,
+                "Input Value": round(value, 2),
+                "Weight": f"{w*100:.0f}%",
+                "Contribution": f"{value * w:.2f}"
+            })
+        st.table(pd.DataFrame(rows))
 
 if not filtered.empty:
     # Show summary
