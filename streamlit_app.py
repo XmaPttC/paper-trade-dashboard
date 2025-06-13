@@ -70,7 +70,15 @@ st.markdown("""
         /* Dropdowns / multiselects */
         .stSelectbox, .stMultiSelect {
             background-color: #BFC9CA !important;
+
         }
+
+        /* Main Header */
+        .title {
+            font-family: 'Garamond', serif;
+
+        }
+        
 
     </style>
 """, unsafe_allow_html=True)
