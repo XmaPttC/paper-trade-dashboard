@@ -82,7 +82,7 @@ with st.sidebar:
 
 # --- READ MOCK DATA ---
 try:
-    df = pd.read_csv("mock_data.csv")
+    df = pd.read_csv("mock_stock_data.csv")
 except:
     df = pd.DataFrame({
         "Ticker": ["AAPL", "TSLA", "MSFT"],
