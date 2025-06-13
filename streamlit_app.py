@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # ---- CONFIG & THEME ----
-st.set_page_config(layout="wide", page_title="Stock Screener Pro")
+st.set_page_config(layout="wide", page_title="Harbourne Terminal")
 
 # 🌈 THEME OVERRIDE
 # ---- THEME & MODE TOGGLE ----
@@ -21,10 +21,10 @@ if st.session_state.dark_mode:
     accent = "#38bdf8"      # Sky-400
     font = "FFFFFF"
 else:
-    bg = "#f9fafb"
-    fg = "#1f2937"
-    accent = "#2563eb"
-    panel_bg = "#f1f5f9"
+    bg = "#1e293b"
+    fg = "#f1f5f9"
+    accent = "#38bdf8"
+    panel_bg = "#334155"
     font = "#111827"
 
 # Dynamic theme injection
@@ -53,6 +53,10 @@ st.markdown(f"""
             color: white !important;
             border-radius: 6px;
         }}
+
+        stDataFrame, .stDataEditor {
+            border-radius: 0px !important;
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -180,13 +184,13 @@ q1, q2, q3 = scores.quantile([0.25, 0.5, 0.75])
 
 def badge(score):
     if score >= q3:
-        return "🟩 Top Performer"
+        return "◻ Top Performer"
     elif score >= q2:
-        return "🟨 Above Average"
+        return "◻ Above Average"
     elif score >= q1:
-        return "🟥 Below Average"
+        return "◻ Below Average"
     else:
-        return "⬛ Low Tier"
+        return "◻ Low Tier"
 
 filtered["Badge"] = filtered["SmartScore"].apply(badge)
 
