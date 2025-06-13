@@ -15,7 +15,7 @@ html, body, .stApp, .block-container {
     color: #f1f5f9 !important;
 }
 section[data-testid="stSidebar"] {
-    background-color: #121a22 !important;
+    background-color: #1e293b !important;
     color: #f1f5f9 !important;
 }
 div[data-testid="stDataFrameContainer"] {
@@ -34,7 +34,7 @@ thead th, div[role="table"], div[role="gridcell"], div[role="columnheader"] {
 
 # --- SIDEBAR: Expanders ---
 with st.sidebar:
-    with st.expander("⚙️ Smart Score Weights"):
+    with st.expander("🎯 Smart Score Weights", expanded=True):
         peg_w = st.slider("PEG", 0, 100, 20, format="%d%%")
         eps_w = st.slider("EPS Growth", 0, 100, 15, format="%d%%")
         rating_w = st.slider("Analyst Rating", 0, 100, 20, format="%d%%")
@@ -53,7 +53,7 @@ with st.sidebar:
             "Insider": insider_w / total
         }
 
-        st.subheader("⚙️ Score Composition")
+        st.subheader("📊 Score Composition")
         labels = list(weights.keys())
         sizes = list(weights.values())
         colors = ['#3b82f6', '#10b981', '#facc15', '#f97316', '#8b5cf6', '#ec4899']
@@ -65,7 +65,7 @@ with st.sidebar:
         ax.axis('equal')
         st.pyplot(fig)
 
-    with st.expander("⚙️ Core Fundamentals"):
+    with st.expander("📈 Core Fundamentals", expanded=True):
         pe_filter = st.checkbox("Enable PE Filter", True)
         pe_min = st.number_input("Min PE", value=0.0)
         pe_max = st.number_input("Max PE", value=30.0)
@@ -74,7 +74,7 @@ with st.sidebar:
         eps_filter = st.checkbox("Enable EPS Growth Filter", True)
         eps_min = st.slider("Min EPS Growth", 0, 100, 15)
 
-    with st.expander("⚙️ Analyst Signals"):
+    with st.expander("🧠 Analyst Signals", expanded=True):
         analyst_filter = st.checkbox("Enable Analyst Rating Filter", True)
         rating_max = st.slider("Max Analyst Rating", 1.0, 5.0, 3.5)
         target_filter = st.checkbox("Enable Target Upside Filter", True)
@@ -82,7 +82,7 @@ with st.sidebar:
 
 # --- READ MOCK DATA ---
 try:
-    df = pd.read_csv("mock_stock_data.csv")
+    df = pd.read_csv("mock_data.csv")
 except:
     df = pd.DataFrame({
         "Ticker": ["AAPL", "TSLA", "MSFT"],
@@ -131,7 +131,7 @@ def badge(score):
 df["Badge"] = df["SmartScore"].apply(badge)
 
 # --- DISPLAY TABLE ---
-st.title("Harbourne Screener Terminal")
+st.title("🚀 Harbourne Terminal")
 st.data_editor(
     df[[
         "Ticker", "SmartScore", "Badge", "PE", "PEG", "EPS_Growth",
@@ -141,4 +141,3 @@ st.data_editor(
     hide_index=True,
     disabled=["Ticker", "Badge"]
 )
-
