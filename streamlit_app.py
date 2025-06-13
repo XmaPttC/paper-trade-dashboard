@@ -56,6 +56,12 @@ st.markdown(f"""
 
         stDataFrame, .stDataEditor {{
             border-radius: 0px !important;
+            background-color: {bg} !important;
+        }}
+
+        stDataEditor div[role="table"] {{
+            border-radius: 0px !important;
+            background-color: {bg} !important;
         }}
     </style>
 """, unsafe_allow_html=True)
