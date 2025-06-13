@@ -54,9 +54,9 @@ st.markdown(f"""
             border-radius: 6px;
         }}
 
-        stDataFrame, .stDataEditor {
+        stDataFrame, .stDataEditor {{
             border-radius: 0px !important;
-        }
+        }}
     </style>
 """, unsafe_allow_html=True)
 
