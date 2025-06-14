@@ -133,11 +133,9 @@ def badge(score):
 df["Badge"] = df["SmartScore"].apply(badge)
 
 # --- DISPLAY TABLE ---
-st.title("🚀 Harbourne Terminal")
-
 
 # --- HTML TABLE DISPLAY ---
-st.markdown("### 🚀 Harbourne Terminal (Styled Table)")
+st.markdown("###  Harbourne Terminal (Styled Table)")
 
 table_html = f""" 
 <style>
