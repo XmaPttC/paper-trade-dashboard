@@ -150,12 +150,12 @@ from datetime import datetime
 col1, col2 = st.columns([1, 1])
 with col1:
     st.markdown(
-        f"<div style='border:1px solid #707b7c; font-size: 8px; padding:4px 8px; width:fit-content;'>"
+        f"<div style='border:1px solid #707b7c; font-size: 10px; padding:4px 8px; width:fit-content;'>"
         f"Results:<strong> {len(df)}</strong></div>",
         unsafe_allow_html=True)
 with col2:
     st.markdown(
-        f"<div style='border:1px solid #707b7c; font-size: 8px; padding:4px 8px; width:fit-content;'>"
+        f"<div style='border:1px solid #707b7c; font-size: 10px; padding:4px 8px; width:fit-content;'>"
         f"Date:<strong>{datetime.now().strftime('%Y-%m-%d')}</strong> </div>",
         unsafe_allow_html=True)
 
