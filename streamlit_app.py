@@ -31,6 +31,13 @@ thead th, div[role="table"], div[role="gridcell"], div[role="columnheader"] {
     font-family: 'Lato', sans-serif;
     font-size: 8px !important;
 }
+section[data-testid="stSidebar"] label,
+section[data-testid="stSidebar"] span,
+section[data-testid="stSidebar"] div,
+section[data-testid="stSidebar"] p {
+    color: #f1f5f9 !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -137,11 +144,24 @@ df["Badge"] = df["SmartScore"].apply(badge)
 # --- HTML TABLE DISPLAY ---
 st.markdown("###  Harbourne Terminal")
 
+from datetime import datetime
+col1, col2 = st.columns([1, 1])
+with col1:
+    st.markdown(
+        f"<div style='border:1px solid #ccc; padding:4px 8px; width:fit-content;'>"
+        f"<strong>Total Results:</strong> {len(df)}</div>",
+        unsafe_allow_html=True)
+with col2:
+    st.markdown(
+        f"<div style='border:1px solid #ccc; padding:4px 8px; width:fit-content;'>"
+        f"<strong>Date:</strong> {datetime.now().strftime('%Y-%m-%d')}</div>",
+        unsafe_allow_html=True)
+
 table_html = f""" 
 <style>
 .custom-table {{
     background-color: #466686; # maintablebg
-    font-size: 8px;
+    font-size: 13px;              /* 👈 smaller font */
     color: f1f5f9;
     border-collapse: collapse;
     font-family: 'Lato', sans-serif;
@@ -151,10 +171,18 @@ table_html = f"""
     border: 1px solid #333;
     padding: 8px;
     text-align: left;
+    padding: 4px 6px;             /* 👈 shorter row height */
+    font-size: 13px;              /* 👈 smaller font */
 }}
 .custom-table th {{
     background-color: #466686; # maintablebg
     font-size: 8px;
+}}
+.custom-table tr:nth-child(even) {{
+    background-color: #466686;   /* 👈 alternating row colors */
+}}
+.custom-table tr:nth-child(odd) {{
+    background-color: #3d5975;
 }}
 </style>
 <table class="custom-table">
