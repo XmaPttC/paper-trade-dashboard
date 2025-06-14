@@ -34,7 +34,7 @@ thead th, div[role="table"], div[role="gridcell"], div[role="columnheader"] {
 
 # --- SIDEBAR: Expanders ---
 with st.sidebar:
-    with st.expander("Smart Score Weights"):
+    with st.expander("⚙ Smart Score Weights"):
         peg_w = st.slider("PEG", 0, 100, 20, format="%d%%")
         eps_w = st.slider("EPS Growth", 0, 100, 15, format="%d%%")
         rating_w = st.slider("Analyst Rating", 0, 100, 20, format="%d%%")
@@ -65,7 +65,7 @@ with st.sidebar:
         ax.axis('equal')
         st.pyplot(fig)
 
-    with st.expander("Core Fundamentals"):
+    with st.expander("⚙ Core Fundamentals"):
         pe_filter = st.checkbox("Enable PE Filter", True)
         pe_min = st.number_input("Min PE", value=0.0)
         pe_max = st.number_input("Max PE", value=30.0)
