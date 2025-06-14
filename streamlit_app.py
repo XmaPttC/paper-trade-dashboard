@@ -150,8 +150,8 @@ from datetime import datetime
 col1, col2 = st.columns([1, 1])
 with col1:
     st.markdown(
-        f"<div style='border:1px solid #ccc; padding:4px 8px; width:fit-content;'>"
-        f"<strong>Total Results:</strong> {len(df)}</div>",
+        f"<div style='border:1px solid #707b7c; padding:4px 8px; width:fit-content;'>"
+        f"Total Results:<strong> {len(df)}</strong></div>",
         unsafe_allow_html=True)
 with col2:
     st.markdown(
