@@ -170,6 +170,20 @@ st.markdown(f"""
 sort_by = st.selectbox("Sort table by:", options=df.columns, index=0)
 df = df.sort_values(by=sort_by, ascending=True)
 
+# Display main table summary view before expanders
+table_html = f""" 
+<table class="custom-table">
+    <tr>
+        <th>Ticker</th><th>SmartScore</th><th>Badge</th>
+        <th>PE</th><th>PEG</th><th>EPS Growth</th>
+        <th>Analyst Rating</th><th>Target Upside</th>
+        <th>Reddit Sentiment</th><th>Hi/Lo %</th>
+    </tr>
+    {''.join(f"<tr><td>{row.Ticker}</td><td>{row.SmartScore:.2f}</td><td>{row.Badge}</td><td>{row.PE}</td><td>{row.PEG}</td><td>{row.EPS_Growth}</td><td>{row.AnalystRating}</td><td>{row.TargetUpside}</td><td>{row.RedditSentiment}</td><td>{row.HiLoProximity*100:.1f}%</td></tr>" for _, row in df.iterrows())}
+</table>
+"""
+st.markdown(table_html, unsafe_allow_html=True)
+
 for _, row in df.iterrows():
     with st.expander(f"**{row['Ticker']}** — SmartScore: {row['SmartScore']:.2f} | {row['Badge']}"):
         st.markdown(f"""
