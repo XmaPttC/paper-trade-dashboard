@@ -82,7 +82,7 @@ with st.sidebar:
 
 # --- READ MOCK DATA ---
 try:
-    df = pd.read_csv("mock_data.csv")
+    df = pd.read_csv("mock_stock_data.csv")
 except:
     df = pd.DataFrame({
         "Ticker": ["AAPL", "TSLA", "MSFT"],
@@ -168,44 +168,3 @@ table_html = f"""
 </table>
 """
 st.markdown(table_html, unsafe_allow_html=True)
-
-st.markdown("### 🧠 Smart Score Breakdown")
-for _, row in df.iterrows():
-    with st.expander(f"🔍 {row['Ticker']} – {row['Badge']} – Score {row['SmartScore']:.2f}"):
-        factors = {
-            "PEG": 1 / row["PEG"],
-            "EPS": row["EPS_Growth"],
-            "Rating": 5 - row["AnalystRating"],
-            "Upside": row["TargetUpside"],
-            "Sentiment": row["SentimentScore"],
-            "Insider": row["InsiderDepth"]
-        }
-        rows = []
-        for factor, value in factors.items():
-            w = weights[factor]
-            rows.append({
-                "Factor": factor,
-                "Input Value": round(value, 2),
-                "Weight": f"{w*100:.0f}%",
-                "Contribution": f"{value * w:.2f}"
-            })
-        st.table(pd.DataFrame(rows))
-
-st.markdown('''
-<style>
-div[data-testid="stDataFrameContainer"],
-div[role="table"], div[role="gridcell"], div[role="columnheader"], table, thead, tbody, tr, th, td {
-    background-color: #466686 !important; # maintablebg
-    font-size: 10px;
-    border-radius: 0px !important;
-    color: f1f5f9 !important;
-    font-family: 'Lato', sans-serif;
-}
-thead th {
-    background-color: darkorange !important;
-    color: f1f5f9 !important;
-    font-size: 10px;
-    font-weight: normal;
-}
-</style>
-''', unsafe_allow_html=True)
