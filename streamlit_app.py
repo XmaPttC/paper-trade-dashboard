@@ -22,12 +22,14 @@ div[data-testid="stDataFrameContainer"] {
     background-color: #1e293b !important;
     color: #f1f5f9 !important;
     border-radius: 0px !important;
+    font-size: 8px !important;
 }
 thead th, div[role="table"], div[role="gridcell"], div[role="columnheader"] {
     background-color: #334155 !important;
     color: #f1f5f9 !important;
     border-radius: 0px !important;
     font-family: 'Lato', sans-serif;
+    font-size: 8px !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -141,7 +143,7 @@ table_html = f"""
 <style>
 .custom-table {{
     background-color: #466686; # maintablebg
-    font-size: 10px;
+    font-size: 8px;
     color: f1f5f9;
     border-collapse: collapse;
     font-family: 'Lato', sans-serif;
@@ -154,7 +156,7 @@ table_html = f"""
 }}
 .custom-table th {{
     background-color: #466686; # maintablebg
-    font-size: 10px;
+    font-size: 8px;
 }}
 </style>
 <table class="custom-table">
