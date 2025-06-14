@@ -32,10 +32,9 @@ section[data-testid="stSidebar"] p {
     color: #f1f5f9 !important;
 }
 .custom-table {
-    background-color: orange;
-    color: black;
+    background-color: 1e293b; #changed from orange
+    color: f1f5f9;
     border-collapse: collapse;
-    font-family: monospace;
     font-size: 13px;
     width: 100%;
 }
@@ -45,7 +44,7 @@ section[data-testid="stSidebar"] p {
     text-align: left;
 }
 .custom-table th {
-    background-color: darkorange;
+    background-color: 1e293b; #changed from darkorange
 }
 .custom-table tr:nth-child(even) {
     background-color: #466686;
@@ -62,7 +61,7 @@ section[data-testid="stSidebar"] p {
 # Sidebar
 if st.session_state.sidebar_open:
     with st.sidebar:
-        with st.expander("🎯 Smart Score Weights", expanded=True):
+        with st.expander("⚙ Smart Score Weights"):
             peg_w = st.slider("PEG", 0, 100, 20, format="%d%%")
             eps_w = st.slider("EPS Growth", 0, 100, 15, format="%d%%")
             rating_w = st.slider("Analyst Rating", 0, 100, 20, format="%d%%")
@@ -71,7 +70,7 @@ if st.session_state.sidebar_open:
             insider_w = st.slider("Insider Depth", 0, 100, 15, format="%d%%")
         total = peg_w + eps_w + rating_w + target_w + sentiment_w + insider_w
 
-        with st.expander("📈 Core Fundamentals", expanded=True):
+        with st.expander("⚙ Core Fundamentals"):
             pe_filter = st.checkbox("Enable PE Filter", True)
             pe_min = st.number_input("Min PE", value=0.0)
             pe_max = st.number_input("Max PE", value=30.0)
@@ -80,7 +79,7 @@ if st.session_state.sidebar_open:
             eps_filter = st.checkbox("Enable EPS Growth Filter", True)
             eps_min = st.slider("Min EPS Growth", 0, 100, 15)
 
-        with st.expander("🧠 Analyst Signals", expanded=True):
+        with st.expander("⚙ Analyst Signals"):
             analyst_filter = st.checkbox("Enable Analyst Rating Filter", True)
             rating_max = st.slider("Max Analyst Rating", 1.0, 5.0, 3.5)
             target_filter = st.checkbox("Enable Target Upside Filter", True)
@@ -144,18 +143,18 @@ df["SmartScore"] = (
 # --- Score badge ---
 q1, q2, q3 = df["SmartScore"].quantile([0.25, 0.5, 0.75])
 def badge(score):
-    if score >= q3: return "🟩 Top Performer"
-    elif score >= q2: return "🟨 Above Average"
-    elif score >= q1: return "🟥 Below Average"
-    else: return "⬛ Low Tier"
+    if score >= q3: return "🟩 Top Quartile"
+    elif score >= q2: return "🟨 Top Half"
+    elif score >= q1: return "🟥 Bottom Half"
+    else: return "⬛ Bottom Quartile"
 df["Badge"] = df["SmartScore"].apply(badge)
 
 # --- Info boxes ---
 st.title("🚀 Harbourne Terminal")
 st.markdown(f"""
 <div style='display: flex; align-items: center; gap: 20px; margin-bottom: 4px;'>
-  <div style='border:1px solid #ccc; padding:4px 8px;'><strong>Total Results:</strong> {len(df)}</div>
-  <div style='border:1px solid #ccc; padding:4px 8px;'><strong>Date:</strong> {datetime.now().strftime('%Y-%m-%d')}</div>
+  <div style='border:1px solid #ccc; font-size: 10px; padding:4px 8px;'><strong>Total Results:</strong> {len(df)}</div>
+  <div style='border:1px solid #ccc; font-size: 10px; padding:4px 8px;'><strong>Date:</strong> {datetime.now().strftime('%Y-%m-%d')}</div>
 </div>
 <hr style='border-top: 1px solid #ccc; margin-bottom: 8px;' />
 """, unsafe_allow_html=True)
@@ -173,26 +172,3 @@ table_html = f"""
 </table>
 """
 st.markdown(table_html, unsafe_allow_html=True)
-
-# --- Score audit tables ---
-st.markdown("### 🧠 Smart Score Breakdown")
-for _, row in df.iterrows():
-    with st.expander(f"🔍 {row['Ticker']} – {row['Badge']} – Score {row['SmartScore']:.2f}"):
-        factors = {
-            "PEG": 1 / row["PEG"],
-            "EPS": row["EPS_Growth"],
-            "Rating": 5 - row["AnalystRating"],
-            "Upside": row["TargetUpside"],
-            "Sentiment": row["SentimentScore"],
-            "Insider": row["InsiderDepth"]
-        }
-        breakdown = []
-        for factor, val in factors.items():
-            w = weights[factor]
-            breakdown.append({
-                "Factor": factor,
-                "Input": round(val, 2),
-                "Weight": f"{w * 100:.0f}%",
-                "Contribution": f"{val * w:.2f}"
-            })
-        st.table(pd.DataFrame(breakdown))
