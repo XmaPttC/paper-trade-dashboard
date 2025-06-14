@@ -181,10 +181,10 @@ table_html = f"""
     font-size: 8px;
 }}
 .custom-table tr:nth-child(even) {{
-    background-color: #466686;   /* 👈 alternating row colors */
+    background-color: #27354c;   /* 👈 alternating row colors */
 }}
 .custom-table tr:nth-child(odd) {{
-    background-color: #3d5975;
+    background-color: #1e293b;
 }}
 </style>
 <table class="custom-table">
