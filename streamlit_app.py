@@ -1,18 +1,17 @@
 import streamlit as st
-st.set_page_config(layout="wide", page_title="Harbourne Terminal")
-
-if "sidebar_open" not in st.session_state:
-    st.session_state.sidebar_open = True
-
-with st.container():
-    if st.button("🧭 Toggle Sidebar"):
-        st.session_state.sidebar_open = not st.session_state.sidebar_open
-
 import pandas as pd
 import matplotlib.pyplot as plt
-import numpy as np
+from datetime import datetime
 
-# --- DARK THEME CSS FIXES ---
+st.set_page_config(layout="wide", page_title="Harbourne Terminal")
+
+# Toggle logic
+if "sidebar_open" not in st.session_state:
+    st.session_state.sidebar_open = True
+if st.button("🧭 Toggle Sidebar"):
+    st.session_state.sidebar_open = not st.session_state.sidebar_open
+
+# Styling
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Lato&display=swap');
@@ -24,19 +23,7 @@ html, body, .stApp, .block-container {
 section[data-testid="stSidebar"] {
     background-color: #1e293b !important;
     color: #f1f5f9 !important;
-}
-div[data-testid="stDataFrameContainer"] {
-    background-color: #1e293b !important;
-    color: #f1f5f9 !important;
-    border-radius: 0px !important;
-    font-size: 8px !important;
-}
-thead th, div[role="table"], div[role="gridcell"], div[role="columnheader"] {
-    background-color: #334155 !important;
-    color: #f1f5f9 !important;
-    border-radius: 0px !important;
-    font-family: 'Lato', sans-serif;
-    font-size: 8px !important;
+    width: 220px !important;
 }
 section[data-testid="stSidebar"] label,
 section[data-testid="stSidebar"] span,
@@ -44,26 +31,47 @@ section[data-testid="stSidebar"] div,
 section[data-testid="stSidebar"] p {
     color: #f1f5f9 !important;
 }
-
+.custom-table {
+    background-color: orange;
+    color: black;
+    border-collapse: collapse;
+    font-family: monospace;
+    font-size: 13px;
+    width: 100%;
+}
+.custom-table th, .custom-table td {
+    border: 1px solid #333;
+    padding: 4px 6px;
+    text-align: left;
+}
+.custom-table th {
+    background-color: darkorange;
+}
+.custom-table tr:nth-child(even) {
+    background-color: #466686;
+}
+.custom-table tr:nth-child(odd) {
+    background-color: #3d5975;
+}
+.custom-table tr:hover {
+    background-color: #64748b !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
-# --- SIDEBAR: Expanders ---
+# Sidebar
 if st.session_state.sidebar_open:
     with st.sidebar:
-        st.markdown("<style>section[data-testid='stSidebar'] { width: 220px !important; }</style>", unsafe_allow_html=True)
-
-        with st.expander("Smart Score Weights"):
+        with st.expander("🎯 Smart Score Weights", expanded=True):
             peg_w = st.slider("PEG", 0, 100, 20, format="%d%%")
             eps_w = st.slider("EPS Growth", 0, 100, 15, format="%d%%")
             rating_w = st.slider("Analyst Rating", 0, 100, 20, format="%d%%")
             target_w = st.slider("Target Upside", 0, 100, 15, format="%d%%")
             sentiment_w = st.slider("Sentiment", 0, 100, 15, format="%d%%")
             insider_w = st.slider("Insider Depth", 0, 100, 15, format="%d%%")
-
         total = peg_w + eps_w + rating_w + target_w + sentiment_w + insider_w
 
-        with st.expander("Core Fundamentals"):
+        with st.expander("📈 Core Fundamentals", expanded=True):
             pe_filter = st.checkbox("Enable PE Filter", True)
             pe_min = st.number_input("Min PE", value=0.0)
             pe_max = st.number_input("Max PE", value=30.0)
@@ -72,14 +80,12 @@ if st.session_state.sidebar_open:
             eps_filter = st.checkbox("Enable EPS Growth Filter", True)
             eps_min = st.slider("Min EPS Growth", 0, 100, 15)
 
-        with st.expander("Analyst Signals"):
+        with st.expander("🧠 Analyst Signals", expanded=True):
             analyst_filter = st.checkbox("Enable Analyst Rating Filter", True)
             rating_max = st.slider("Max Analyst Rating", 1.0, 5.0, 3.5)
             target_filter = st.checkbox("Enable Target Upside Filter", True)
             target_min = st.slider("Min Target Upside", 0, 100, 20)
-
 else:
-    # Fallback defaults when sidebar is hidden
     peg_w = eps_w = rating_w = target_w = sentiment_w = insider_w = 1
     pe_filter = peg_filter = eps_filter = analyst_filter = target_filter = False
     pe_min = 0
@@ -89,7 +95,6 @@ else:
     rating_max = 5.0
     target_min = 0
     total = peg_w + eps_w + rating_w + target_w + sentiment_w + insider_w
-    }
 
 weights = {
     "PEG": peg_w / total,
@@ -100,12 +105,10 @@ weights = {
     "Insider": insider_w / total
 }
 
-# --- READ MOCK DATA ---
+# Load data
 try:
     df = pd.read_csv("mock_stock_data.csv")
-    st.success("Mock data loaded successfully.")    
-except FileNotFoundError:
-    st.error("Could not find mock_stock_data.csv file. Using fallback data")
+except:
     df = pd.DataFrame({
         "Ticker": ["AAPL", "TSLA", "MSFT"],
         "PEG": [1.2, 2.5, 1.8],
@@ -117,7 +120,7 @@ except FileNotFoundError:
         "InsiderDepth": [0.60, 0.02, 0.71],
     })
 
-# --- FILTERING LOGIC ---
+# Apply filters
 if pe_filter:
     df = df[(df["PE"] >= pe_min) & (df["PE"] <= pe_max)]
 if peg_filter:
@@ -127,9 +130,8 @@ if eps_filter:
 if analyst_filter:
     df = df[df["AnalystRating"] <= rating_max]
 if target_filter:
-    df = df[df["TargetUpside"] >= target_min]
-
-# --- SCORE CALC ---
+    df = df[df["TargetUpside"] >= target_min
+# --- Smart Score calculation ---
 df["SmartScore"] = (
     (1 / df["PEG"].clip(lower=0.01)) * weights["PEG"] +
     df["EPS_Growth"] * weights["EPS"] +
@@ -139,27 +141,17 @@ df["SmartScore"] = (
     df["InsiderDepth"] * weights["Insider"]
 )
 
-# --- BADGES ---
+# --- Score badge ---
 q1, q2, q3 = df["SmartScore"].quantile([0.25, 0.5, 0.75])
 def badge(score):
-    if score >= q3:
-        return "🟩"
-    elif score >= q2:
-        return "🟨"
-    elif score >= q1:
-        return "🟥"
-    else:
-        return "⬛"
+    if score >= q3: return "🟩 Top Performer"
+    elif score >= q2: return "🟨 Above Average"
+    elif score >= q1: return "🟥 Below Average"
+    else: return "⬛ Low Tier"
 df["Badge"] = df["SmartScore"].apply(badge)
 
-# --- DISPLAY TABLE ---
-
-# --- HTML TABLE DISPLAY ---
-st.markdown("###  Harbourne Terminal")
-
-from datetime import datetime
-from datetime import datetime
-
+# --- Info boxes ---
+st.title("🚀 Harbourne Terminal")
 st.markdown(f"""
 <div style='display: flex; align-items: center; gap: 20px; margin-bottom: 4px;'>
   <div style='border:1px solid #ccc; padding:4px 8px;'><strong>Total Results:</strong> {len(df)}</div>
@@ -168,37 +160,8 @@ st.markdown(f"""
 <hr style='border-top: 1px solid #ccc; margin-bottom: 8px;' />
 """, unsafe_allow_html=True)
 
+# --- HTML Table ---
 table_html = f""" 
-<style>
-.custom-table {{
-    background-color: #466686; # maintablebg
-    font-size: 13px;              /* 👈 smaller font */
-    color: f1f5f9;
-    border-collapse: collapse;
-    font-family: 'Lato', sans-serif;
-    width: 100%;
-}}
-.custom-table th, .custom-table td {{
-    border: 0px solid #333;
-    padding: 8px;
-    text-align: left;
-    padding: 4px 6px;             /* 👈 shorter row height */
-    font-size: 13px;              /* 👈 smaller font */
-}}
-.custom-table th {{
-    background-color: #466686; # maintablebg
-    font-size: 8px;
-}}
-.custom-table tr:nth-child(even) {{
-    background-color: #27354c;   /* 👈 alternating row colors */
-}}
-.custom-table tr:nth-child(odd) {{
-    background-color: #1e293b;
-}}
-.custom-table tr:hover {{
-    background-color: #64748b !important;
-}}
-</style>
 <table class="custom-table">
     <tr>
         <th>Ticker</th><th>SmartScore</th><th>Badge</th>
@@ -210,3 +173,26 @@ table_html = f"""
 </table>
 """
 st.markdown(table_html, unsafe_allow_html=True)
+
+# --- Score audit tables ---
+st.markdown("### 🧠 Smart Score Breakdown")
+for _, row in df.iterrows():
+    with st.expander(f"🔍 {row['Ticker']} – {row['Badge']} – Score {row['SmartScore']:.2f}"):
+        factors = {
+            "PEG": 1 / row["PEG"],
+            "EPS": row["EPS_Growth"],
+            "Rating": 5 - row["AnalystRating"],
+            "Upside": row["TargetUpside"],
+            "Sentiment": row["SentimentScore"],
+            "Insider": row["InsiderDepth"]
+        }
+        breakdown = []
+        for factor, val in factors.items():
+            w = weights[factor]
+            breakdown.append({
+                "Factor": factor,
+                "Input": round(val, 2),
+                "Weight": f"{w * 100:.0f}%",
+                "Contribution": f"{val * w:.2f}"
+            })
+        st.table(pd.DataFrame(breakdown))
