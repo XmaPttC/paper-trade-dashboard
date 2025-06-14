@@ -89,6 +89,14 @@ else:
     rating_max = 5.0
     target_min = 0
     total = peg_w + eps_w + rating_w + target_w + sentiment_w + insider_w
+    weights = {
+        "PEG": peg_w / total,
+        "EPS": eps_w / total,
+        "Rating": rating_w / total,
+        "Upside": target_w / total,
+        "Sentiment": sentiment_w / total,
+        "Insider": insider_w / total
+    }
 
 # --- READ MOCK DATA ---
 try:
