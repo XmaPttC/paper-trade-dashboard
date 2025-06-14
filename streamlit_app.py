@@ -121,13 +121,13 @@ df["SmartScore"] = (
 q1, q2, q3 = df["SmartScore"].quantile([0.25, 0.5, 0.75])
 def badge(score):
     if score >= q3:
-        return "🟩 Top Performer"
+        return "🟩"
     elif score >= q2:
-        return "🟨 Above Average"
+        return "🟨"
     elif score >= q1:
-        return "🟥 Below Average"
+        return "🟥"
     else:
-        return "⬛ Low Tier"
+        return "⬛"
 df["Badge"] = df["SmartScore"].apply(badge)
 
 # --- DISPLAY TABLE ---
