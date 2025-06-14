@@ -8,7 +8,7 @@ st.set_page_config(layout="wide", page_title="Harbourne Terminal")
 # Toggle logic
 if "sidebar_open" not in st.session_state:
     st.session_state.sidebar_open = True
-if st.button("🧭 Toggle Sidebar"):
+if st.button("Toggle Sidebar"):
     st.session_state.sidebar_open = not st.session_state.sidebar_open
 
 # Styling
@@ -39,7 +39,7 @@ section[data-testid="stSidebar"] p {
     width: 100%;
 }
 .custom-table th, .custom-table td {
-    border: 1px solid #333;
+    border: 0px solid #333;
     padding: 4px 6px;
     text-align: left;
 }
@@ -150,7 +150,7 @@ def badge(score):
 df["Badge"] = df["SmartScore"].apply(badge)
 
 # --- Info boxes ---
-st.title("🚀 Harbourne Terminal")
+st.title("Terminal")
 st.markdown(f"""
 <div style='display: flex; align-items: center; gap: 20px; margin-bottom: 4px;'>
   <div style='border:1px solid #ccc; font-size: 10px; padding:4px 8px;'><strong>Total Results:</strong> {len(df)}</div>
