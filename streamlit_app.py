@@ -92,7 +92,9 @@ with st.sidebar:
 # --- READ MOCK DATA ---
 try:
     df = pd.read_csv("mock_stock_data.csv")
-except:
+    st.success("Mock data loaded successfully.")    
+except FileNotFoundError:
+    st.error("Could not find mock_stock_data.csv file. Using fallback data")
     df = pd.DataFrame({
         "Ticker": ["AAPL", "TSLA", "MSFT"],
         "PEG": [1.2, 2.5, 1.8],
