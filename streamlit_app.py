@@ -51,18 +51,35 @@ section[data-testid="stSidebar"] p {
 # --- SIDEBAR: Expanders ---
 if st.session_state.sidebar_open:
     with st.sidebar:
-        with st.expander("⚙ Smart Score Weights"):
+        st.markdown("<style>section[data-testid='stSidebar'] { width: 220px !important; }</style>", unsafe_allow_html=True)
+
+        with st.expander("Smart Score Weights"):
             peg_w = st.slider("PEG", 0, 100, 20, format="%d%%")
             eps_w = st.slider("EPS Growth", 0, 100, 15, format="%d%%")
             rating_w = st.slider("Analyst Rating", 0, 100, 20, format="%d%%")
             target_w = st.slider("Target Upside", 0, 100, 15, format="%d%%")
             sentiment_w = st.slider("Sentiment", 0, 100, 15, format="%d%%")
             insider_w = st.slider("Insider Depth", 0, 100, 15, format="%d%%")
-    
-            total = peg_w + eps_w + rating_w + target_w + sentiment_w + insider_w
+
+        total = peg_w + eps_w + rating_w + target_w + sentiment_w + insider_w
+
+        with st.expander("Core Fundamentals"):
+            pe_filter = st.checkbox("Enable PE Filter", True)
+            pe_min = st.number_input("Min PE", value=0.0)
+            pe_max = st.number_input("Max PE", value=30.0)
+            peg_filter = st.checkbox("Enable PEG Filter", True)
+            peg_max = st.slider("Max PEG", 0.0, 5.0, 2.0)
+            eps_filter = st.checkbox("Enable EPS Growth Filter", True)
+            eps_min = st.slider("Min EPS Growth", 0, 100, 15)
+
+        with st.expander("Analyst Signals"):
+            analyst_filter = st.checkbox("Enable Analyst Rating Filter", True)
+            rating_max = st.slider("Max Analyst Rating", 1.0, 5.0, 3.5)
+            target_filter = st.checkbox("Enable Target Upside Filter", True)
+            target_min = st.slider("Min Target Upside", 0, 100, 20)
 
 else:
-    # fallback values when sidebar is hidden
+    # Fallback defaults when sidebar is hidden
     peg_w = eps_w = rating_w = target_w = sentiment_w = insider_w = 1
     pe_filter = peg_filter = eps_filter = analyst_filter = target_filter = False
     pe_min = 0
@@ -72,43 +89,6 @@ else:
     rating_max = 5.0
     target_min = 0
     total = peg_w + eps_w + rating_w + target_w + sentiment_w + insider_w
-
-            if total == 0: total = 1
-            weights = {
-                "PEG": peg_w / total,
-                "EPS": eps_w / total,
-                "Rating": rating_w / total,
-                "Upside": target_w / total,
-                "Sentiment": sentiment_w / total,
-                "Insider": insider_w / total
-            }
-    
-            st.subheader("Score Composition")
-            labels = list(weights.keys())
-            sizes = list(weights.values())
-            colors = ['#3b82f6', '#10b981', '#facc15', '#f97316', '#8b5cf6', '#ec4899']
-            fig, ax = plt.subplots(figsize=(3.5, 3.5))
-            fig.patch.set_facecolor("#1e293b")
-            ax.set_facecolor("#1e293b")
-            ax.pie(sizes, labels=labels, colors=colors, startangle=140,
-                   autopct='%1.0f%%', pctdistance=0.85, wedgeprops=dict(width=0.3))
-            ax.axis('equal')
-            st.pyplot(fig)
-    
-        with st.expander("⚙ Core Fundamentals"):
-            pe_filter = st.checkbox("Enable PE Filter", True)
-            pe_min = st.number_input("Min PE", value=0.0)
-            pe_max = st.number_input("Max PE", value=30.0)
-            peg_filter = st.checkbox("Enable PEG Filter", True)
-            peg_max = st.slider("Max PEG", 0.0, 5.0, 2.0)
-            eps_filter = st.checkbox("Enable EPS Growth Filter", True)
-            eps_min = st.slider("Min EPS Growth", 0, 100, 15)
-    
-        with st.expander("⚙ Analyst Signals"):
-            analyst_filter = st.checkbox("Enable Analyst Rating Filter", True)
-            rating_max = st.slider("Max Analyst Rating", 1.0, 5.0, 3.5)
-            target_filter = st.checkbox("Enable Target Upside Filter", True)
-            target_min = st.slider("Min Target Upside", 0, 100, 20)
 
 # --- READ MOCK DATA ---
 try:
