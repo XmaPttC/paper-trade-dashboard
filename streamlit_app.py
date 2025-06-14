@@ -160,6 +160,72 @@ def badge(score):
     else: return "⬛ Bottom Quartile"
 df["Badge"] = df["SmartScore"].apply(badge)
 
+# --- HTML table with expandable rows ---
+table_rows = ""
+for i, row in df.iterrows():
+    ticker = row['Ticker']
+    note_key = f"note_{ticker}"
+    note = st.session_state.get(note_key, "")
+
+    # Main visible row
+    table_rows += f"""
+    <tr onclick="toggleRow('detail_{i}')" style="cursor:pointer;">
+        <td>{ticker}</td>
+        <td>{row['SmartScore']:.2f}</td>
+        <td>{row['Badge']}</td>
+        <td>{row['PE']}</td>
+        <td>{row['PEG']}</td>
+        <td>{row['EPS_Growth']}</td>
+        <td>{row['AnalystRating']}</td>
+        <td>{row['TargetUpside']}</td>
+        <td>{row['SentimentScore']}</td>
+        <td>{row['InsiderDepth']}</td>
+        <td>{row['RedditSentiment']}</td>
+        <td>{row['HiLoProximity']*100:.1f}%</td>
+    </tr>
+    <tr id="detail_{i}" style="display:none;">
+        <td colspan="12" class="note-box">
+            <strong>SmartScore Breakdown:</strong><br>
+            PEG: {(1 / row["PEG"].clip(lower=0.01)) * weights["PEG"]:.2f}, 
+            EPS Growth: {row["EPS_Growth"] * weights["EPS"]:.2f}, 
+            Rating: {(5 - row["AnalystRating"]) * weights["Rating"]:.2f}, 
+            Upside: {row["TargetUpside"] * weights["Upside"]:.2f}, 
+            Sentiment: {row["SentimentScore"] * weights["Sentiment"]:.2f}, 
+            Insider: {row["InsiderDepth"] * weights["Insider"]:.2f}
+            <br><br>
+            <label>Notes:</label><br>
+            <textarea id="note_{ticker}" rows="2" style="width:100%;">{note}</textarea>
+        </td>
+    </tr>
+    """
+
+# Display the table
+st.markdown(f"""
+<table class="custom-table">
+    <thead>
+    <tr>
+        <th>Ticker</th><th>SmartScore</th><th>Badge</th>
+        <th>PE</th><th>PEG</th><th>EPS</th><th>Rating</th><th>Upside</th>
+        <th>Sentiment</th><th>Insider</th><th>Reddit</th><th>Hi/Lo %</th>
+    </tr>
+    </thead>
+    <tbody>
+    {table_rows}
+    </tbody>
+</table>
+
+<script>
+function toggleRow(id) {{
+    var row = document.getElementById(id);
+    if (row.style.display === "none") {{
+        row.style.display = "";
+    }} else {{
+        row.style.display = "none";
+    }}
+}}
+</script>
+""", unsafe_allow_html=True)
+
 # Header / meta
 st.title("Terminal")
 st.markdown(f"""
@@ -209,25 +275,3 @@ if not df.empty:
     st.markdown(table_html, unsafe_allow_html=True)
 else:
     st.info("No data to display.")
-
-for _, row in df.iterrows():
-    with st.expander(f"**{row['Ticker']}** — SmartScore: {row['SmartScore']:.2f} | {row['Badge']}"):
-        st.markdown(f"""
-        <table class="custom-table">
-        <tr><th>Metric</th><th>Value</th></tr>
-        <tr><td>PE</td><td>{row['PE']}</td></tr>
-        <tr><td>PEG</td><td>{row['PEG']}</td></tr>
-        <tr><td>EPS Growth</td><td>{row['EPS_Growth']}</td></tr>
-        <tr><td>Analyst Rating</td><td>{row['AnalystRating']}</td></tr>
-        <tr><td>Target Upside</td><td>{row['TargetUpside']}%</td></tr>
-        <tr><td>Sentiment Score</td><td>{row['SentimentScore']}</td></tr>
-        <tr><td>Insider Depth</td><td>{row['InsiderDepth']}</td></tr>
-        <tr><td>Reddit Sentiment</td><td>{row['RedditSentiment']}</td></tr>
-        <tr><td>52wk Hi/Lo Proximity</td><td>{row['HiLoProximity']*100:.1f}%</td></tr>
-        </table>
-        """, unsafe_allow_html=True)
-
-        note_key = f"note_{row['Ticker']}"
-        if note_key not in st.session_state:
-            st.session_state[note_key] = ""
-        st.text_area("Notes", key=note_key)
