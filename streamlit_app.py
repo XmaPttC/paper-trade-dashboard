@@ -27,7 +27,7 @@ thead th, div[role="table"], div[role="gridcell"], div[role="columnheader"] {
     background-color: #334155 !important;
     color: #f1f5f9 !important;
     border-radius: 0px !important;
-    font-family: monospace !important;
+    font-family: 'Lato', sans-serif;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -141,9 +141,9 @@ table_html = f"""
 <style>
 .custom-table {{
     background-color: #466686; # maintablebg 
-    color: black;
+    color: f1f5f9;
     border-collapse: collapse;
-    font-family: monospace;
+    font-family: 'Lato', sans-serif;
     width: 100%;
 }}
 .custom-table th, .custom-table td {{
@@ -195,12 +195,12 @@ div[data-testid="stDataFrameContainer"],
 div[role="table"], div[role="gridcell"], div[role="columnheader"], table, thead, tbody, tr, th, td {
     background-color: #466686 !important; # maintablebg
     border-radius: 0px !important;
-    color: black !important;
-    font-family: monospace !important;
+    color: f1f5f9 !important;
+    font-family: 'Lato', sans-serif;
 }
 thead th {
     background-color: darkorange !important;
-    color: black !important;
+    color: f1f5f9 !important;
 }
 </style>
 ''', unsafe_allow_html=True)
