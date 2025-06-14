@@ -140,7 +140,7 @@ st.markdown("### 🚀 Harbourne Terminal (Styled Table)")
 table_html = f""" 
 <style>
 .custom-table {{
-    background-color: #688cb0;
+    background-color: #466686; # maintablebg 
     color: black;
     border-collapse: collapse;
     font-family: monospace;
