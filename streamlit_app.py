@@ -186,7 +186,7 @@ for i, row in df.iterrows():
     <tr id="detail_{i}" style="display:none;">
         <td colspan="12" class="note-box">
             <strong>SmartScore Breakdown:</strong><br>
-            PEG: {(1 / row["PEG"].clip(lower=0.01)) * weights["PEG"]:.2f}, 
+            PEG: {(1 / max(row["PEG"], 0.01)) * weights["PEG"]:.2f}, 
             EPS Growth: {row["EPS_Growth"] * weights["EPS"]:.2f}, 
             Rating: {(5 - row["AnalystRating"]) * weights["Rating"]:.2f}, 
             Upside: {row["TargetUpside"] * weights["Upside"]:.2f}, 
