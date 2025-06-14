@@ -171,18 +171,40 @@ sort_by = st.selectbox("Sort table by:", options=df.columns, index=0)
 df = df.sort_values(by=sort_by, ascending=True)
 
 # Display main table summary view before expanders
-table_html = f""" 
-<table class="custom-table">
-    <tr>
-        <th>Ticker</th><th>SmartScore</th><th>Badge</th>
-        <th>PE</th><th>PEG</th><th>EPS Growth</th>
-        <th>Analyst Rating</th><th>Target Upside</th>
-        <th>Reddit Sentiment</th><th>Hi/Lo %</th>
-    </tr>
-    {''.join(f"<tr><td>{row.Ticker}</td><td>{row.SmartScore:.2f}</td><td>{row.Badge}</td><td>{row.PE}</td><td>{row.PEG}</td><td>{row.EPS_Growth}</td><td>{row.AnalystRating}</td><td>{row.TargetUpside}</td><td>{row.RedditSentiment}</td><td>{row.HiLoProximity*100:.1f}%</td></tr>" for _, row in df.iterrows())}
-</table>
-"""
-st.markdown(table_html, unsafe_allow_html=True)
+# --- Render main HTML table (summary view) ---
+if not df.empty:
+    table_html = f""" 
+    <table class="custom-table">
+        <thead>
+            <tr>
+                <th>Ticker</th><th>SmartScore</th><th>Badge</th>
+                <th>PE</th><th>PEG</th><th>EPS Growth</th>
+                <th>Analyst Rating</th><th>Target Upside</th>
+                <th>Reddit Sentiment</th><th>Hi/Lo %</th>
+            </tr>
+        </thead>
+        <tbody>
+            {''.join(
+                f"<tr>"
+                f"<td><a href='https://finance.yahoo.com/quote/{row.Ticker}' target='_blank'>{row.Ticker}</a></td>"
+                f"<td>{row.SmartScore:.2f}</td>"
+                f"<td>{row.Badge}</td>"
+                f"<td>{row.PE}</td>"
+                f"<td>{row.PEG}</td>"
+                f"<td>{row.EPS_Growth}</td>"
+                f"<td>{row.AnalystRating}</td>"
+                f"<td>{row.TargetUpside}%</td>"
+                f"<td>{row.RedditSentiment}</td>"
+                f"<td>{row.HiLoProximity*100:.1f}%</td>"
+                f"</tr>"
+                for _, row in df.iterrows()
+            )}
+        </tbody>
+    </table>
+    """
+    st.markdown(table_html, unsafe_allow_html=True)
+else:
+    st.info("No data to display.")
 
 for _, row in df.iterrows():
     with st.expander(f"**{row['Ticker']}** — SmartScore: {row['SmartScore']:.2f} | {row['Badge']}"):
