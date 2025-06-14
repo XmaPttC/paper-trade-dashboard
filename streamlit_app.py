@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
 from datetime import datetime
 
 st.set_page_config(layout="wide", page_title="Harbourne Terminal")
@@ -32,7 +31,7 @@ section[data-testid="stSidebar"] p {
     color: #f1f5f9 !important;
 }
 .custom-table {
-    background-color: 1e293b; #changed from orange
+    background-color: 1e293b;
     color: f1f5f9;
     border-collapse: collapse;
     font-size: 13px;
@@ -42,9 +41,10 @@ section[data-testid="stSidebar"] p {
     border: 0px solid #333;
     padding: 4px 6px;
     text-align: left;
+    cursor: pointer;
 }
 .custom-table th {
-    background-color: 1e293b; #changed from darkorange
+    background-color: 1e293b;
 }
 .custom-table tr:nth-child(even) {
     background-color: #466686;
@@ -54,6 +54,13 @@ section[data-testid="stSidebar"] p {
 }
 .custom-table tr:hover {
     background-color: #64748b !important;
+}
+.note-box {
+    margin-top: 4px;
+    font-size: 12px;
+    padding: 4px;
+    background-color: #334155;
+    color: #f1f5f9;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -104,22 +111,21 @@ weights = {
     "Insider": insider_w / total
 }
 
-# Load data
-try:
-    df = pd.read_csv("mock_stock_data.csv")
-except:
-    df = pd.DataFrame({
-        "Ticker": ["AAPL", "TSLA", "MSFT"],
-        "PEG": [1.2, 2.5, 1.8],
-        "PE": [24, 70, 30],
-        "EPS_Growth": [18, 35, 20],
-        "AnalystRating": [2.2, 3.2, 1.8],
-        "TargetUpside": [15, 20, 40],
-        "SentimentScore": [0.21, 0.61, 0.85],
-        "InsiderDepth": [0.60, 0.02, 0.71],
-    })
+# Load dummy data
+df = pd.DataFrame({
+    "Ticker": ["AAPL", "TSLA", "MSFT"],
+    "PEG": [1.2, 2.5, 1.8],
+    "PE": [24, 70, 30],
+    "EPS_Growth": [18, 35, 20],
+    "AnalystRating": [2.2, 3.2, 1.8],
+    "TargetUpside": [15, 20, 40],
+    "SentimentScore": [0.21, 0.61, 0.85],
+    "InsiderDepth": [0.60, 0.02, 0.71],
+    "RedditSentiment": [0.5, 0.8, 0.2],
+    "HiLoProximity": [0.91, 0.82, 0.75]
+})
 
-# Apply filters
+# Filters
 if pe_filter:
     df = df[(df["PE"] >= pe_min) & (df["PE"] <= pe_max)]
 if peg_filter:
@@ -130,7 +136,8 @@ if analyst_filter:
     df = df[df["AnalystRating"] <= rating_max]
 if target_filter:
     df = df[df["TargetUpside"] >= target_min]
-# --- Smart Score calculation ---
+
+# SmartScore Calculation
 df["SmartScore"] = (
     (1 / df["PEG"].clip(lower=0.01)) * weights["PEG"] +
     df["EPS_Growth"] * weights["EPS"] +
@@ -140,7 +147,7 @@ df["SmartScore"] = (
     df["InsiderDepth"] * weights["Insider"]
 )
 
-# --- Score badge ---
+# Score badges
 q1, q2, q3 = df["SmartScore"].quantile([0.25, 0.5, 0.75])
 def badge(score):
     if score >= q3: return "🟩 Top Quartile"
@@ -149,7 +156,7 @@ def badge(score):
     else: return "⬛ Bottom Quartile"
 df["Badge"] = df["SmartScore"].apply(badge)
 
-# --- Info boxes ---
+# Header / meta
 st.title("Terminal")
 st.markdown(f"""
 <div style='display: flex; align-items: center; gap: 20px; margin-bottom: 4px;'>
@@ -159,16 +166,29 @@ st.markdown(f"""
 <hr style='border-top: 1px solid #ccc; margin-bottom: 8px;' />
 """, unsafe_allow_html=True)
 
-# --- HTML Table ---
-table_html = f""" 
-<table class="custom-table">
-    <tr>
-        <th>Ticker</th><th>SmartScore</th><th>Badge</th>
-        <th>PE</th><th>PEG</th><th>EPS_Growth</th>
-        <th>AnalystRating</th><th>TargetUpside</th>
-        <th>SentimentScore</th><th>InsiderDepth</th>
-    </tr>
-    {''.join(f"<tr><td>{row.Ticker}</td><td>{row.SmartScore:.2f}</td><td>{row.Badge}</td><td>{row.PE}</td><td>{row.PEG}</td><td>{row.EPS_Growth}</td><td>{row.AnalystRating}</td><td>{row.TargetUpside}</td><td>{row.SentimentScore}</td><td>{row.InsiderDepth}</td></tr>" for _, row in df.iterrows())}
-</table>
-"""
-st.markdown(table_html, unsafe_allow_html=True)
+# Table rendering
+sort_by = st.selectbox("Sort table by:", options=df.columns, index=0)
+df = df.sort_values(by=sort_by, ascending=True)
+
+for _, row in df.iterrows():
+    with st.expander(f"**{row['Ticker']}** — SmartScore: {row['SmartScore']:.2f} | {row['Badge']}"):
+        st.markdown(f"""
+        <table class="custom-table">
+        <tr><th>Metric</th><th>Value</th></tr>
+        <tr><td>PE</td><td>{row['PE']}</td></tr>
+        <tr><td>PEG</td><td>{row['PEG']}</td></tr>
+        <tr><td>EPS Growth</td><td>{row['EPS_Growth']}</td></tr>
+        <tr><td>Analyst Rating</td><td>{row['AnalystRating']}</td></tr>
+        <tr><td>Target Upside</td><td>{row['TargetUpside']}%</td></tr>
+        <tr><td>Sentiment Score</td><td>{row['SentimentScore']}</td></tr>
+        <tr><td>Insider Depth</td><td>{row['InsiderDepth']}</td></tr>
+        <tr><td>Reddit Sentiment</td><td>{row['RedditSentiment']}</td></tr>
+        <tr><td>52wk Hi/Lo Proximity</td><td>{row['HiLoProximity']*100:.1f}%</td></tr>
+        </table>
+        """, unsafe_allow_html=True)
+
+        note_key = f"note_{row['Ticker']}"
+        if note_key not in st.session_state:
+            st.session_state[note_key] = ""
+        note = st.text_area("Personal Notes", value=st.session_state[note_key], key=note_key)
+        st.session_state[note_key] = note
