@@ -170,7 +170,7 @@ table_html = f"""
     width: 100%;
 }}
 .custom-table th, .custom-table td {{
-    border: 1px solid #333;
+    border: 0px solid #333;
     padding: 8px;
     text-align: left;
     padding: 4px 6px;             /* 👈 shorter row height */
