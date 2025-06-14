@@ -130,7 +130,7 @@ if eps_filter:
 if analyst_filter:
     df = df[df["AnalystRating"] <= rating_max]
 if target_filter:
-    df = df[df["TargetUpside"] >= target_min
+    df = df[df["TargetUpside"] >= target_min]
 # --- Smart Score calculation ---
 df["SmartScore"] = (
     (1 / df["PEG"].clip(lower=0.01)) * weights["PEG"] +
