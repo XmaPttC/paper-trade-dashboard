@@ -1,6 +1,13 @@
 import streamlit as st
 st.set_page_config(layout="wide", page_title="Harbourne Terminal")
 
+if "sidebar_open" not in st.session_state:
+    st.session_state.sidebar_open = True
+
+with st.container():
+    if st.button("🧭 Toggle Sidebar"):
+        st.session_state.sidebar_open = not st.session_state.sidebar_open
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -42,6 +49,7 @@ section[data-testid="stSidebar"] p {
 """, unsafe_allow_html=True)
 
 # --- SIDEBAR: Expanders ---
+if st.session_state.sidebar_open:
 with st.sidebar:
     with st.expander("⚙ Smart Score Weights"):
         peg_w = st.slider("PEG", 0, 100, 20, format="%d%%")
@@ -147,17 +155,15 @@ df["Badge"] = df["SmartScore"].apply(badge)
 st.markdown("###  Harbourne Terminal")
 
 from datetime import datetime
-col1, col2 = st.columns([1, 1])
-with col1:
-    st.markdown(
-        f"<div style='border:1px solid #707b7c; font-size: 10px; padding:4px 8px; width:fit-content;'>"
-        f"Results:<strong> {len(df)}</strong></div>",
-        unsafe_allow_html=True)
-with col2:
-    st.markdown(
-        f"<div style='border:1px solid #707b7c; font-size: 10px; padding:4px 8px; width:fit-content;'>"
-        f"Date:<strong>{datetime.now().strftime('%Y-%m-%d')}</strong> </div>",
-        unsafe_allow_html=True)
+from datetime import datetime
+
+st.markdown(f"""
+<div style='display: flex; align-items: center; gap: 20px; margin-bottom: 4px;'>
+  <div style='border:1px solid #ccc; padding:4px 8px;'><strong>Total Results:</strong> {len(df)}</div>
+  <div style='border:1px solid #ccc; padding:4px 8px;'><strong>Date:</strong> {datetime.now().strftime('%Y-%m-%d')}</div>
+</div>
+<hr style='border-top: 1px solid #ccc; margin-bottom: 8px;' />
+""", unsafe_allow_html=True)
 
 table_html = f""" 
 <style>
@@ -185,6 +191,9 @@ table_html = f"""
 }}
 .custom-table tr:nth-child(odd) {{
     background-color: #1e293b;
+}}
+.custom-table tr:hover {{
+    background-color: #64748b !important;
 }}
 </style>
 <table class="custom-table">
