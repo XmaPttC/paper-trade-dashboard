@@ -132,12 +132,75 @@ df["Badge"] = df["SmartScore"].apply(badge)
 
 # --- DISPLAY TABLE ---
 st.title("🚀 Harbourne Terminal")
-st.data_editor(
-    df[[
-        "Ticker", "SmartScore", "Badge", "PE", "PEG", "EPS_Growth",
-        "AnalystRating", "TargetUpside", "SentimentScore", "InsiderDepth"
-    ]],
-    use_container_width=True,
-    hide_index=True,
-    disabled=["Ticker", "Badge"]
-)
+
+
+# --- HTML TABLE DISPLAY ---
+st.markdown("### 🚀 Harbourne Terminal (Styled Table)")
+
+table_html = f""" 
+<style>
+.custom-table {{
+    background-color: orange;
+    color: black;
+    border-collapse: collapse;
+    font-family: monospace;
+    width: 100%;
+}}
+.custom-table th, .custom-table td {{
+    border: 1px solid #333;
+    padding: 8px;
+    text-align: left;
+}}
+.custom-table th {{
+    background-color: darkorange;
+}}
+</style>
+<table class="custom-table">
+    <tr>
+        <th>Ticker</th><th>SmartScore</th><th>Badge</th>
+        <th>PE</th><th>PEG</th><th>EPS_Growth</th>
+        <th>AnalystRating</th><th>TargetUpside</th>
+        <th>SentimentScore</th><th>InsiderDepth</th>
+    </tr>
+    {''.join(f"<tr><td>{row.Ticker}</td><td>{row.SmartScore:.2f}</td><td>{row.Badge}</td><td>{row.PE}</td><td>{row.PEG}</td><td>{row.EPS_Growth}</td><td>{row.AnalystRating}</td><td>{row.TargetUpside}</td><td>{row.SentimentScore}</td><td>{row.InsiderDepth}</td></tr>" for _, row in df.iterrows())}
+</table>
+"""
+st.markdown(table_html, unsafe_allow_html=True)
+
+st.markdown("### 🧠 Smart Score Breakdown")
+for _, row in df.iterrows():
+    with st.expander(f"🔍 {row['Ticker']} – {row['Badge']} – Score {row['SmartScore']:.2f}"):
+        factors = {
+            "PEG": 1 / row["PEG"],
+            "EPS": row["EPS_Growth"],
+            "Rating": 5 - row["AnalystRating"],
+            "Upside": row["TargetUpside"],
+            "Sentiment": row["SentimentScore"],
+            "Insider": row["InsiderDepth"]
+        }
+        rows = []
+        for factor, value in factors.items():
+            w = weights[factor]
+            rows.append({
+                "Factor": factor,
+                "Input Value": round(value, 2),
+                "Weight": f"{w*100:.0f}%",
+                "Contribution": f"{value * w:.2f}"
+            })
+        st.table(pd.DataFrame(rows))
+
+st.markdown('''
+<style>
+div[data-testid="stDataFrameContainer"],
+div[role="table"], div[role="gridcell"], div[role="columnheader"], table, thead, tbody, tr, th, td {
+    background-color: orange !important;
+    border-radius: 0px !important;
+    color: black !important;
+    font-family: monospace !important;
+}
+thead th {
+    background-color: darkorange !important;
+    color: black !important;
+}
+</style>
+''', unsafe_allow_html=True)
