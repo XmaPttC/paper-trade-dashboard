@@ -111,19 +111,23 @@ weights = {
     "Insider": insider_w / total
 }
 
-# Load dummy data
-df = pd.DataFrame({
-    "Ticker": ["AAPL", "TSLA", "MSFT"],
-    "PEG": [1.2, 2.5, 1.8],
-    "PE": [24, 70, 30],
-    "EPS_Growth": [18, 35, 20],
-    "AnalystRating": [2.2, 3.2, 1.8],
-    "TargetUpside": [15, 20, 40],
-    "SentimentScore": [0.21, 0.61, 0.85],
-    "InsiderDepth": [0.60, 0.02, 0.71],
-    "RedditSentiment": [0.5, 0.8, 0.2],
-    "HiLoProximity": [0.91, 0.82, 0.75]
-})
+# Load from CSV if available
+try:
+    df = pd.read_csv("mock_stock_data.csv")
+except Exception as e:
+    st.warning("⚠ Could not load 'mock_stock_data.csv'. Using fallback data.")
+    df = pd.DataFrame({
+        "Ticker": ["AAPL", "TSLA", "MSFT"],
+        "PEG": [1.2, 2.5, 1.8],
+        "PE": [24, 70, 30],
+        "EPS_Growth": [18, 35, 20],
+        "AnalystRating": [2.2, 3.2, 1.8],
+        "TargetUpside": [15, 20, 40],
+        "SentimentScore": [0.21, 0.61, 0.85],
+        "InsiderDepth": [0.60, 0.02, 0.71],
+        "RedditSentiment": [0.5, 0.8, 0.2],
+        "HiLoProximity": [0.91, 0.82, 0.75]
+    })
 
 # Filters
 if pe_filter:
