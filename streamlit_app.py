@@ -60,6 +60,19 @@ if st.session_state.sidebar_open:
             insider_w = st.slider("Insider Depth", 0, 100, 15, format="%d%%")
     
             total = peg_w + eps_w + rating_w + target_w + sentiment_w + insider_w
+
+else:
+    # fallback values when sidebar is hidden
+    peg_w = eps_w = rating_w = target_w = sentiment_w = insider_w = 1
+    pe_filter = peg_filter = eps_filter = analyst_filter = target_filter = False
+    pe_min = 0
+    pe_max = 100
+    peg_max = 10.0
+    eps_min = 0
+    rating_max = 5.0
+    target_min = 0
+    total = peg_w + eps_w + rating_w + target_w + sentiment_w + insider_w
+
             if total == 0: total = 1
             weights = {
                 "PEG": peg_w / total,
@@ -96,18 +109,6 @@ if st.session_state.sidebar_open:
             rating_max = st.slider("Max Analyst Rating", 1.0, 5.0, 3.5)
             target_filter = st.checkbox("Enable Target Upside Filter", True)
             target_min = st.slider("Min Target Upside", 0, 100, 20)
-
-    else:
-        # fallback values when sidebar is hidden
-        peg_w = eps_w = rating_w = target_w = sentiment_w = insider_w = 1
-        pe_filter = peg_filter = eps_filter = analyst_filter = target_filter = False
-        pe_min = 0
-        pe_max = 100
-        peg_max = 10.0
-        eps_min = 0
-        rating_max = 5.0
-        target_min = 0
-        total = peg_w + eps_w + rating_w + target_w + sentiment_w + insider_
 
 # --- READ MOCK DATA ---
 try:
