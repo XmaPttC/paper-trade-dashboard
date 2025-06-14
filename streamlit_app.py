@@ -152,7 +152,7 @@ table_html = f"""
     text-align: left;
 }}
 .custom-table th {{
-    background-color: darkorange;
+    background-color: #688cb0;
 }}
 </style>
 <table class="custom-table">
@@ -193,7 +193,7 @@ st.markdown('''
 <style>
 div[data-testid="stDataFrameContainer"],
 div[role="table"], div[role="gridcell"], div[role="columnheader"], table, thead, tbody, tr, th, td {
-    background-color: orange !important;
+    background-color: #688cb0 !important;
     border-radius: 0px !important;
     color: black !important;
     font-family: monospace !important;
