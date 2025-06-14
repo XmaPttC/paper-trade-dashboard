@@ -4,13 +4,13 @@ from datetime import datetime
 
 st.set_page_config(layout="wide", page_title="Harbourne Terminal")
 
-# Toggle logic
+# --- Initial session state ---
 if "sidebar_open" not in st.session_state:
     st.session_state.sidebar_open = True
 if st.button("Toggle Sidebar"):
     st.session_state.sidebar_open = not st.session_state.sidebar_open
 
-# Styling
+# --- Styling ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Lato&display=swap');
@@ -24,15 +24,12 @@ section[data-testid="stSidebar"] {
     color: #f1f5f9 !important;
     width: 220px !important;
 }
-section[data-testid="stSidebar"] label,
-section[data-testid="stSidebar"] span,
-section[data-testid="stSidebar"] div,
-section[data-testid="stSidebar"] p {
+section[data-testid="stSidebar"] * {
     color: #f1f5f9 !important;
 }
 .custom-table {
-    background-color: 1e293b;
-    color: f1f5f9;
+    background-color: #1e293b;
+    color: #f1f5f9;
     border-collapse: collapse;
     font-size: 13px;
     width: 100%;
@@ -41,10 +38,6 @@ section[data-testid="stSidebar"] p {
     border: 0px solid #333;
     padding: 4px 6px;
     text-align: left;
-    cursor: pointer;
-}
-.custom-table th {
-    background-color: 1e293b;
 }
 .custom-table tr:nth-child(even) {
     background-color: #466686;
@@ -56,16 +49,15 @@ section[data-testid="stSidebar"] p {
     background-color: #64748b !important;
 }
 .note-box {
-    margin-top: 4px;
     font-size: 12px;
-    padding: 4px;
     background-color: #334155;
     color: #f1f5f9;
+    padding: 6px;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# Sidebar
+# --- Sidebar ---
 if st.session_state.sidebar_open:
     with st.sidebar:
         with st.expander("⚙ Smart Score Weights"):
@@ -75,7 +67,7 @@ if st.session_state.sidebar_open:
             target_w = st.slider("Target Upside", 0, 100, 15, format="%d%%")
             sentiment_w = st.slider("Sentiment", 0, 100, 15, format="%d%%")
             insider_w = st.slider("Insider Depth", 0, 100, 15, format="%d%%")
-        total = peg_w + eps_w + rating_w + target_w + sentiment_w + insider_w
+        total = max(1, peg_w + eps_w + rating_w + target_w + sentiment_w + insider_w)
 
         with st.expander("⚙ Core Fundamentals"):
             pe_filter = st.checkbox("Enable PE Filter", True)
@@ -91,16 +83,6 @@ if st.session_state.sidebar_open:
             rating_max = st.slider("Max Analyst Rating", 1.0, 5.0, 3.5)
             target_filter = st.checkbox("Enable Target Upside Filter", True)
             target_min = st.slider("Min Target Upside", 0, 100, 20)
-else:
-    peg_w = eps_w = rating_w = target_w = sentiment_w = insider_w = 1
-    pe_filter = peg_filter = eps_filter = analyst_filter = target_filter = False
-    pe_min = 0
-    pe_max = 100
-    peg_max = 10.0
-    eps_min = 0
-    rating_max = 5.0
-    target_min = 0
-    total = peg_w + eps_w + rating_w + target_w + sentiment_w + insider_w
 
 weights = {
     "PEG": peg_w / total,
@@ -111,167 +93,105 @@ weights = {
     "Insider": insider_w / total
 }
 
-# Load from CSV if available
+# --- Load data ---
 try:
     df = pd.read_csv("mock_stock_data.csv")
-except Exception as e:
-    st.warning("⚠ Could not load 'mock_stock_data.csv'. Using fallback data.")
-    df = pd.DataFrame({
-        "Ticker": ["AAPL", "TSLA", "MSFT"],
-        "PEG": [1.2, 2.5, 1.8],
-        "PE": [24, 70, 30],
-        "EPS_Growth": [18, 35, 20],
-        "AnalystRating": [2.2, 3.2, 1.8],
-        "TargetUpside": [15, 20, 40],
-        "SentimentScore": [0.21, 0.61, 0.85],
-        "InsiderDepth": [0.60, 0.02, 0.71],
-        "RedditSentiment": [0.5, 0.8, 0.2],
-        "HiLoProximity": [0.91, 0.82, 0.75]
-    })
+except:
+    df = pd.DataFrame()
 
-# Filters
-if pe_filter:
-    df = df[(df["PE"] >= pe_min) & (df["PE"] <= pe_max)]
-if peg_filter:
-    df = df[df["PEG"] <= peg_max]
-if eps_filter:
-    df = df[df["EPS_Growth"] >= eps_min]
-if analyst_filter:
-    df = df[df["AnalystRating"] <= rating_max]
-if target_filter:
-    df = df[df["TargetUpside"] >= target_min]
-
-# SmartScore Calculation
-df["SmartScore"] = (
-    (1 / df["PEG"].clip(lower=0.01)) * weights["PEG"] +
-    df["EPS_Growth"] * weights["EPS"] +
-    (5 - df["AnalystRating"]) * weights["Rating"] +
-    df["TargetUpside"] * weights["Upside"] +
-    df["SentimentScore"] * weights["Sentiment"] +
-    df["InsiderDepth"] * weights["Insider"]
-)
-
-# Score badges
-q1, q2, q3 = df["SmartScore"].quantile([0.25, 0.5, 0.75])
-def badge(score):
-    if score >= q3: return "🟩 Top Quartile"
-    elif score >= q2: return "🟨 Top Half"
-    elif score >= q1: return "🟥 Bottom Half"
-    else: return "⬛ Bottom Quartile"
-df["Badge"] = df["SmartScore"].apply(badge)
-
-# --- HTML table with expandable rows ---
-table_rows = ""
-for i, row in df.iterrows():
-    ticker = row['Ticker']
-    note_key = f"note_{ticker}"
-    note = st.session_state.get(note_key, "")
-
-    # Main visible row
-    table_rows += f"""
-    <tr onclick="toggleRow('detail_{i}')" style="cursor:pointer;">
-        <td>{ticker}</td>
-        <td>{row['SmartScore']:.2f}</td>
-        <td>{row['Badge']}</td>
-        <td>{row['PE']}</td>
-        <td>{row['PEG']}</td>
-        <td>{row['EPS_Growth']}</td>
-        <td>{row['AnalystRating']}</td>
-        <td>{row['TargetUpside']}</td>
-        <td>{row['SentimentScore']}</td>
-        <td>{row['InsiderDepth']}</td>
-        <td>{row['RedditSentiment']}</td>
-        <td>{row['HiLoProximity']*100:.1f}%</td>
-    </tr>
-    <tr id="detail_{i}" style="display:none;">
-        <td colspan="12" class="note-box">
-            <strong>SmartScore Breakdown:</strong><br>
-            PEG: {(1 / max(row["PEG"], 0.01)) * weights["PEG"]:.2f}, 
-            EPS Growth: {row["EPS_Growth"] * weights["EPS"]:.2f}, 
-            Rating: {(5 - row["AnalystRating"]) * weights["Rating"]:.2f}, 
-            Upside: {row["TargetUpside"] * weights["Upside"]:.2f}, 
-            Sentiment: {row["SentimentScore"] * weights["Sentiment"]:.2f}, 
-            Insider: {row["InsiderDepth"] * weights["Insider"]:.2f}
-            <br><br>
-            <label>Notes:</label><br>
-            <textarea id="note_{ticker}" rows="2" style="width:100%;">{note}</textarea>
-        </td>
-    </tr>
-    """
-
-# Display the table
-st.markdown(f"""
-<table class="custom-table">
-    <thead>
-    <tr>
-        <th>Ticker</th><th>SmartScore</th><th>Badge</th>
-        <th>PE</th><th>PEG</th><th>EPS</th><th>Rating</th><th>Upside</th>
-        <th>Sentiment</th><th>Insider</th><th>Reddit</th><th>Hi/Lo %</th>
-    </tr>
-    </thead>
-    <tbody>
-    {table_rows}
-    </tbody>
-</table>
-
-<script>
-function toggleRow(id) {{
-    var row = document.getElementById(id);
-    if (row.style.display === "none") {{
-        row.style.display = "";
-    }} else {{
-        row.style.display = "none";
-    }}
-}}
-</script>
-""", unsafe_allow_html=True)
-
-# Header / meta
-st.title("Terminal")
-st.markdown(f"""
-<div style='display: flex; align-items: center; gap: 20px; margin-bottom: 4px;'>
-  <div style='border:1px solid #ccc; font-size: 10px; padding:4px 8px;'><strong>Total Results:</strong> {len(df)}</div>
-  <div style='border:1px solid #ccc; font-size: 10px; padding:4px 8px;'><strong>Date:</strong> {datetime.now().strftime('%Y-%m-%d')}</div>
-</div>
-<hr style='border-top: 1px solid #ccc; margin-bottom: 8px;' />
-""", unsafe_allow_html=True)
-
-# Table rendering
-sort_by = st.selectbox("Sort table by:", options=df.columns, index=0)
-df = df.sort_values(by=sort_by, ascending=True)
-
-# Display main table summary view before expanders
-# --- Render main HTML table (summary view) ---
 if not df.empty:
-    table_html = f""" 
+    # --- Apply filters ---
+    if pe_filter:
+        df = df[(df["PE"] >= pe_min) & (df["PE"] <= pe_max)]
+    if peg_filter:
+        df = df[df["PEG"] <= peg_max]
+    if eps_filter:
+        df = df[df["EPS_Growth"] >= eps_min]
+    if analyst_filter:
+        df = df[df["AnalystRating"] <= rating_max]
+    if target_filter:
+        df = df[df["TargetUpside"] >= target_min]
+
+    # --- SmartScore ---
+    df["SmartScore"] = (
+        (1 / df["PEG"].clip(lower=0.01)) * weights["PEG"] +
+        df["EPS_Growth"] * weights["EPS"] +
+        (5 - df["AnalystRating"]) * weights["Rating"] +
+        df["TargetUpside"] * weights["Upside"] +
+        df["SentimentScore"] * weights["Sentiment"] +
+        df["InsiderDepth"] * weights["Insider"]
+    )
+
+    q1, q2, q3 = df["SmartScore"].quantile([0.25, 0.5, 0.75])
+    def badge(score):
+        if score >= q3: return "🟩 Top Quartile"
+        elif score >= q2: return "🟨 Top Half"
+        elif score >= q1: return "🟥 Bottom Half"
+        else: return "⬛ Bottom Quartile"
+    df["Badge"] = df["SmartScore"].apply(badge)
+
+    # --- Sort and display ---
+    sort_by = st.selectbox("Sort by:", options=df.columns.tolist(), index=0)
+    df = df.sort_values(by=sort_by, ascending=True)
+
+    st.title("Terminal")
+    st.markdown(f"""
+    <div style='display: flex; gap: 20px; margin-bottom: 4px;'>
+      <div style='border:1px solid #ccc; font-size: 10px; padding:4px 8px;'>Total Results: {len(df)}</div>
+      <div style='border:1px solid #ccc; font-size: 10px; padding:4px 8px;'>Date: {datetime.now().strftime('%Y-%m-%d')}</div>
+    </div>
+    <hr style='border-top: 1px solid #ccc; margin-bottom: 8px;' />
+    """, unsafe_allow_html=True)
+
+    table_rows = ""
+    for i, row in df.iterrows():
+        ticker = row["Ticker"]
+        note_key = f"note_{ticker}"
+        note = st.session_state.get(note_key, "")
+
+        table_rows += f"""
+        <tr onclick="toggleRow('detail_{i}')" style="cursor:pointer;">
+            <td>{ticker}</td><td>{row['SmartScore']:.2f}</td><td>{row['Badge']}</td>
+            <td>{row['PE']}</td><td>{row['PEG']}</td><td>{row['EPS_Growth']}</td>
+            <td>{row['AnalystRating']}</td><td>{row['TargetUpside']}</td><td>{row['SentimentScore']}</td>
+            <td>{row['InsiderDepth']}</td><td>{row['RedditSentiment']}</td><td>{row['HiLoProximity']*100:.1f}%</td>
+        </tr>
+        <tr id="detail_{i}" style="display:none;">
+            <td colspan="12" class="note-box">
+                <strong>SmartScore Breakdown:</strong><br>
+                PEG: {(1 / row['PEG'].clip(lower=0.01)) * weights["PEG"]:.2f}, 
+                EPS: {row["EPS_Growth"] * weights["EPS"]:.2f}, 
+                Rating: {(5 - row["AnalystRating"]) * weights["Rating"]:.2f}, 
+                Upside: {row["TargetUpside"] * weights["Upside"]:.2f}, 
+                Sentiment: {row["SentimentScore"] * weights["Sentiment"]:.2f}, 
+                Insider: {row["InsiderDepth"] * weights["Insider"]:.2f}<br><br>
+                <label>Notes:</label><br>
+                <textarea rows="2" style="width:100%;">{note}</textarea>
+            </td>
+        </tr>
+        """
+
+    st.markdown(f"""
     <table class="custom-table">
         <thead>
-            <tr>
-                <th>Ticker</th><th>SmartScore</th><th>Badge</th>
-                <th>PE</th><th>PEG</th><th>EPS Growth</th>
-                <th>Analyst Rating</th><th>Target Upside</th>
-                <th>Reddit Sentiment</th><th>Hi/Lo %</th>
-            </tr>
+        <tr>
+            <th>Ticker</th><th>SmartScore</th><th>Badge</th><th>PE</th><th>PEG</th>
+            <th>EPS</th><th>Rating</th><th>Upside</th><th>Sentiment</th><th>Insider</th>
+            <th>Reddit</th><th>Hi/Lo %</th>
+        </tr>
         </thead>
-        <tbody>
-            {''.join(
-                f"<tr>"
-                f"<td><a href='https://finance.yahoo.com/quote/{row.Ticker}' target='_blank'>{row.Ticker}</a></td>"
-                f"<td>{row.SmartScore:.2f}</td>"
-                f"<td>{row.Badge}</td>"
-                f"<td>{row.PE}</td>"
-                f"<td>{row.PEG}</td>"
-                f"<td>{row.EPS_Growth}</td>"
-                f"<td>{row.AnalystRating}</td>"
-                f"<td>{row.TargetUpside}%</td>"
-                f"<td>{row.RedditSentiment}</td>"
-                f"<td>{row.HiLoProximity*100:.1f}%</td>"
-                f"</tr>"
-                for _, row in df.iterrows()
-            )}
-        </tbody>
+        <tbody>{table_rows}</tbody>
     </table>
-    """
-    st.markdown(table_html, unsafe_allow_html=True)
+    <script>
+    function toggleRow(id) {{
+        var row = document.getElementById(id);
+        if (row.style.display === "none") {{
+            row.style.display = "";
+        }} else {{
+            row.style.display = "none";
+        }}
+    }}
+    </script>
+    """, unsafe_allow_html=True)
 else:
-    st.info("No data to display.")
+    st.warning("No data available. Please check that mock_stock_data.csv exists and is valid.")
