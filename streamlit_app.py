@@ -190,5 +190,4 @@ for _, row in df.iterrows():
         note_key = f"note_{row['Ticker']}"
         if note_key not in st.session_state:
             st.session_state[note_key] = ""
-        note = st.text_area("Personal Notes", value=st.session_state[note_key], key=note_key)
-        st.session_state[note_key] = note
+        st.text_area("Notes", key=note_key)
