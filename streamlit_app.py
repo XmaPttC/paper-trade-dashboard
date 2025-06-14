@@ -140,7 +140,8 @@ st.markdown("### 🚀 Harbourne Terminal (Styled Table)")
 table_html = f""" 
 <style>
 .custom-table {{
-    background-color: #466686; # maintablebg 
+    background-color: #466686; # maintablebg
+    font-size: 10px;
     color: f1f5f9;
     border-collapse: collapse;
     font-family: 'Lato', sans-serif;
@@ -153,6 +154,7 @@ table_html = f"""
 }}
 .custom-table th {{
     background-color: #466686; # maintablebg
+    font-size: 10px;
 }}
 </style>
 <table class="custom-table">
@@ -194,6 +196,7 @@ st.markdown('''
 div[data-testid="stDataFrameContainer"],
 div[role="table"], div[role="gridcell"], div[role="columnheader"], table, thead, tbody, tr, th, td {
     background-color: #466686 !important; # maintablebg
+    font-size: 10px;
     border-radius: 0px !important;
     color: f1f5f9 !important;
     font-family: 'Lato', sans-serif;
@@ -201,6 +204,8 @@ div[role="table"], div[role="gridcell"], div[role="columnheader"], table, thead,
 thead th {
     background-color: darkorange !important;
     color: f1f5f9 !important;
+    font-size: 10px;
+    font-weight: normal;
 }
 </style>
 ''', unsafe_allow_html=True)
