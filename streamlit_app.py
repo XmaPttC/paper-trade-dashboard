@@ -4,6 +4,47 @@ from datetime import datetime
 
 st.set_page_config(layout="wide", page_title="Terminal")
 
+# --- Styling ---
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Lato&display=swap');
+html, body, .stApp, .block-container {
+    font-family: 'Lato', sans-serif;
+    background-color: #1e293b !important;
+    color: #f1f5f9 !important;
+}
+.custom-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+.custom-table th, .custom-table td {
+    padding: 6px 8px;
+    text-align: left;
+}
+.custom-table th {
+    background-color: #334155;
+    color: #f1f5f9;
+}
+.custom-table tr:nth-child(even) {
+    background-color: #3d5975;
+}
+.custom-table tr:nth-child(odd) {
+    background-color: #466686;
+}
+.custom-table tr:hover {
+    background-color: #64748b !important;
+}
+a {
+    color: #38bdf8;
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # --- Load Data ---
 df = pd.read_csv("mock_stock_data.csv")
 
