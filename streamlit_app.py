@@ -1,42 +1,63 @@
 import streamlit as st
 import pandas as pd
 from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
-from st_aggrid.shared import JsCode  # ✅ REQUIRED for JS styling
 
-st.set_page_config(layout="wide", page_title="Dark Table Test")
+# Set page
+st.set_page_config(layout="wide", page_title="AG Grid Test")
 
-# Sample Data
-df = pd.DataFrame({
-    "Ticker": ["AAPL", "GOOG", "MSFT"],
-    "PE": [24.6, 30.2, 28.1],
-    "EPS Growth": [18, 22, 15]
-})
-
-# JavaScript for row styling
-row_style = JsCode("""
-function(params) {
-    return {
-        'backgroundColor': '#3d5975',
-        'color': '#f1f5f9',
-        'fontFamily': 'Lato, sans-serif',
-        'fontSize': '13px'
+# CSS styling injected to override AG Grid defaults
+st.markdown("""
+    <style>
+    html, body, .stApp {
+        background-color: #1e293b !important;
+        color: #f1f5f9 !important;
+        font-family: 'Lato', sans-serif;
     }
-}
-""")
+
+    .ag-root-wrapper {
+        background-color: #1e293b !important;
+        color: #f1f5f9 !important;
+    }
+
+    .ag-header {
+        background-color: #334155 !important;
+        color: #f1f5f9 !important;
+    }
+
+    .ag-row {
+        background-color: #3d5975 !important;
+        color: #f1f5f9 !important;
+    }
+
+    .ag-row:nth-child(even) {
+        background-color: #466686 !important;
+    }
+
+    .ag-row:hover {
+        background-color: #64748b !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# Sample DataFrame
+df = pd.DataFrame({
+    "Ticker": ["AAPL", "TSLA", "GOOG", "MSFT"],
+    "Price": [187.6, 251.3, 2835.2, 312.0],
+    "PE": [28, 70, 30, 33],
+    "PEG": [1.5, 2.1, 1.8, 1.9]
+})
 
 # Configure Grid
 gb = GridOptionsBuilder.from_dataframe(df)
-gb.configure_default_column(editable=False, filter=True, sortable=True, resizable=True)
-gb.configure_grid_options(getRowStyle=row_style)
+gb.configure_default_column(editable=False, filter=True, sortable=True)
 grid_options = gb.build()
 
-# Render AG Grid
+# Display table
 AgGrid(
     df,
     gridOptions=grid_options,
-    height=350,
-    width='100%',
+    height=400,
     update_mode=GridUpdateMode.NO_UPDATE,
     fit_columns_on_grid_load=True,
-    theme="streamlit"  # Use built-in theme to keep compatibility
+    theme="streamlit"
 )
