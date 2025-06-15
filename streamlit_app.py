@@ -15,11 +15,13 @@ if st.button("Toggle Sidebar"):
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Lato&display=swap');
+
 html, body, .stApp, .block-container {
     font-family: 'Lato', sans-serif;
     background-color: #1e293b !important;
     color: #f1f5f9 !important;
 }
+
 section[data-testid="stSidebar"] {
     background-color: #1e293b !important;
     color: #f1f5f9 !important;
@@ -28,31 +30,35 @@ section[data-testid="stSidebar"] {
 section[data-testid="stSidebar"] * {
     color: #f1f5f9 !important;
 }
-.ag-theme-streamlit {
+
+.ag-theme-material-dark {
+    --ag-background-color: #1e293b;
+    --ag-foreground-color: #f1f5f9;
+    --ag-header-background-color: #334155;
+    --ag-row-hover-color: #475569;
+    --ag-font-size: 13px;
+    --ag-font-family: 'Lato', sans-serif;
+}
+
+.ag-theme-material-dark .ag-root-wrapper,
+.ag-theme-material-dark .ag-header,
+.ag-theme-material-dark .ag-cell,
+.ag-theme-material-dark .ag-header-cell-label {
+    background-color: #1e293b !important;
+    color: #f1f5f9 !important;
+    font-family: 'Lato', sans-serif !important;
     font-size: 13px !important;
-    background-color: #1e293b !important;
-    color: #f1f5f9 !important;
 }
-.ag-theme-streamlit, .ag-theme-balham-dark, .ag-theme-material-dark {
-    background-color: #1e293b !important;
-    color: #f1f5f9 !important;
-    font-family: 'Lato', sans-serif;
-    font-size: 13px;
-}
-.ag-theme-streamlit .ag-header,
-.ag-theme-balham-dark .ag-header,
+
 .ag-theme-material-dark .ag-header {
     background-color: #334155 !important;
-    color: #f1f5f9 !important;
 }
-.ag-row {
+
+.ag-theme-material-dark .ag-row:nth-child(even) {
     background-color: #3d5975 !important;
 }
-.ag-row:nth-child(even) {
+.ag-theme-material-dark .ag-row:nth-child(odd) {
     background-color: #466686 !important;
-}
-.ag-row:hover {
-    background-color: #64748b !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -172,25 +178,6 @@ gb.configure_grid_options(
     },
     headerHeight=32
 )
-
-# Custom header style via CSS injection
-st.markdown("""
-<style>
-.ag-theme-material-dark .ag-header {
-    background-color: #334155 !important;
-    color: #f1f5f9 !important;
-    font-family: 'Lato', sans-serif !important;
-}
-.ag-theme-material-dark .ag-root-wrapper {
-    background-color: #1e293b !important;
-}
-.ag-theme-material-dark .ag-cell, 
-.ag-theme-material-dark .ag-header-cell-label {
-    font-family: 'Lato', sans-serif !important;
-    font-size: 13px !important;
-}
-</style>
-""", unsafe_allow_html=True)
 
 grid_options = gb.build()
 
