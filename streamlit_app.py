@@ -164,13 +164,32 @@ gb.configure_column("Notes", editable=True)
 gb.configure_grid_options(
     domLayout='normal',
     suppressRowClickSelection=False,
-    rowStyle={"backgroundColor": "#1e293b", "color": "#f1f5f9", "fontSize": "13px", "fontFamily": "Lato"}
+    rowStyle={
+        "backgroundColor": "#1e293b",
+        "color": "#f1f5f9",
+        "fontSize": "13px",
+        "fontFamily": "Lato, sans-serif"
+    },
+    headerHeight=32
 )
-gb.configure_selection(selection_mode="single", use_checkbox=False)
+
+# Custom header style via CSS injection
+st.markdown("""
+<style>
+.ag-theme-material-dark .ag-header {
+    background-color: #334155 !important;
+    color: #f1f5f9 !important;
+    font-family: 'Lato', sans-serif !important;
+}
+.ag-theme-material-dark .ag-root-wrapper {
+    background-color: #1e293b !important;
+}
+</style>
+""", unsafe_allow_html=True)
 
 grid_options = gb.build()
 
-# --- Render Grid ---
+# --- Render Grid inside styled container
 AgGrid(
     df,
     gridOptions=grid_options,
