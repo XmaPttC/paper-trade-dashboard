@@ -195,19 +195,21 @@ for i, row in df.iterrows():
     </tr>
     """
 
+# --- Render HTML table with toggleable rows ---
 st.markdown(f"""
 <table class="custom-table">
     <thead>
-        <tr>
-            <th>Ticker</th><th>SmartScore</th><th>Badge</th>
-            <th>PE</th><th>PEG</th><th>EPS</th><th>Rating</th><th>Upside</th>
-            <th>Sentiment</th><th>Insider</th><th>Reddit</th><th>Hi/Lo %</th>
-        </tr>
+    <tr>
+        <th>Ticker</th><th>SmartScore</th><th>Badge</th>
+        <th>PE</th><th>PEG</th><th>EPS</th><th>Rating</th><th>Upside</th>
+        <th>Sentiment</th><th>Insider</th><th>Reddit</th><th>Hi/Lo %</th>
+    </tr>
     </thead>
     <tbody>
-        {table_rows}
+    {table_rows}
     </tbody>
 </table>
+
 <script>
 function toggleRow(id) {{
     var row = document.getElementById(id);
