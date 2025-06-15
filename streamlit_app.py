@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 
 st.set_page_config(layout="wide", page_title="Harbourne Terminal")
 
@@ -9,12 +10,6 @@ if "sidebar_open" not in st.session_state:
     st.session_state.sidebar_open = True
 if st.button("Toggle Sidebar"):
     st.session_state.sidebar_open = not st.session_state.sidebar_open
-
-# Sort tracking
-if "sort_column" not in st.session_state:
-    st.session_state.sort_column = "Ticker"
-if "sort_ascending" not in st.session_state:
-    st.session_state.sort_ascending = True
 
 # --- Styling ---
 st.markdown("""
@@ -33,40 +28,15 @@ section[data-testid="stSidebar"] {
 section[data-testid="stSidebar"] * {
     color: #f1f5f9 !important;
 }
-.custom-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-}
-.custom-table th, .custom-table td {
-    padding: 6px 8px;
-    text-align: left;
-}
-.custom-table th {
-    background-color: #1e293b;
-    color: #f1f5f9;
-    cursor: pointer;
-}
-.custom-table tr:nth-child(even) {
-    background-color: #466686;
-}
-.custom-table tr:nth-child(odd) {
-    background-color: #3d5975;
-}
-.custom-table tr:hover {
-    background-color: #64748b !important;
-}
-.note-box {
-    margin-top: 4px;
-    font-size: 12px;
-    padding: 4px;
-    background-color: #334155;
-    color: #f1f5f9;
+.ag-theme-streamlit {
+    font-size: 13px !important;
+    background-color: #1e293b !important;
+    color: #f1f5f9 !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# --- Sidebar filters ---
+# --- Sidebar ---
 if st.session_state.sidebar_open:
     with st.sidebar:
         with st.expander("⚙ Smart Score Weights"):
@@ -95,14 +65,18 @@ if st.session_state.sidebar_open:
 else:
     peg_w = eps_w = rating_w = target_w = sentiment_w = insider_w = 1
     pe_filter = peg_filter = eps_filter = analyst_filter = target_filter = False
-    pe_min, pe_max = 0, 100
-    peg_max, eps_min, rating_max, target_min = 10.0, 0, 5.0, 0
+    pe_min = 0
+    pe_max = 100
+    peg_max = 10.0
+    eps_min = 0
+    rating_max = 5.0
+    target_min = 0
     total = peg_w + eps_w + rating_w + target_w + sentiment_w + insider_w
 
-# --- Load data ---
+# --- Load Data ---
 df = pd.read_csv("mock_stock_data.csv")
 
-# --- Apply filters ---
+# --- Filters ---
 if pe_filter:
     df = df[(df["PE"] >= pe_min) & (df["PE"] <= pe_max)]
 if peg_filter:
@@ -114,7 +88,7 @@ if analyst_filter:
 if target_filter:
     df = df[df["TargetUpside"] >= target_min]
 
-# --- Smart Score calculation ---
+# --- SmartScore Calculation ---
 weights = {
     "PEG": peg_w / total,
     "EPS": eps_w / total,
@@ -130,9 +104,9 @@ df["SmartScore"] = (
     df["TargetUpside"] * weights["Upside"] +
     df["SentimentScore"] * weights["Sentiment"] +
     df["InsiderDepth"] * weights["Insider"]
-)
+).round(2)
 
-# --- Badge ranking ---
+# --- Badge Ranking ---
 q1, q2, q3 = df["SmartScore"].quantile([0.25, 0.5, 0.75])
 def badge(score):
     if score >= q3: return "🟩 Top Quartile"
@@ -141,61 +115,38 @@ def badge(score):
     else: return "⬛ Bottom Quartile"
 df["Badge"] = df["SmartScore"].apply(badge)
 
-# --- Sorting logic ---
-clicked_col = st.query_params.get("sort")
-if clicked_col:
-    if st.session_state.sort_column == clicked_col:
-        st.session_state.sort_ascending = not st.session_state.sort_ascending
-    else:
-        st.session_state.sort_column = clicked_col
-        st.session_state.sort_ascending = True
-df = df.sort_values(by=st.session_state.sort_column, ascending=st.session_state.sort_ascending)
+# --- Add Notes Placeholder ---
+for ticker in df["Ticker"]:
+    note_key = f"note_{ticker}"
+    if note_key not in st.session_state:
+        st.session_state[note_key] = ""
 
-# --- Info boxes ---
+df["Notes"] = df["Ticker"].apply(lambda x: st.session_state.get(f"note_{x}", ""))
+
+# --- Info Header ---
 st.title("Terminal")
 st.markdown(f"""
-<div style='display: flex; align-items: center; gap: 20px; margin-bottom: 4px;'>
+<div style='display: flex; gap: 20px; margin-bottom: 4px;'>
   <div style='border:1px solid #ccc; font-size: 10px; padding:4px 8px;'><strong>Total Results:</strong> {len(df)}</div>
   <div style='border:1px solid #ccc; font-size: 10px; padding:4px 8px;'><strong>Date:</strong> {datetime.now().strftime('%Y-%m-%d')}</div>
 </div>
 <hr style='border-top: 1px solid #ccc; margin-bottom: 8px;' />
 """, unsafe_allow_html=True)
 
-# --- HTML Table ---
-headers = ["Ticker", "SmartScore", "Badge", "PE", "PEG", "EPS_Growth", "AnalystRating", "TargetUpside", "SentimentScore", "InsiderDepth", "RedditSentiment", "HiLoProximity"]
-table = f"<table class='custom-table'><thead><tr>"
-for h in headers:
-    table += f"<th onclick='window.location.search=\"?sort={h}\"'>{h}</th>"
-table += "</tr></thead><tbody>"
+# --- Display Table with st_aggrid ---
+gb = GridOptionsBuilder.from_dataframe(df)
+gb.configure_default_column(editable=False, filter=True, sortable=True, resizable=True)
+gb.configure_column("Notes", editable=True)
+gb.configure_grid_options(domLayout='normal', suppressRowClickSelection=False)
+gb.configure_selection(selection_mode="single", use_checkbox=False)
+grid_options = gb.build()
 
-for _, row in df.iterrows():
-    ticker = row["Ticker"]
-    note_key = f"note_{ticker}"
-    if note_key not in st.session_state:
-        st.session_state[note_key] = ""
-    note = st.session_state[note_key]
-
-    table += f"<tr onclick=\"document.getElementById('details_{ticker}').style.display = (document.getElementById('details_{ticker}').style.display == 'none') ? '' : 'none'\">"
-    for h in headers:
-        val = f"{row[h]*100:.1f}%" if h == "HiLoProximity" else row[h]
-        table += f"<td>{val}</td>"
-    table += "</tr>"
-    table += f"""
-    <tr id="details_{ticker}" style="display:none;">
-        <td colspan="12" class="note-box">
-        <strong>SmartScore Breakdown:</strong><br>
-        PEG: {(1 / max(row["PEG"], 0.01)) * weights["PEG"]:.2f}, 
-        EPS: {row["EPS_Growth"] * weights["EPS"]:.2f}, 
-        Rating: {(5 - row["AnalystRating"]) * weights["Rating"]:.2f}, 
-        Upside: {row["TargetUpside"] * weights["Upside"]:.2f}, 
-        Sentiment: {row["SentimentScore"] * weights["Sentiment"]:.2f}, 
-        Insider: {row["InsiderDepth"] * weights["Insider"]:.2f}
-        <br><br>
-        <label for="note_{ticker}">Notes:</label><br>
-        <textarea id="note_{ticker}" rows="2" style="width:100%;">{note}</textarea>
-        </td>
-    </tr>
-    """
-
-table += "</tbody></table>"
-st.markdown(table, unsafe_allow_html=True)
+AgGrid(
+    df,
+    gridOptions=grid_options,
+    height=500,
+    width='100%',
+    update_mode=GridUpdateMode.VALUE_CHANGED,
+    fit_columns_on_grid_load=True,
+    theme="streamlit"
+)
