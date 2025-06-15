@@ -57,31 +57,6 @@ section[data-testid="stSidebar"] * {
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown("""
-<style>
-.ag-theme-streamlit, .ag-theme-balham-dark, .ag-theme-material-dark {
-    background-color: #1e293b !important;
-    color: #f1f5f9 !important;
-    font-family: 'Lato', sans-serif;
-    font-size: 13px;
-}
-.ag-theme-streamlit .ag-header,
-.ag-theme-balham-dark .ag-header,
-.ag-theme-material-dark .ag-header {
-    background-color: #334155 !important;
-    color: #f1f5f9 !important;
-}
-.ag-row {
-    background-color: #3d5975 !important;
-}
-.ag-row:nth-child(even) {
-    background-color: #466686 !important;
-}
-.ag-row:hover {
-    background-color: #64748b !important;
-}
-</style>
-""", unsafe_allow_html=True)
 
 # --- Sidebar ---
 if st.session_state.sidebar_open:
