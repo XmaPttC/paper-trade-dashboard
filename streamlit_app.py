@@ -135,28 +135,27 @@ st.markdown(f"""
 
 from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 
-# --- Display Table with st_aggrid ---
+# --- Build Grid Options ---
 gb = GridOptionsBuilder.from_dataframe(df)
 gb.configure_default_column(editable=False, filter=True, sortable=True, resizable=True)
 gb.configure_column("Notes", editable=True)
 gb.configure_grid_options(domLayout='normal', suppressRowClickSelection=False)
 gb.configure_selection(selection_mode="single", use_checkbox=False)
 
-# --- Apply custom row style ---
-gb.configure_grid_options(
-    getRowStyle="""
-    function(params) {
-        return {
-            background: '#3d5975',
-            color: '#f1f5f9',
-            fontSize: '13px'
-        };
-    }
-    """
-)
-
+# --- Build and inject getRowStyle as raw JS ---
 grid_options = gb.build()
 
+grid_options["getRowStyle"] = """
+function(params) {
+    return {
+        backgroundColor: '#3d5975',
+        color: '#f1f5f9',
+        fontSize: '13px'
+    };
+}
+"""
+
+# --- Render Grid ---
 AgGrid(
     df,
     gridOptions=grid_options,
@@ -164,5 +163,5 @@ AgGrid(
     width='100%',
     update_mode=GridUpdateMode.VALUE_CHANGED,
     fit_columns_on_grid_load=True,
-    theme="streamlit"
+    theme="streamlit"  # or "balham-dark"
 )
