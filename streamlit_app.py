@@ -118,16 +118,11 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # --- HTML Table Rendering ---
-table_html = f"""<table class="custom-table">
-<thead>
-<tr><th>Ticker</th><th>Price</th><th>SmartScore</th><th>PEG</th><th>PE</th><th>EPSGrowth</th>
-<th>MarketCap</th><th>30DayVol</th><th>AnalystRating</th><th>TargetUpside</th><th>Sector</th>
-<th>InsiderDepth</th><th>SentimentScore</th><th>RedditSentiment</th><th>HiLoProximity</th><th>Badge</th></tr>
-</thead><tbody>
-"""
+# --- HTML Table Rendering ---
+table_rows = ""
 for _, row in df.iterrows():
     yahoo_link = f"https://finance.yahoo.com/quote/{row['Ticker']}"
-    table_html += f"""
+    table_rows += f"""
     <tr>
         <td><a href="{yahoo_link}" target="_blank">{row['Ticker']}</a></td>
         <td>{row['Price']}</td>
@@ -147,6 +142,20 @@ for _, row in df.iterrows():
         <td>{row['Badge']}</td>
     </tr>
     """
-table_html += "</tbody></table>"
-import streamlit.components.v1 as components
-components.html(table_html, height=600, scrolling=True)
+
+table_html = f"""
+<table class="custom-table">
+    <thead>
+        <tr>
+            <th>Ticker</th><th>Price</th><th>SmartScore</th><th>PEG</th><th>PE</th><th>EPSGrowth</th>
+            <th>MarketCap</th><th>30DayVol</th><th>AnalystRating</th><th>TargetUpside</th><th>Sector</th>
+            <th>InsiderDepth</th><th>SentimentScore</th><th>RedditSentiment</th><th>HiLoProximity</th><th>Badge</th>
+        </tr>
+    </thead>
+    <tbody>
+        {table_rows}
+    </tbody>
+</table>
+"""
+
+st.markdown(table_html, unsafe_allow_html=True)
