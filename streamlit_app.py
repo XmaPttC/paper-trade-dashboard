@@ -40,21 +40,20 @@ section[data-testid="stSidebar"] * {
     color: #f1f5f9 !important;
 }
 
-.ag-theme-streamlit .ag-cell,
-.ag-theme-streamlit .ag-header-cell {
-    background-color: #1e293b !important;
-    color: #f1f5f9 !important;
-    border-color: #334155 !important;
-}
-
 .ag-theme-streamlit .ag-row-even {
-    background-color: #466686 !important;
+    background-color: #466686 !important;  /* bluish-gray */
 }
 .ag-theme-streamlit .ag-row-odd {
-    background-color: #3d5975 !important;
+    background-color: #3d5975 !important;  /* darker bluish-gray */
 }
 .ag-theme-streamlit .ag-row-hover {
-    background-color: #64748b !important;
+    background-color: #64748b !important;  /* hover effect */
+}
+.ag-theme-streamlit .ag-cell,
+.ag-theme-streamlit .ag-header-cell {
+    background-color: #1e293b !important;  /* deepest background */
+    color: #f1f5f9 !important;
+    font-family: 'Lato', sans-serif;
 }
 </style>
 """, unsafe_allow_html=True)
