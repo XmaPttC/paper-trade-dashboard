@@ -30,24 +30,30 @@ section[data-testid="stSidebar"] * {
 }
 
 /* AG Grid styling */
-.ag-theme-streamlit {
+.ag-theme-streamlit,
+.ag-root-wrapper,
+.ag-root,
+.ag-center-cols-container,
+.ag-header-viewport,
+.ag-body-viewport {
     background-color: #1e293b !important;
     color: #f1f5f9 !important;
-    font-family: 'Lato', sans-serif !important;
-    font-size: 13px !important;
 }
-.ag-theme-streamlit .ag-header {
-    background-color: #334155 !important;
+
+.ag-theme-streamlit .ag-cell,
+.ag-theme-streamlit .ag-header-cell {
+    background-color: #1e293b !important;
     color: #f1f5f9 !important;
-    font-weight: bold !important;
+    border-color: #334155 !important;
 }
-.ag-theme-streamlit .ag-row {
-    background-color: #3d5975 !important;
-}
-.ag-theme-streamlit .ag-row:nth-child(even) {
+
+.ag-theme-streamlit .ag-row-even {
     background-color: #466686 !important;
 }
-.ag-theme-streamlit .ag-row:hover {
+.ag-theme-streamlit .ag-row-odd {
+    background-color: #3d5975 !important;
+}
+.ag-theme-streamlit .ag-row-hover {
     background-color: #64748b !important;
 }
 </style>
