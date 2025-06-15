@@ -145,13 +145,13 @@ gb.configure_selection(selection_mode="single", use_checkbox=False)
 # --- Apply custom row style ---
 gb.configure_grid_options(
     getRowStyle="""
-        function(params) {
-            return {
-                background: '#3d5975',
-                color: '#f1f5f9',
-                fontSize: '13px'
-            }
-        }
+    function(params) {
+        return {
+            background: '#3d5975',
+            color: '#f1f5f9',
+            fontSize: '13px'
+        };
+    }
     """
 )
 
