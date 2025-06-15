@@ -4,57 +4,15 @@ from datetime import datetime
 
 st.set_page_config(layout="wide", page_title="Terminal")
 
-# --- Styling ---
-st.markdown("""
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Lato&display=swap');
-html, body, .stApp, .block-container {
-    font-family: 'Lato', sans-serif;
-    background-color: #1e293b !important;
-    color: #f1f5f9 !important;
-}
-.custom-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-}
-.custom-table th, .custom-table td {
-    padding: 6px 8px;
-    text-align: left;
-}
-.custom-table th {
-    background-color: #334155;
-    color: #f1f5f9;
-}
-.custom-table tr:nth-child(even) {
-    background-color: #3d5975;
-}
-.custom-table tr:nth-child(odd) {
-    background-color: #466686;
-}
-.custom-table tr:hover {
-    background-color: #64748b !important;
-}
-a {
-    color: #38bdf8;
-    text-decoration: none;
-}
-a:hover {
-    text-decoration: underline;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# --- Load Data ---
+# --- Load data ---
 df = pd.read_csv("mock_stock_data.csv")
 
-# --- Sidebar Filters and Weights ---
+# --- Sidebar: Filters and Smart Score Weights ---
 with st.sidebar:
     st.header("📊 Filter Stocks")
 
     pe_min = st.number_input("Min PE", value=0.0)
     pe_max = st.number_input("Max PE", value=50.0)
-
     peg_max = st.slider("Max PEG", 0.0, 5.0, 2.0)
     eps_min = st.slider("Min EPS Growth (%)", 0, 100, 10)
     rating_max = st.slider("Max Analyst Rating", 1.0, 5.0, 3.5)
@@ -63,14 +21,14 @@ with st.sidebar:
     st.divider()
     st.header("⚖️ Smart Score Weights")
 
-    peg_w = st.slider("PEG Weight", 0, 100, 20)
-    eps_w = st.slider("EPS Growth Weight", 0, 100, 15)
-    rating_w = st.slider("Analyst Rating Weight", 0, 100, 20)
-    upside_w = st.slider("Target Upside Weight", 0, 100, 15)
-    sentiment_w = st.slider("Sentiment Score Weight", 0, 100, 15)
-    insider_w = st.slider("Insider Depth Weight", 0, 100, 15)
+    peg_w = st.slider("PEG", 0, 100, 20)
+    eps_w = st.slider("EPS Growth", 0, 100, 15)
+    rating_w = st.slider("Analyst Rating", 0, 100, 20)
+    upside_w = st.slider("Target Upside", 0, 100, 15)
+    sentiment_w = st.slider("Sentiment", 0, 100, 15)
+    insider_w = st.slider("Insider Depth", 0, 100, 15)
 
-# --- Apply Filters ---
+# --- Apply filters ---
 df = df[
     (df["PE"] >= pe_min) & (df["PE"] <= pe_max) &
     (df["PEG"] <= peg_max) &
@@ -80,7 +38,7 @@ df = df[
 ]
 
 # --- SmartScore Calculation ---
-total = sum([peg_w, eps_w, rating_w, upside_w, sentiment_w, insider_w]) or 1
+total = peg_w + eps_w + rating_w + upside_w + sentiment_w + insider_w or 1
 weights = {
     "PEG": peg_w / total,
     "EPSGrowth": eps_w / total,
@@ -107,7 +65,63 @@ def badge(score):
     else: return "⬛ Bottom Quartile"
 df["Badge"] = df["SmartScore"].apply(badge)
 
-# --- Info Header ---
+# --- Define and enforce column order ---
+column_order = [
+    "Ticker", "Price", "SmartScore", "PEG", "PE", "EPSGrowth", "MarketCap",
+    "30DayVol", "AnalystRating", "TargetUpside", "Sector", "InsiderDepth",
+    "SentimentScore", "RedditSentiment", "HiLoProximity", "Badge"
+]
+df = df[[col for col in column_order if col in df.columns]]
+
+# --- Sorting ---
+sort_column = st.selectbox("Sort by column", df.columns.tolist(), index=0)
+df = df.sort_values(by=sort_column)
+
+# --- Styling ---
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Lato&display=swap');
+html, body, .stApp, .block-container {
+    font-family: 'Lato', sans-serif;
+    background-color: #1e293b !important;
+    color: #f1f5f9 !important;
+}
+.custom-table {
+    background-color: #1e293b;
+    color: #f1f5f9;
+    border-collapse: collapse;
+    font-size: 13px;
+    width: 100%;
+}
+.custom-table th, .custom-table td {
+    border: 1px solid #334155;
+    padding: 6px 10px;
+    text-align: left;
+}
+.custom-table th {
+    background-color: #334155;
+    cursor: pointer;
+}
+.custom-table tr:nth-child(even) {
+    background-color: #3d5975;
+}
+.custom-table tr:nth-child(odd) {
+    background-color: #466686;
+}
+.custom-table tr:hover {
+    background-color: #64748b;
+}
+a.ticker-link {
+    color: #93c5fd;
+    text-decoration: none;
+}
+a.ticker-link:hover {
+    text-decoration: underline;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# --- Title & Meta ---
 st.title("Terminal")
 st.markdown(f"""
 <div style='display: flex; gap: 20px; margin-bottom: 4px;'>
@@ -118,44 +132,21 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # --- HTML Table Rendering ---
-# --- HTML Table Rendering ---
-table_rows = ""
+header_html = ''.join(f"<th>{col}</th>" for col in df.columns)
+row_html = ""
 for _, row in df.iterrows():
-    yahoo_link = f"https://finance.yahoo.com/quote/{row['Ticker']}"
-    table_rows += f"""
-    <tr>
-        <td><a href="{yahoo_link}" target="_blank">{row['Ticker']}</a></td>
-        <td>{row['Price']}</td>
-        <td>{row['SmartScore']:.2f}</td>
-        <td>{row['PEG']}</td>
-        <td>{row['PE']}</td>
-        <td>{row['EPSGrowth']}</td>
-        <td>{row['MarketCap']}</td>
-        <td>{row['30DayVol']}</td>
-        <td>{row['AnalystRating']}</td>
-        <td>{row['TargetUpside']}</td>
-        <td>{row['Sector']}</td>
-        <td>{row['InsiderDepth']}</td>
-        <td>{row['SentimentScore']}</td>
-        <td>{row['RedditSentiment']}</td>
-        <td>{row['HiLoProximity']}</td>
-        <td>{row['Badge']}</td>
-    </tr>
-    """
+    row_cells = ""
+    for col in df.columns:
+        val = row[col]
+        if col == "Ticker":
+            link = f"https://finance.yahoo.com/quote/{val}"
+            val = f"<a class='ticker-link' href='{link}' target='_blank'>{val}</a>"
+        row_cells += f"<td>{val}</td>"
+    row_html += f"<tr>{row_cells}</tr>"
 
-table_html = f"""
+st.markdown(f"""
 <table class="custom-table">
-    <thead>
-        <tr>
-            <th>Ticker</th><th>Price</th><th>SmartScore</th><th>PEG</th><th>PE</th><th>EPSGrowth</th>
-            <th>MarketCap</th><th>30DayVol</th><th>AnalystRating</th><th>TargetUpside</th><th>Sector</th>
-            <th>InsiderDepth</th><th>SentimentScore</th><th>RedditSentiment</th><th>HiLoProximity</th><th>Badge</th>
-        </tr>
-    </thead>
-    <tbody>
-        {table_rows}
-    </tbody>
+    <thead><tr>{header_html}</tr></thead>
+    <tbody>{row_html}</tbody>
 </table>
-"""
-
-st.markdown(table_html, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
