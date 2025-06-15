@@ -5,23 +5,21 @@ from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 
 st.set_page_config(layout="wide", page_title="Harbourne Terminal")
 
-# Sidebar toggle
+# --- Sidebar toggle ---
 if "sidebar_open" not in st.session_state:
     st.session_state.sidebar_open = True
 if st.button("Toggle Sidebar"):
     st.session_state.sidebar_open = not st.session_state.sidebar_open
 
-# --- Styling ---
+# --- Custom Styling ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Lato&display=swap');
-
 html, body, .stApp, .block-container {
-    font-family: 'Lato', sans-serif;
+    font-family: 'Lato', sans-serif !important;
     background-color: #1e293b !important;
     color: #f1f5f9 !important;
 }
-
 section[data-testid="stSidebar"] {
     background-color: #1e293b !important;
     color: #f1f5f9 !important;
@@ -31,40 +29,31 @@ section[data-testid="stSidebar"] * {
     color: #f1f5f9 !important;
 }
 
-.ag-theme-material-dark {
-    --ag-background-color: #1e293b;
-    --ag-foreground-color: #f1f5f9;
-    --ag-header-background-color: #334155;
-    --ag-row-hover-color: #475569;
-    --ag-font-size: 13px;
-    --ag-font-family: 'Lato', sans-serif;
-}
-
-.ag-theme-material-dark .ag-root-wrapper,
-.ag-theme-material-dark .ag-header,
-.ag-theme-material-dark .ag-cell,
-.ag-theme-material-dark .ag-header-cell-label {
+/* AG Grid styling */
+.ag-theme-streamlit {
     background-color: #1e293b !important;
     color: #f1f5f9 !important;
     font-family: 'Lato', sans-serif !important;
     font-size: 13px !important;
 }
-
-.ag-theme-material-dark .ag-header {
+.ag-theme-streamlit .ag-header {
     background-color: #334155 !important;
+    color: #f1f5f9 !important;
+    font-weight: bold !important;
 }
-
-.ag-theme-material-dark .ag-row:nth-child(even) {
+.ag-theme-streamlit .ag-row {
     background-color: #3d5975 !important;
 }
-.ag-theme-material-dark .ag-row:nth-child(odd) {
+.ag-theme-streamlit .ag-row:nth-child(even) {
     background-color: #466686 !important;
+}
+.ag-theme-streamlit .ag-row:hover {
+    background-color: #64748b !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
-
-# --- Sidebar ---
+# --- Sidebar Filters ---
 if st.session_state.sidebar_open:
     with st.sidebar:
         with st.expander("⚙ Smart Score Weights"):
@@ -104,7 +93,7 @@ else:
 # --- Load Data ---
 df = pd.read_csv("mock_stock_data.csv")
 
-# --- Filters ---
+# --- Apply Filters ---
 if pe_filter:
     df = df[(df["PE"] >= pe_min) & (df["PE"] <= pe_max)]
 if peg_filter:
@@ -116,7 +105,7 @@ if analyst_filter:
 if target_filter:
     df = df[df["TargetUpside"] >= target_min]
 
-# --- SmartScore Calculation ---
+# --- Smart Score Calculation ---
 weights = {
     "PEG": peg_w / total,
     "EPS": eps_w / total,
@@ -134,7 +123,7 @@ df["SmartScore"] = (
     df["InsiderDepth"] * weights["Insider"]
 ).round(2)
 
-# --- Badge Ranking ---
+# --- Smart Score Badge ---
 q1, q2, q3 = df["SmartScore"].quantile([0.25, 0.5, 0.75])
 def badge(score):
     if score >= q3: return "🟩 Top Quartile"
@@ -143,15 +132,14 @@ def badge(score):
     else: return "⬛ Bottom Quartile"
 df["Badge"] = df["SmartScore"].apply(badge)
 
-# --- Add Notes Placeholder ---
+# --- Notes Placeholder ---
 for ticker in df["Ticker"]:
-    note_key = f"note_{ticker}"
-    if note_key not in st.session_state:
-        st.session_state[note_key] = ""
-
+    key = f"note_{ticker}"
+    if key not in st.session_state:
+        st.session_state[key] = ""
 df["Notes"] = df["Ticker"].apply(lambda x: st.session_state.get(f"note_{x}", ""))
 
-# --- Info Header ---
+# --- Header ---
 st.title("Terminal")
 st.markdown(f"""
 <div style='display: flex; gap: 20px; margin-bottom: 4px;'>
@@ -161,16 +149,15 @@ st.markdown(f"""
 <hr style='border-top: 1px solid #ccc; margin-bottom: 8px;' />
 """, unsafe_allow_html=True)
 
-from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
-
-# --- Build Grid Options ---
+# --- AG Grid Setup ---
 gb = GridOptionsBuilder.from_dataframe(df)
 gb.configure_default_column(editable=False, filter=True, sortable=True, resizable=True)
 gb.configure_column("Notes", editable=True)
-
+gb.configure_grid_options(domLayout='normal', suppressRowClickSelection=False)
+gb.configure_selection(selection_mode="single", use_checkbox=False)
 grid_options = gb.build()
 
-# --- Render Grid inside styled container
+# --- Render AG Grid ---
 AgGrid(
     df,
     gridOptions=grid_options,
@@ -178,5 +165,5 @@ AgGrid(
     width='100%',
     update_mode=GridUpdateMode.VALUE_CHANGED,
     fit_columns_on_grid_load=True,
-    theme="material-dark"  # or "streamlit" if you prefer
+    theme="streamlit"  # Required for CSS hooks
 )
