@@ -161,13 +161,16 @@ from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 gb = GridOptionsBuilder.from_dataframe(df)
 gb.configure_default_column(editable=False, filter=True, sortable=True, resizable=True)
 gb.configure_column("Notes", editable=True)
-gb.configure_grid_options(domLayout='normal', suppressRowClickSelection=False)
+gb.configure_grid_options(
+    domLayout='normal',
+    suppressRowClickSelection=False,
+    rowStyle={"backgroundColor": "#1e293b", "color": "#f1f5f9", "fontSize": "13px", "fontFamily": "Lato"}
+)
 gb.configure_selection(selection_mode="single", use_checkbox=False)
 
-# --- Finalize Grid Options ---
 grid_options = gb.build()
 
-# --- Render Grid using built-in dark theme ---
+# --- Render Grid ---
 AgGrid(
     df,
     gridOptions=grid_options,
@@ -175,5 +178,5 @@ AgGrid(
     width='100%',
     update_mode=GridUpdateMode.VALUE_CHANGED,
     fit_columns_on_grid_load=True,
-    theme="material-dark"  # You can also try "balham-dark"
+    theme="material-dark"
 )
