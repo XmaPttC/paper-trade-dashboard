@@ -142,20 +142,10 @@ gb.configure_column("Notes", editable=True)
 gb.configure_grid_options(domLayout='normal', suppressRowClickSelection=False)
 gb.configure_selection(selection_mode="single", use_checkbox=False)
 
-# --- Build and inject getRowStyle as raw JS ---
+# --- Finalize Grid Options ---
 grid_options = gb.build()
 
-grid_options["getRowStyle"] = """
-function(params) {
-    return {
-        backgroundColor: '#3d5975',
-        color: '#f1f5f9',
-        fontSize: '13px'
-    };
-}
-"""
-
-# --- Render Grid ---
+# --- Render Grid using built-in dark theme ---
 AgGrid(
     df,
     gridOptions=grid_options,
@@ -163,5 +153,5 @@ AgGrid(
     width='100%',
     update_mode=GridUpdateMode.VALUE_CHANGED,
     fit_columns_on_grid_load=True,
-    theme="streamlit"  # or "balham-dark"
+    theme="balham-dark"  # You can also try "material-dark"
 )
