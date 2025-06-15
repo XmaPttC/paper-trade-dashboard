@@ -1,174 +1,60 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime
 from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 
-st.set_page_config(layout="wide", page_title="Harbourne Terminal")
+st.set_page_config(layout="wide", page_title="AG Grid Styling Test")
 
-# --- Sidebar toggle ---
-if "sidebar_open" not in st.session_state:
-    st.session_state.sidebar_open = True
-if st.button("Toggle Sidebar"):
-    st.session_state.sidebar_open = not st.session_state.sidebar_open
-
-# --- Custom Styling ---
+# Custom CSS for styling AG Grid
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Lato&display=swap');
 html, body, .stApp, .block-container {
-    font-family: 'Lato', sans-serif !important;
+    font-family: 'Lato', sans-serif;
     background-color: #1e293b !important;
     color: #f1f5f9 !important;
 }
-section[data-testid="stSidebar"] {
+.ag-theme-streamlit {
     background-color: #1e293b !important;
-    color: #f1f5f9 !important;
-    width: 220px !important;
-}
-section[data-testid="stSidebar"] * {
-    color: #f1f5f9 !important;
-}
-
-/* AG Grid styling */
-.ag-theme-streamlit,
-.ag-root-wrapper,
-.ag-root,
-.ag-center-cols-container,
-.ag-header-viewport,
-.ag-body-viewport {
-    background-color: #1e293b !important;
-    color: #f1f5f9 !important;
-}
-
-.ag-theme-streamlit .ag-row-even {
-    background-color: #466686 !important;  /* bluish-gray */
-}
-.ag-theme-streamlit .ag-row-odd {
-    background-color: #3d5975 !important;  /* darker bluish-gray */
-}
-.ag-theme-streamlit .ag-row-hover {
-    background-color: #64748b !important;  /* hover effect */
-}
-.ag-theme-streamlit .ag-cell,
-.ag-theme-streamlit .ag-header-cell {
-    background-color: #1e293b !important;  /* deepest background */
     color: #f1f5f9 !important;
     font-family: 'Lato', sans-serif;
+    font-size: 13px !important;
+}
+.ag-header {
+    background-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+.ag-row {
+    background-color: #3d5975 !important;
+    color: #f1f5f9 !important;
+}
+.ag-row:nth-child(even) {
+    background-color: #466686 !important;
+}
+.ag-row:hover {
+    background-color: #64748b !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# --- Sidebar Filters ---
-if st.session_state.sidebar_open:
-    with st.sidebar:
-        with st.expander("⚙ Smart Score Weights"):
-            peg_w = st.slider("PEG", 0, 100, 20)
-            eps_w = st.slider("EPS Growth", 0, 100, 15)
-            rating_w = st.slider("Analyst Rating", 0, 100, 20)
-            target_w = st.slider("Target Upside", 0, 100, 15)
-            sentiment_w = st.slider("Sentiment", 0, 100, 15)
-            insider_w = st.slider("Insider Depth", 0, 100, 15)
-        total = peg_w + eps_w + rating_w + target_w + sentiment_w + insider_w
+# Sample data
+df = pd.DataFrame({
+    "Ticker": ["AAPL", "TSLA", "MSFT", "GOOG", "NVDA"],
+    "Price": [175.2, 202.5, 321.8, 140.7, 116.9],
+    "PE Ratio": [28.5, 65.3, 33.2, 24.8, 50.0],
+    "PEG Ratio": [1.2, 2.1, 1.8, 1.5, 2.3]
+})
 
-        with st.expander("⚙ Core Fundamentals"):
-            pe_filter = st.checkbox("Enable PE Filter", True)
-            pe_min = st.number_input("Min PE", value=0.0)
-            pe_max = st.number_input("Max PE", value=30.0)
-            peg_filter = st.checkbox("Enable PEG Filter", True)
-            peg_max = st.slider("Max PEG", 0.0, 5.0, 2.0)
-            eps_filter = st.checkbox("Enable EPS Growth Filter", True)
-            eps_min = st.slider("Min EPS Growth", 0, 100, 15)
-
-        with st.expander("⚙ Analyst Signals"):
-            analyst_filter = st.checkbox("Enable Analyst Rating Filter", True)
-            rating_max = st.slider("Max Analyst Rating", 1.0, 5.0, 3.5)
-            target_filter = st.checkbox("Enable Target Upside Filter", True)
-            target_min = st.slider("Min Target Upside", 0, 100, 20)
-else:
-    peg_w = eps_w = rating_w = target_w = sentiment_w = insider_w = 1
-    pe_filter = peg_filter = eps_filter = analyst_filter = target_filter = False
-    pe_min = 0
-    pe_max = 100
-    peg_max = 10.0
-    eps_min = 0
-    rating_max = 5.0
-    target_min = 0
-    total = peg_w + eps_w + rating_w + target_w + sentiment_w + insider_w
-
-# --- Load Data ---
-df = pd.read_csv("mock_stock_data.csv")
-
-# --- Apply Filters ---
-if pe_filter:
-    df = df[(df["PE"] >= pe_min) & (df["PE"] <= pe_max)]
-if peg_filter:
-    df = df[df["PEG"] <= peg_max]
-if eps_filter:
-    df = df[df["EPS_Growth"] >= eps_min]
-if analyst_filter:
-    df = df[df["AnalystRating"] <= rating_max]
-if target_filter:
-    df = df[df["TargetUpside"] >= target_min]
-
-# --- Smart Score Calculation ---
-weights = {
-    "PEG": peg_w / total,
-    "EPS": eps_w / total,
-    "Rating": rating_w / total,
-    "Upside": target_w / total,
-    "Sentiment": sentiment_w / total,
-    "Insider": insider_w / total
-}
-df["SmartScore"] = (
-    (1 / df["PEG"].clip(lower=0.01)) * weights["PEG"] +
-    df["EPS_Growth"] * weights["EPS"] +
-    (5 - df["AnalystRating"]) * weights["Rating"] +
-    df["TargetUpside"] * weights["Upside"] +
-    df["SentimentScore"] * weights["Sentiment"] +
-    df["InsiderDepth"] * weights["Insider"]
-).round(2)
-
-# --- Smart Score Badge ---
-q1, q2, q3 = df["SmartScore"].quantile([0.25, 0.5, 0.75])
-def badge(score):
-    if score >= q3: return "🟩 Top Quartile"
-    elif score >= q2: return "🟨 Top Half"
-    elif score >= q1: return "🟥 Bottom Half"
-    else: return "⬛ Bottom Quartile"
-df["Badge"] = df["SmartScore"].apply(badge)
-
-# --- Notes Placeholder ---
-for ticker in df["Ticker"]:
-    key = f"note_{ticker}"
-    if key not in st.session_state:
-        st.session_state[key] = ""
-df["Notes"] = df["Ticker"].apply(lambda x: st.session_state.get(f"note_{x}", ""))
-
-# --- Header ---
-st.title("Terminal")
-st.markdown(f"""
-<div style='display: flex; gap: 20px; margin-bottom: 4px;'>
-  <div style='border:1px solid #ccc; font-size: 10px; padding:4px 8px;'><strong>Total Results:</strong> {len(df)}</div>
-  <div style='border:1px solid #ccc; font-size: 10px; padding:4px 8px;'><strong>Date:</strong> {datetime.now().strftime('%Y-%m-%d')}</div>
-</div>
-<hr style='border-top: 1px solid #ccc; margin-bottom: 8px;' />
-""", unsafe_allow_html=True)
-
-# --- AG Grid Setup ---
+# AG Grid configuration
 gb = GridOptionsBuilder.from_dataframe(df)
 gb.configure_default_column(editable=False, filter=True, sortable=True, resizable=True)
-gb.configure_column("Notes", editable=True)
-gb.configure_grid_options(domLayout='normal', suppressRowClickSelection=False)
-gb.configure_selection(selection_mode="single", use_checkbox=False)
+gb.configure_grid_options(domLayout='normal')
 grid_options = gb.build()
 
-# --- Render AG Grid ---
+# Display the table
 AgGrid(
     df,
     gridOptions=grid_options,
-    height=500,
-    width='100%',
-    update_mode=GridUpdateMode.VALUE_CHANGED,
-    fit_columns_on_grid_load=True,
-    theme="streamlit"  # Required for CSS hooks
+    height=400,
+    theme="streamlit",  # This activates the 'ag-theme-streamlit' styling
+    update_mode=GridUpdateMode.NO_UPDATE
 )
