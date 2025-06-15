@@ -184,6 +184,11 @@ st.markdown("""
 .ag-theme-material-dark .ag-root-wrapper {
     background-color: #1e293b !important;
 }
+.ag-theme-material-dark .ag-cell, 
+.ag-theme-material-dark .ag-header-cell-label {
+    font-family: 'Lato', sans-serif !important;
+    font-size: 13px !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
