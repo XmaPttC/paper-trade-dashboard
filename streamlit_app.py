@@ -148,7 +148,7 @@ gb.configure_grid_options(
         }
     }
 )
-# grid_options = gb.build()
+grid_options = gb.build()
 
 AgGrid(
     df,
