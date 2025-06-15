@@ -153,5 +153,5 @@ AgGrid(
     width='100%',
     update_mode=GridUpdateMode.VALUE_CHANGED,
     fit_columns_on_grid_load=True,
-    theme="balham-dark"  # You can also try "material-dark"
+    theme="material-dark"  # You can also try "balham-dark"
 )
