@@ -59,10 +59,10 @@ df["SmartScore"] = (
 # --- Badge Ranking ---
 q1, q2, q3 = df["SmartScore"].quantile([0.25, 0.5, 0.75])
 def badge(score):
-    if score >= q3: return "🟩 Top Quartile"
-    elif score >= q2: return "🟨 Top Half"
-    elif score >= q1: return "🟥 Bottom Half"
-    else: return "⬛ Bottom Quartile"
+    if score >= q3: return "TQ"
+    elif score >= q2: return "TH"
+    elif score >= q1: return "BH"
+    else: return "BQ"
 df["Badge"] = df["SmartScore"].apply(badge)
 
 # --- Define and enforce column order ---
