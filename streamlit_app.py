@@ -10,6 +10,12 @@ if "sidebar_open" not in st.session_state:
 if st.button("Toggle Sidebar"):
     st.session_state.sidebar_open = not st.session_state.sidebar_open
 
+# Sort tracking
+if "sort_column" not in st.session_state:
+    st.session_state.sort_column = "Ticker"
+if "sort_ascending" not in st.session_state:
+    st.session_state.sort_ascending = True
+
 # --- Styling ---
 st.markdown("""
 <style>
@@ -24,10 +30,7 @@ section[data-testid="stSidebar"] {
     color: #f1f5f9 !important;
     width: 220px !important;
 }
-section[data-testid="stSidebar"] label,
-section[data-testid="stSidebar"] span,
-section[data-testid="stSidebar"] div,
-section[data-testid="stSidebar"] p {
+section[data-testid="stSidebar"] * {
     color: #f1f5f9 !important;
 }
 .custom-table {
@@ -67,12 +70,12 @@ section[data-testid="stSidebar"] p {
 if st.session_state.sidebar_open:
     with st.sidebar:
         with st.expander("⚙ Smart Score Weights"):
-            peg_w = st.slider("PEG", 0, 100, 20, format="%d%%")
-            eps_w = st.slider("EPS Growth", 0, 100, 15, format="%d%%")
-            rating_w = st.slider("Analyst Rating", 0, 100, 20, format="%d%%")
-            target_w = st.slider("Target Upside", 0, 100, 15, format="%d%%")
-            sentiment_w = st.slider("Sentiment", 0, 100, 15, format="%d%%")
-            insider_w = st.slider("Insider Depth", 0, 100, 15, format="%d%%")
+            peg_w = st.slider("PEG", 0, 100, 20)
+            eps_w = st.slider("EPS Growth", 0, 100, 15)
+            rating_w = st.slider("Analyst Rating", 0, 100, 20)
+            target_w = st.slider("Target Upside", 0, 100, 15)
+            sentiment_w = st.slider("Sentiment", 0, 100, 15)
+            insider_w = st.slider("Insider Depth", 0, 100, 15)
         total = peg_w + eps_w + rating_w + target_w + sentiment_w + insider_w
 
         with st.expander("⚙ Core Fundamentals"):
@@ -92,12 +95,8 @@ if st.session_state.sidebar_open:
 else:
     peg_w = eps_w = rating_w = target_w = sentiment_w = insider_w = 1
     pe_filter = peg_filter = eps_filter = analyst_filter = target_filter = False
-    pe_min = 0
-    pe_max = 100
-    peg_max = 10.0
-    eps_min = 0
-    rating_max = 5.0
-    target_min = 0
+    pe_min, pe_max = 0, 100
+    peg_max, eps_min, rating_max, target_min = 10.0, 0, 5.0, 0
     total = peg_w + eps_w + rating_w + target_w + sentiment_w + insider_w
 
 # --- Load data ---
@@ -142,9 +141,15 @@ def badge(score):
     else: return "⬛ Bottom Quartile"
 df["Badge"] = df["SmartScore"].apply(badge)
 
-# --- Sortable table header ---
-sort_col = st.selectbox("Sort by column:", df.columns.tolist(), index=0)
-df = df.sort_values(by=sort_col)
+# --- Sorting logic ---
+clicked_col = st.query_params.get("sort")
+if clicked_col:
+    if st.session_state.sort_column == clicked_col:
+        st.session_state.sort_ascending = not st.session_state.sort_ascending
+    else:
+        st.session_state.sort_column = clicked_col
+        st.session_state.sort_ascending = True
+df = df.sort_values(by=st.session_state.sort_column, ascending=st.session_state.sort_ascending)
 
 # --- Info boxes ---
 st.title("Terminal")
@@ -156,68 +161,41 @@ st.markdown(f"""
 <hr style='border-top: 1px solid #ccc; margin-bottom: 8px;' />
 """, unsafe_allow_html=True)
 
-# --- HTML table rendering with expandable rows ---
-table_rows = ""
-for i, row in df.iterrows():
-    ticker = row['Ticker']
-    note_key = f"note_{ticker}"
-    note = st.session_state.get(note_key, "")
+# --- HTML Table ---
+headers = ["Ticker", "SmartScore", "Badge", "PE", "PEG", "EPS_Growth", "AnalystRating", "TargetUpside", "SentimentScore", "InsiderDepth", "RedditSentiment", "HiLoProximity"]
+table = f"<table class='custom-table'><thead><tr>"
+for h in headers:
+    table += f"<th onclick='window.location.search=\"?sort={h}\"'>{h}</th>"
+table += "</tr></thead><tbody>"
 
-    # Main row
-    table_rows += f"""
-    <tr onclick="toggleRow('detail_{i}')" style="cursor:pointer;">
-        <td>{ticker}</td>
-        <td>{row['SmartScore']:.2f}</td>
-        <td>{row['Badge']}</td>
-        <td>{row['PE']}</td>
-        <td>{row['PEG']}</td>
-        <td>{row['EPS_Growth']}</td>
-        <td>{row['AnalystRating']}</td>
-        <td>{row['TargetUpside']}</td>
-        <td>{row['SentimentScore']}</td>
-        <td>{row['InsiderDepth']}</td>
-        <td>{row['RedditSentiment']}</td>
-        <td>{row['HiLoProximity'] * 100:.1f}%</td>
-    </tr>
-    <tr id="detail_{i}" style="display:none;">
+for _, row in df.iterrows():
+    ticker = row["Ticker"]
+    note_key = f"note_{ticker}"
+    if note_key not in st.session_state:
+        st.session_state[note_key] = ""
+    note = st.session_state[note_key]
+
+    table += f"<tr onclick=\"document.getElementById('details_{ticker}').style.display = (document.getElementById('details_{ticker}').style.display == 'none') ? '' : 'none'\">"
+    for h in headers:
+        val = f"{row[h]*100:.1f}%" if h == "HiLoProximity" else row[h]
+        table += f"<td>{val}</td>"
+    table += "</tr>"
+    table += f"""
+    <tr id="details_{ticker}" style="display:none;">
         <td colspan="12" class="note-box">
-            <strong>SmartScore Breakdown:</strong><br>
-            PEG: {(1 / max(row['PEG'], 0.01)) * weights["PEG"]:.2f}, 
-            EPS: {row['EPS_Growth'] * weights["EPS"]:.2f}, 
-            Rating: {(5 - row['AnalystRating']) * weights["Rating"]:.2f}, 
-            Upside: {row['TargetUpside'] * weights["Upside"]:.2f}, 
-            Sentiment: {row['SentimentScore'] * weights["Sentiment"]:.2f}, 
-            Insider: {row['InsiderDepth'] * weights["Insider"]:.2f}
-            <br><br>
-            <label for="note_{ticker}">Notes:</label><br>
-            <textarea id="note_{ticker}" rows="2" style="width:100%;">{note}</textarea>
+        <strong>SmartScore Breakdown:</strong><br>
+        PEG: {(1 / max(row["PEG"], 0.01)) * weights["PEG"]:.2f}, 
+        EPS: {row["EPS_Growth"] * weights["EPS"]:.2f}, 
+        Rating: {(5 - row["AnalystRating"]) * weights["Rating"]:.2f}, 
+        Upside: {row["TargetUpside"] * weights["Upside"]:.2f}, 
+        Sentiment: {row["SentimentScore"] * weights["Sentiment"]:.2f}, 
+        Insider: {row["InsiderDepth"] * weights["Insider"]:.2f}
+        <br><br>
+        <label for="note_{ticker}">Notes:</label><br>
+        <textarea id="note_{ticker}" rows="2" style="width:100%;">{note}</textarea>
         </td>
     </tr>
     """
 
-# --- Render HTML table with toggleable rows ---
-st.markdown(f"""
-<table class="custom-table">
-    <thead>
-    <tr>
-        <th>Ticker</th><th>SmartScore</th><th>Badge</th>
-        <th>PE</th><th>PEG</th><th>EPS</th><th>Rating</th><th>Upside</th>
-        <th>Sentiment</th><th>Insider</th><th>Reddit</th><th>Hi/Lo %</th>
-    </tr>
-    </thead>
-    <tbody>
-    {table_rows}
-    </tbody>
-</table>
-
-<script>
-function toggleRow(id) {{
-    var row = document.getElementById(id);
-    if (row.style.display === "none") {{
-        row.style.display = "";
-    }} else {{
-        row.style.display = "none";
-    }}
-}}
-</script>
-""", unsafe_allow_html=True)
+table += "</tbody></table>"
+st.markdown(table, unsafe_allow_html=True)
