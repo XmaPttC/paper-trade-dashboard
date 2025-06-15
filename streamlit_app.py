@@ -167,17 +167,6 @@ from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 gb = GridOptionsBuilder.from_dataframe(df)
 gb.configure_default_column(editable=False, filter=True, sortable=True, resizable=True)
 gb.configure_column("Notes", editable=True)
-gb.configure_grid_options(
-    domLayout='normal',
-    suppressRowClickSelection=False,
-    rowStyle={
-        "backgroundColor": "#1e293b",
-        "color": "#f1f5f9",
-        "fontSize": "13px",
-        "fontFamily": "Lato, sans-serif"
-    },
-    headerHeight=32
-)
 
 grid_options = gb.build()
 
@@ -189,5 +178,5 @@ AgGrid(
     width='100%',
     update_mode=GridUpdateMode.VALUE_CHANGED,
     fit_columns_on_grid_load=True,
-    theme="material-dark"
+    theme="material-dark"  # or "streamlit" if you prefer
 )
