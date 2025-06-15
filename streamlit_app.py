@@ -139,7 +139,16 @@ gb.configure_default_column(editable=False, filter=True, sortable=True, resizabl
 gb.configure_column("Notes", editable=True)
 gb.configure_grid_options(domLayout='normal', suppressRowClickSelection=False)
 gb.configure_selection(selection_mode="single", use_checkbox=False)
-grid_options = gb.build()
+gb.configure_grid_options(
+    getRowStyle={
+        "style": {
+            "background": "#orange",
+            "color": "#f1f5f9",
+            "fontSize": "13px"
+        }
+    }
+)
+# grid_options = gb.build()
 
 AgGrid(
     df,
