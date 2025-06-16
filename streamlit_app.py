@@ -93,8 +93,8 @@ a.ticker-link:hover {
     text-decoration: underline;
 }
 /* Hide spin buttons in Firefox */
-input::-webkit-outer-spin-button,
-input::-webkit-inner-spin-button {
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
