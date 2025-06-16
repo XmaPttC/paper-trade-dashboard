@@ -23,13 +23,35 @@ df = df.sort_values(by=sort_column)
 with st.sidebar:
     st.markdown("""
         <style>
-            section[data-testid="stSidebar"] {
-                background-color: #000000;
-            }
-            .sidebar-label {
-                color: #f1f5f9;
-                font-size: 13px;
-            }
+        /* Sidebar container */
+        section[data-testid="stSidebar"] {
+            background-color: #000000; /* black background */
+            padding: 12px;
+        }
+
+        /* Text and label styling in sidebar */
+        section[data-testid="stSidebar"] * {
+            color: #f1f5f9 !important;
+            font-size: 14px !important;
+            font-family: 'Lato', sans-serif;
+        }
+
+        /* Label size specifically */
+        section[data-testid="stSidebar"] label {
+            font-size: 13px !important;
+            font-weight: 500;
+            color: #cbd5e1 !important;
+        }
+
+        /* Headers in sidebar */
+        section[data-testid="stSidebar"] h1,
+        section[data-testid="stSidebar"] h2,
+        section[data-testid="stSidebar"] h3,
+        section[data-testid="stSidebar"] h4 {
+            color: #facc15 !important; /* gold-yellow headers */
+            font-size: 15px !important;
+            margin-top: 12px;
+        }
         </style>
     """, unsafe_allow_html=True)
 
