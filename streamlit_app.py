@@ -41,6 +41,13 @@ input[type="number"], input[type="text"] {
     border-radius: 10px;
     padding: 0px;
 }
+div[data-baseweb="input"] {
+    border: 1px solid #FFA500 !important;
+    border-radius: 2px !important;
+    box-shadow: none !important;
+    background-color: transparent !important;
+    padding: 0 !important
+}
 .custom-table {
     background-color: #1e293b;
     color: #f1f5f9;
