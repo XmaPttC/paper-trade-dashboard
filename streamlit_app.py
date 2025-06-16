@@ -37,13 +37,13 @@ section[data-testid="stSidebar"] * {
 input[type="number"], input[type="text"] {
     background-color: #0f172a;
     color: #f1f5f9;
-    border: 1px solid #f1f5f9;
+    border: none !important;
     border-radius: 0px;
     padding: 0px;
 }
 div[data-testid="stNumberInput"] {
     background-color: transparent !important;
-    border: 0px solid #FFA500 !important;
+    border: none !important;
     border-radius: 0px !important;
     padding: 2px !important;
     box-shadow: none !important;
@@ -51,7 +51,7 @@ div[data-testid="stNumberInput"] {
 /* Outer wrapper around each input (catch-all for input containers) */
 div[data-testid="stNumberInput"], div[data-baseweb="input"], div[class*="StyledBox"] {
     background-color: transparent !important;
-    border: 0px solid #334155 !important;
+    border: none !important;
     border-radius: 0px !important;
     padding: 0px !important;
     box-shadow: none !important;
