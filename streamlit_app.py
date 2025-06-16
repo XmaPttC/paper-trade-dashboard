@@ -36,13 +36,7 @@ section[data-testid="stSidebar"] label,
 section[data-testid="stSidebar"] span {
     color: #f1f5f9 !important;
 }
-.filter-row {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 12px;
-}
-.filter-row input {
+input[type="number"], input[type="text"] {
     background-color: #1e293b;
     color: #f1f5f9;
     border: 1px solid #475569;
@@ -53,7 +47,7 @@ section[data-testid="stSidebar"] span {
 input:focus {
     outline: none;
     border: 1px solid #38bdf8;
-
+}
 .custom-table {
     background-color: #1e293b;
     color: #f1f5f9;
@@ -92,29 +86,26 @@ a.ticker-link:hover {
 # --- Sidebar Content ---
 with st.sidebar:
     with st.expander("Filter Stocks"):
-        st.markdown("**PEG**")
-        st.markdown('<div class="filter-row"><input type="number" placeholder="Min"/><input type="number" placeholder="Max"/></div>', unsafe_allow_html=True)
-
-        st.markdown("**EPS Growth**")
-        st.markdown('<div class="filter-row"><input type="number" placeholder="Min"/><input type="number" placeholder="Max"/></div>', unsafe_allow_html=True)
-
-        st.markdown("**Analyst Rating**")
-        st.markdown('<div class="filter-row"><input type="number" placeholder="Min"/><input type="number" placeholder="Max"/></div>', unsafe_allow_html=True)
-
-        st.markdown("**Target Upside**")
-        st.markdown('<div class="filter-row"><input type="number" placeholder="Min"/><input type="number" placeholder="Max"/></div>', unsafe_allow_html=True)
+        peg_min = st.number_input("Min PEG", 0.0, 5.0, 0.0)
+        peg_max = st.number_input("Max PEG", 0.0, 5.0, 2.0)
+        eps_min = st.number_input("Min EPS Growth", 0, 100, 10)
+        eps_max = st.number_input("Max EPS Growth", 0, 100, 100)
+        rating_max = st.number_input("Max Analyst Rating", 1.0, 5.0, 3.5)
+        upside_min = st.number_input("Min Target Upside", 0, 100, 10)
+        pe_min = st.number_input("Min PE", 0.0, 100.0, 0.0)
+        pe_max = st.number_input("Max PE", 0.0, 100.0, 50.0)
 
         st.toggle("🇺🇸 US Only")
         st.toggle("🟣 Nasdaq Only")
         st.toggle("🟠 NYSE Only")
 
     with st.expander("Smart Score Weights"):
-        st.slider("PEG", 0, 100, 20)
-        st.slider("EPS Growth", 0, 100, 15)
-        st.slider("Analyst Rating", 0, 100, 20)
-        st.slider("Target Upside", 0, 100, 15)
-        st.slider("Sentiment", 0, 100, 15)
-        st.slider("Insider Depth", 0, 100, 15)
+        peg_w = st.slider("PEG", 0, 100, 20)
+        eps_w = st.slider("EPS Growth", 0, 100, 15)
+        rating_w = st.slider("Analyst Rating", 0, 100, 20)
+        upside_w = st.slider("Target Upside", 0, 100, 15)
+        sentiment_w = st.slider("Sentiment", 0, 100, 15)
+        insider_w = st.slider("Insider Depth", 0, 100, 15)
 
     st.divider()
     st.markdown("📈 **Charts**")
