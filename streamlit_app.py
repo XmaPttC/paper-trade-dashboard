@@ -25,61 +25,35 @@ html, body, .stApp, .block-container {
     color: #f1f5f9 !important;
 }
 section[data-testid="stSidebar"] {
-    background-color: #000000 !important;
-    color: #f1f5f9 !important;
-    padding-right: 0px;
-    width: 270px !important;
-}
-section[data-testid="stSidebar"] * {
-    font-size: 13px !important;
-    color: #f1f5f9 !important;
-}
-input[type="number"], input[type="text"] {
-    background-color: #0f172a;
-    color: #f1f5f9;
-    border: none !important;
-    border-radius: 0px;
-    padding: 0px;
-}
-div[data-testid="stNumberInput"] {
-    background-color: transparent !important;
-    border: none !important;
-    border-radius: 0px !important;
-    padding: 2px !important;
-    box-shadow: none !important;
-}
-/* Outer wrapper around each input (catch-all for input containers) */
-div[data-testid="stNumberInput"], div[data-baseweb="input"], div[class*="StyledBox"] {
-    background-color: transparent !important;
-    border: none !important;
-    border-radius: 0px !important;
-    padding: 0px !important;
-    box-shadow: none !important;
-    margin: 0px !important;
-}
-
-/* The actual <input> field */
-div[data-testid="stNumberInput"] input {
     background-color: #0f172a !important;
     color: #f1f5f9 !important;
-    border: none !important;
-    box-shadow: none !important;
-    padding: 6px 8px !important;
+    padding: 20px;
+    width: 250px;
 }
-
-/* Change border color of outer container when input is focused */
-div[data-testid="stNumberInput"]:focus-within,
-div[data-baseweb="input"]:focus-within {
-    border-color: #38bdf8 !important;  /* e.g., a blue highlight */
-    box-shadow: 0 0 0 1px #38bdf8 !important;  /* optional glow */
+section[data-testid="stSidebar"] h2, 
+section[data-testid="stSidebar"] h3, 
+section[data-testid="stSidebar"] label, 
+section[data-testid="stSidebar"] span {
+    color: #f1f5f9 !important;
 }
-
-/* Optional: also style the input focus directly */
+.filter-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+.filter-row input {
+    background-color: #1e293b;
+    color: #f1f5f9;
+    border: 1px solid #475569;
+    border-radius: 4px;
+    padding: 5px;
+    width: 100%;
+}
 input:focus {
-    border: none !important;
-    outline: none !important;
-    box-shadow: none !important;
-}
+    outline: none;
+    border: 1px solid #38bdf8;
+
 .custom-table {
     background-color: #1e293b;
     color: #f1f5f9;
@@ -115,38 +89,38 @@ a.ticker-link:hover {
 </style>
 """, unsafe_allow_html=True)
 
-# --- Sidebar Filters ---
+# --- Sidebar Content ---
 with st.sidebar:
     with st.expander("Filter Stocks"):
-        col1, col2 = st.columns(2)
-        with col1:
-            peg_min = st.number_input("Min PEG", value=0.0, key="peg_min")
-            pe_min = st.number_input("Min PE", value=0.0, key="pe_min")
-            eps_min = st.number_input("Min EPS", value=0.0, key="eps_min")
-            upside_min = st.number_input("Min Upside %", value=0.0, key="upside_min")
-        with col2:
-            peg_max = st.number_input("Max PEG", value=3.0, key="peg_max")
-            pe_max = st.number_input("Max PE", value=50.0, key="pe_max")
-            eps_max = st.number_input("Max EPS", value=100.0, key="eps_max")
-            rating_max = st.number_input("Max Rating", value=4.0, key="rating_max")
+        st.markdown("**PEG**")
+        st.markdown('<div class="filter-row"><input type="number" placeholder="Min"/><input type="number" placeholder="Max"/></div>', unsafe_allow_html=True)
 
-        st.toggle("US only", value=True)
-        st.toggle("Nasdaq only", value=False)
-        st.toggle("NYSE only", value=False)
+        st.markdown("**EPS Growth**")
+        st.markdown('<div class="filter-row"><input type="number" placeholder="Min"/><input type="number" placeholder="Max"/></div>', unsafe_allow_html=True)
+
+        st.markdown("**Analyst Rating**")
+        st.markdown('<div class="filter-row"><input type="number" placeholder="Min"/><input type="number" placeholder="Max"/></div>', unsafe_allow_html=True)
+
+        st.markdown("**Target Upside**")
+        st.markdown('<div class="filter-row"><input type="number" placeholder="Min"/><input type="number" placeholder="Max"/></div>', unsafe_allow_html=True)
+
+        st.toggle("🇺🇸 US Only")
+        st.toggle("🟣 Nasdaq Only")
+        st.toggle("🟠 NYSE Only")
 
     with st.expander("Smart Score Weights"):
-        peg_w = st.slider("PEG Weight", 0, 100, 20)
-        eps_w = st.slider("EPS Growth Weight", 0, 100, 15)
-        rating_w = st.slider("Analyst Rating Weight", 0, 100, 20)
-        upside_w = st.slider("Target Upside Weight", 0, 100, 15)
-        sentiment_w = st.slider("Sentiment Score Weight", 0, 100, 15)
-        insider_w = st.slider("Insider Depth Weight", 0, 100, 15)
+        st.slider("PEG", 0, 100, 20)
+        st.slider("EPS Growth", 0, 100, 15)
+        st.slider("Analyst Rating", 0, 100, 20)
+        st.slider("Target Upside", 0, 100, 15)
+        st.slider("Sentiment", 0, 100, 15)
+        st.slider("Insider Depth", 0, 100, 15)
 
-    st.markdown("---")
-    st.subheader("📈 Charts")
-    st.subheader("🔬 Research")
-    st.subheader("🛠 Misc")
-    st.subheader("ℹ️ Information Hub")
+    st.divider()
+    st.markdown("📈 **Charts**")
+    st.markdown("🔍 **Research**")
+    st.markdown("🧪 **Misc**")
+    st.markdown("📚 **Information Hub**")
 
 # --- Apply filters ---
 df = df[
