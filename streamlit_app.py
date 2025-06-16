@@ -119,7 +119,8 @@ with st.sidebar:
     
             st.markdown('<div class="sidebar-label">30-Day Volume</div>', unsafe_allow_html=True)
             st.markdown('<div class="filter-row"><input type="number" placeholder="Min"/><input type="number" placeholder="Max"/></div>', unsafe_allow_html=True)    
-    st.divider()
+            
+        st.divider()
            
     st.toggle("US Only")
     st.toggle("Nasdaq Only")
