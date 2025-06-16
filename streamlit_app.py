@@ -38,12 +38,13 @@ section[data-testid="stSidebar"] {
 .sidebar-label {
     font-size: 13px;
     color: #f1f5f9 !important;
-    margin-bottom: 12px;
+    margin-bottom: 22px;
 }
 .filter-row {
     display: flex;
     justify-content: space-between;
     gap: 6px;
+    margin-bottom: 10px;
 }
 .filter-row input {
     background-color: #1e293b;
