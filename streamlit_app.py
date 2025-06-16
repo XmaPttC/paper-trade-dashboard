@@ -28,6 +28,7 @@ html, body, .stApp, .block-container {
 section[data-testid="stSidebar"] {
     background-color: #070b15 !important;
     color: #f1f5f9 !important;
+    font-size: 13px;
     padding: 8px 8px 8px 8px;
     width: 240px !important;
 }
@@ -106,18 +107,22 @@ with st.sidebar:
 
         st.markdown('<div class="sidebar-label">Target Upside</div>', unsafe_allow_html=True)
         st.markdown('<div class="filter-row"><input type="number" placeholder="Min"/><input type="number" placeholder="Max"/></div>', unsafe_allow_html=True)
-
+    
+    st.divider()
+           
         st.toggle("US Only")
         st.toggle("Nasdaq Only")
         st.toggle("NYSE Only")
-
+    
+    st.divider()
+    
     with st.expander("Smart Score Weights", expanded=False):
-        st.slider("PEG", 0, 100, 20)
-        st.slider("EPS Growth", 0, 100, 15)
-        st.slider("Analyst Rating", 0, 100, 20)
-        st.slider("Target Upside", 0, 100, 15)
-        st.slider("Sentiment", 0, 100, 15)
-        st.slider("Insider Depth", 0, 100, 15)
+        st.slider("PEG", 0, 100, 50)
+        st.slider("EPS Growth", 0, 100, 50)
+        st.slider("Analyst Rating", 0, 100, 50)
+        st.slider("Target Upside", 0, 100, 50)
+        st.slider("Sentiment", 0, 100, 50)
+        st.slider("Insider Depth", 0, 100, 50)
 
     st.divider()
     st.markdown("Charts")
