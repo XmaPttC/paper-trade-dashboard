@@ -37,8 +37,8 @@ section[data-testid="stSidebar"] * {
 input[type="number"], input[type="text"] {
     background-color: #0f172a;
     color: #f1f5f9;
-    border: 1px solid #FFA500;
-    border-radius: 0px;
+    border: 5px solid #FFA500;
+    border-radius: 10px;
     padding: 0px;
 }
 .custom-table {
@@ -78,7 +78,7 @@ a.ticker-link:hover {
 
 # --- Sidebar Filters ---
 with st.sidebar:
-    with st.expander("📊 Filter Stocks", expanded=True):
+    with st.expander("Filter Stocks"):
         col1, col2 = st.columns(2)
         with col1:
             peg_min = st.number_input("Min PEG", value=0.0, key="peg_min")
@@ -95,7 +95,7 @@ with st.sidebar:
         st.toggle("Nasdaq only", value=False)
         st.toggle("NYSE only", value=False)
 
-    with st.expander("⚖️ Smart Score Weights", expanded=True):
+    with st.expander("Smart Score Weights"):
         peg_w = st.slider("PEG Weight", 0, 100, 20)
         eps_w = st.slider("EPS Growth Weight", 0, 100, 15)
         rating_w = st.slider("Analyst Rating Weight", 0, 100, 20)
