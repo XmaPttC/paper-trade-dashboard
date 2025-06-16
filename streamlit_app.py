@@ -39,6 +39,7 @@ section[data-testid="stSidebar"] {
     font-size: 13px;
     color: #f1f5f9 !important;
     margin-bottom: 2px;
+    border-bottom: 1px solid #f1f5f9;
 }
 .filter-row {
     display: flex;
