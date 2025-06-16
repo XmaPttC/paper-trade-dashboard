@@ -7,38 +7,82 @@ st.set_page_config(layout="wide", page_title="Terminal")
 # --- Load data ---
 df = pd.read_csv("mock_stock_data.csv")
 
-# --- Sidebar: Filters and Smart Score Weights ---
-with st.sidebar:
-    st.header("📊 Filter Stocks")
+# --- Define and enforce column order ---
+column_order = [
+    "Ticker", "Price", "SmartScore", "PEG", "PE", "EPSGrowth", "MarketCap",
+    "30DayVol", "AnalystRating", "TargetUpside", "Sector", "InsiderDepth",
+    "SentimentScore", "RedditSentiment", "HiLoProximity"
+]
+df = df[[col for col in column_order if col in df.columns]]
 
-    pe_min = st.number_input("Min PE", value=0.0)
-    pe_max = st.number_input("Max PE", value=50.0)
-    peg_max = st.slider("Max PEG", 0.0, 5.0, 2.0)
-    eps_min = st.slider("Min EPS Growth (%)", 0, 100, 10)
-    rating_max = st.slider("Max Analyst Rating", 1.0, 5.0, 3.5)
-    upside_min = st.slider("Min Target Upside (%)", 0, 100, 10)
+# --- Sorting ---
+sort_column = st.selectbox("Sort by column", df.columns.tolist(), index=0)
+df = df.sort_values(by=sort_column)
+
+# --- Sidebar Layout ---
+with st.sidebar:
+    st.markdown("""
+        <style>
+            section[data-testid="stSidebar"] {
+                background-color: #000000;
+            }
+            .sidebar-label {
+                color: #f1f5f9;
+                font-size: 13px;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+
+    with st.expander("📊 Filter Stocks", expanded=True):
+        col1, col2, col3 = st.columns([2, 1, 1])
+        with col1: st.markdown("<div class='sidebar-label'>PEG</div>", unsafe_allow_html=True)
+        with col2: peg_min = st.number_input(" ", value=0.0, key="peg_min")
+        with col3: peg_max = st.number_input("  ", value=2.0, key="peg_max")
+
+        col1, col2, col3 = st.columns([2, 1, 1])
+        with col1: st.markdown("<div class='sidebar-label'>EPS Growth</div>", unsafe_allow_html=True)
+        with col2: eps_min = st.number_input("  ", value=10, key="eps_min")
+        with col3: eps_max = st.number_input("   ", value=100, key="eps_max")
+
+        col1, col2, col3 = st.columns([2, 1, 1])
+        with col1: st.markdown("<div class='sidebar-label'>Analyst Rating</div>", unsafe_allow_html=True)
+        with col2: rating_min = st.number_input("    ", value=1.0, key="rating_min")
+        with col3: rating_max = st.number_input("     ", value=3.5, key="rating_max")
+
+        col1, col2, col3 = st.columns([2, 1, 1])
+        with col1: st.markdown("<div class='sidebar-label'>Target Upside</div>", unsafe_allow_html=True)
+        with col2: upside_min = st.number_input("      ", value=10, key="upside_min")
+        with col3: upside_max = st.number_input("       ", value=100, key="upside_max")
+
+        st.divider()
+        us_only = st.checkbox("🇺🇸 US Only", value=True)
+        nasdaq_only = st.checkbox("NASDAQ Only")
+        nyse_only = st.checkbox("NYSE Only")
+
+    with st.expander("⚖️ Smart Score Weights", expanded=True):
+        peg_w = st.slider("PEG Weight", 0, 100, 20)
+        eps_w = st.slider("EPS Growth Weight", 0, 100, 15)
+        rating_w = st.slider("Analyst Rating Weight", 0, 100, 20)
+        upside_w = st.slider("Target Upside Weight", 0, 100, 15)
+        sentiment_w = st.slider("Sentiment Score Weight", 0, 100, 15)
+        insider_w = st.slider("Insider Depth Weight", 0, 100, 15)
 
     st.divider()
-    st.header("⚖️ Smart Score Weights")
+    st.header("📈 Charts")
+    st.header("📚 Research")
+    st.header("🧪 Misc")
+    st.header("🧠 Information Hub")
 
-    peg_w = st.slider("PEG", 0, 100, 20)
-    eps_w = st.slider("EPS Growth", 0, 100, 15)
-    rating_w = st.slider("Analyst Rating", 0, 100, 20)
-    upside_w = st.slider("Target Upside", 0, 100, 15)
-    sentiment_w = st.slider("Sentiment", 0, 100, 15)
-    insider_w = st.slider("Insider Depth", 0, 100, 15)
-
-# --- Apply filters ---
+# --- Apply Filters ---
 df = df[
-    (df["PE"] >= pe_min) & (df["PE"] <= pe_max) &
-    (df["PEG"] <= peg_max) &
-    (df["EPSGrowth"] >= eps_min) &
-    (df["AnalystRating"] <= rating_max) &
-    (df["TargetUpside"] >= upside_min)
+    (df["PEG"] >= peg_min) & (df["PEG"] <= peg_max) &
+    (df["EPSGrowth"] >= eps_min) & (df["EPSGrowth"] <= eps_max) &
+    (df["AnalystRating"] >= rating_min) & (df["AnalystRating"] <= rating_max) &
+    (df["TargetUpside"] >= upside_min) & (df["TargetUpside"] <= upside_max)
 ]
 
 # --- SmartScore Calculation ---
-total = peg_w + eps_w + rating_w + upside_w + sentiment_w + insider_w or 1
+total = sum([peg_w, eps_w, rating_w, upside_w, sentiment_w, insider_w]) or 1
 weights = {
     "PEG": peg_w / total,
     "EPSGrowth": eps_w / total,
@@ -59,23 +103,11 @@ df["SmartScore"] = (
 # --- Badge Ranking ---
 q1, q2, q3 = df["SmartScore"].quantile([0.25, 0.5, 0.75])
 def badge(score):
-    if score >= q3: return "TQ"
-    elif score >= q2: return "TH"
-    elif score >= q1: return "BH"
-    else: return "BQ"
+    if score >= q3: return "🟩 Top Quartile"
+    elif score >= q2: return "🟨 Top Half"
+    elif score >= q1: return "🟥 Bottom Half"
+    else: return "⬛ Bottom Quartile"
 df["Badge"] = df["SmartScore"].apply(badge)
-
-# --- Define and enforce column order ---
-column_order = [
-    "Ticker", "Price", "SmartScore", "PEG", "PE", "EPSGrowth", "MarketCap",
-    "30DayVol", "AnalystRating", "TargetUpside", "Sector", "InsiderDepth",
-    "SentimentScore", "RedditSentiment", "HiLoProximity", "Badge"
-]
-df = df[[col for col in column_order if col in df.columns]]
-
-# --- Sorting ---
-sort_column = st.selectbox("Sort by column", df.columns.tolist(), index=0)
-df = df.sort_values(by=sort_column)
 
 # --- Styling ---
 st.markdown("""
@@ -121,7 +153,7 @@ a.ticker-link:hover {
 </style>
 """, unsafe_allow_html=True)
 
-# --- Title & Meta ---
+# --- Title & meta info ---
 st.title("Terminal")
 st.markdown(f"""
 <div style='display: flex; gap: 20px; margin-bottom: 4px;'>
@@ -131,7 +163,7 @@ st.markdown(f"""
 <hr style='border-top: 1px solid #ccc; margin-bottom: 8px;' />
 """, unsafe_allow_html=True)
 
-# --- HTML Table Rendering ---
+# --- Table Rendering ---
 header_html = ''.join(f"<th>{col}</th>" for col in df.columns)
 row_html = ""
 for _, row in df.iterrows():
