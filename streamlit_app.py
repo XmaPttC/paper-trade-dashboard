@@ -41,12 +41,20 @@ input[type="number"], input[type="text"] {
     border-radius: 10px;
     padding: 0px;
 }
-div[data-baseweb="input"] {
-    border: 1px solid #FFA500 !important;
-    border-radius: 2px !important;
-    box-shadow: none !important;
+div[data-testid="stNumberInput"] {
     background-color: transparent !important;
-    padding: 0 !important
+    border: 1px solid #334155 !important;
+    border-radius: 6px !important;
+    padding: 2px !important;
+    box-shadow: none !important;
+}
+/* Style the actual <input> field inside */
+div[data-testid="stNumberInput"] input {
+    background-color: #0f172a !important;
+    color: #f1f5f9 !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 6px 8px !important
 }
 .custom-table {
     background-color: #1e293b;
