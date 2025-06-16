@@ -1,4 +1,4 @@
-Ticker,Price,SmartScore,PEG,PE,EPSGrowth,MarketCap,30DayVol,AnalystRating,TargetUpside,Sector,InsiderDepth,SentimentScore,RedditSentiment,HiLoProximity
+Ticker,Price,TerminalScore,PEG,PE,EPSGr,MktCap,30DayVol,AnalystSc,TrgttUpside,Sector,InsiderSc,SentimentScore,RedditSc,52wH
 AAPL,189.55,87.4,1.5,30,18,2.9T,1.2M,2.1,20,Technology,0.45,0.65,0.82,0.91
 MSFT,322.34,89.2,1.3,35,22,2.8T,1.1M,2.3,25,Technology,0.55,0.75,0.65,0.88
 GOOGL,145.67,84.9,1.7,28,16,1.9T,980K,2.0,18,Communication,0.52,0.68,0.78,0.79
