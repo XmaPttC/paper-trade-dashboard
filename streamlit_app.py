@@ -37,9 +37,9 @@ section[data-testid="stSidebar"] * {
 input[type="number"], input[type="text"] {
     background-color: #0f172a;
     color: #f1f5f9;
-    border: 1px solid #334155;
-    border-radius: 4px;
-    padding: 4px;
+    border: 1px solid #FFA500;
+    border-radius: 0px;
+    padding: 0px;
 }
 .custom-table {
     background-color: #1e293b;
