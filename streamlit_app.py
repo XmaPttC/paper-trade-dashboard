@@ -38,7 +38,7 @@ section[data-testid="stSidebar"] {
 .sidebar-label {
     font-size: 13px;
     color: #f1f5f9 !important;
-    margin-bottom: 22px;
+    margin-bottom: 2px;
 }
 .filter-row {
     display: flex;
