@@ -67,8 +67,16 @@ div[data-testid="stNumberInput"] input {
     padding: 6px 8px !important;
 }
 
-/* Remove focus outline for a cleaner look */
+/* Change border color of outer container when input is focused */
+div[data-testid="stNumberInput"]:focus-within,
+div[data-baseweb="input"]:focus-within {
+    border-color: #38bdf8 !important;  /* e.g., a blue highlight */
+    box-shadow: 0 0 0 1px #38bdf8 !important;  /* optional glow */
+}
+
+/* Optional: also style the input focus directly */
 input:focus {
+    border: none !important;
     outline: none !important;
     box-shadow: none !important;
 }
