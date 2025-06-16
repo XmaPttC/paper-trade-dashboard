@@ -1,13 +1,14 @@
+
 import streamlit as st
 import pandas as pd
 from datetime import datetime
 
 st.set_page_config(layout="wide", page_title="Terminal")
 
-# --- Load data ---
+# Load data
 df = pd.read_csv("mock_stock_data.csv")
 
-# --- Define and enforce column order ---
+# Define and enforce column order
 column_order = [
     "Ticker", "Price", "SmartScore", "PEG", "PE", "EPSGrowth", "MarketCap",
     "30DayVol", "AnalystRating", "TargetUpside", "Sector", "InsiderDepth",
@@ -15,7 +16,7 @@ column_order = [
 ]
 df = df[[col for col in column_order if col in df.columns]]
 
-# --- Styling ---
+# Sidebar styling
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Lato&display=swap');
@@ -26,23 +27,29 @@ html, body, .stApp, .block-container {
 }
 section[data-testid="stSidebar"] {
     background-color: #0f172a !important;
-    color: #f1f5f9 !important;
-    padding: 20px;
-    width: 250px;
+    padding: 8px 16px 8px 16px;
+    width: 240px !important;
 }
-section[data-testid="stSidebar"] h2, 
-section[data-testid="stSidebar"] h3, 
-section[data-testid="stSidebar"] label, 
-section[data-testid="stSidebar"] span {
-    color: #f1f5f9 !important;
+.sidebar-section {
+    margin-bottom: 10px;
 }
-input[type="number"], input[type="text"] {
+.sidebar-label {
+    font-size: 13px;
+    margin-bottom: 2px;
+}
+.filter-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+}
+.filter-row input {
     background-color: #1e293b;
     color: #f1f5f9;
     border: 1px solid #475569;
-    border-radius: 4px;
-    padding: 5px;
+    border-radius: 2px;
+    padding: 4px;
     width: 100%;
+    font-size: 12px;
 }
 input:focus {
     outline: none;
@@ -83,78 +90,40 @@ a.ticker-link:hover {
 </style>
 """, unsafe_allow_html=True)
 
-# --- Sidebar Content ---
+# Sidebar content
 with st.sidebar:
-    with st.expander("Filter Stocks"):
-        peg_min = st.number_input("Min PEG", 0.0, 5.0, 0.0)
-        peg_max = st.number_input("Max PEG", 0.0, 5.0, 2.0)
-        eps_min = st.number_input("Min EPS Growth", 0, 100, 10)
-        eps_max = st.number_input("Max EPS Growth", 0, 100, 100)
-        rating_max = st.number_input("Max Analyst Rating", 1.0, 5.0, 3.5)
-        upside_min = st.number_input("Min Target Upside", 0, 100, 10)
-        pe_min = st.number_input("Min PE", 0.0, 100.0, 0.0)
-        pe_max = st.number_input("Max PE", 0.0, 100.0, 50.0)
+    with st.expander("ð Filter Stocks", expanded=True):
+        st.markdown('<div class="sidebar-label">PEG</div>', unsafe_allow_html=True)
+        st.markdown('<div class="filter-row"><input type="number" placeholder="Min"/><input type="number" placeholder="Max"/></div>', unsafe_allow_html=True)
 
-        st.toggle("🇺🇸 US Only")
-        st.toggle("🟣 Nasdaq Only")
-        st.toggle("🟠 NYSE Only")
+        st.markdown('<div class="sidebar-label">EPS Growth</div>', unsafe_allow_html=True)
+        st.markdown('<div class="filter-row"><input type="number" placeholder="Min"/><input type="number" placeholder="Max"/></div>', unsafe_allow_html=True)
 
-    with st.expander("Smart Score Weights"):
-        peg_w = st.slider("PEG", 0, 100, 20)
-        eps_w = st.slider("EPS Growth", 0, 100, 15)
-        rating_w = st.slider("Analyst Rating", 0, 100, 20)
-        upside_w = st.slider("Target Upside", 0, 100, 15)
-        sentiment_w = st.slider("Sentiment", 0, 100, 15)
-        insider_w = st.slider("Insider Depth", 0, 100, 15)
+        st.markdown('<div class="sidebar-label">Analyst Rating</div>', unsafe_allow_html=True)
+        st.markdown('<div class="filter-row"><input type="number" placeholder="Min"/><input type="number" placeholder="Max"/></div>', unsafe_allow_html=True)
+
+        st.markdown('<div class="sidebar-label">Target Upside</div>', unsafe_allow_html=True)
+        st.markdown('<div class="filter-row"><input type="number" placeholder="Min"/><input type="number" placeholder="Max"/></div>', unsafe_allow_html=True)
+
+        st.toggle("ðºð¸ US Only")
+        st.toggle("ð£ Nasdaq Only")
+        st.toggle("ð  NYSE Only")
+
+    with st.expander("âï¸ Smart Score Weights", expanded=False):
+        st.slider("PEG", 0, 100, 20)
+        st.slider("EPS Growth", 0, 100, 15)
+        st.slider("Analyst Rating", 0, 100, 20)
+        st.slider("Target Upside", 0, 100, 15)
+        st.slider("Sentiment", 0, 100, 15)
+        st.slider("Insider Depth", 0, 100, 15)
 
     st.divider()
-    st.markdown("📈 **Charts**")
-    st.markdown("🔍 **Research**")
-    st.markdown("🧪 **Misc**")
-    st.markdown("📚 **Information Hub**")
+    st.markdown("ð **Charts**")
+    st.markdown("ð **Research**")
+    st.markdown("ð§ª **Misc**")
+    st.markdown("ð **Information Hub**")
 
-# --- Apply filters ---
-df = df[
-    (df["PEG"] >= peg_min) & (df["PEG"] <= peg_max) &
-    (df["PE"] >= pe_min) & (df["PE"] <= pe_max) &
-    (df["EPSGrowth"] >= eps_min) & (df["EPSGrowth"] <= eps_max) &
-    (df["AnalystRating"] <= rating_max) &
-    (df["TargetUpside"] >= upside_min)
-]
-
-# --- SmartScore Calculation ---
-total = sum([peg_w, eps_w, rating_w, upside_w, sentiment_w, insider_w]) or 1
-weights = {
-    "PEG": peg_w / total,
-    "EPSGrowth": eps_w / total,
-    "Rating": rating_w / total,
-    "Upside": upside_w / total,
-    "SentimentScore": sentiment_w / total,
-    "InsiderDepth": insider_w / total
-}
-df["SmartScore"] = (
-    (1 / df["PEG"].clip(lower=0.01)) * weights["PEG"] +
-    df["EPSGrowth"] * weights["EPSGrowth"] +
-    (5 - df["AnalystRating"]) * weights["Rating"] +
-    df["TargetUpside"] * weights["Upside"] +
-    df["SentimentScore"] * weights["SentimentScore"] +
-    df["InsiderDepth"] * weights["InsiderDepth"]
-).round(2)
-
-# --- Badge Assignment ---
-q1, q2, q3 = df["SmartScore"].quantile([0.25, 0.5, 0.75])
-def badge(score):
-    if score >= q3: return "🟩 Top Quartile"
-    elif score >= q2: return "🟨 Top Half"
-    elif score >= q1: return "🟥 Bottom Half"
-    else: return "⬛ Bottom Quartile"
-df["Badge"] = df["SmartScore"].apply(badge)
-
-# --- Sort Dropdown ---
-sort_column = st.selectbox("Sort by column", df.columns.tolist(), index=0)
-df = df.sort_values(by=sort_column)
-
-# --- Header Info ---
+# Main area
 st.title("Terminal")
 st.markdown(f"""
 <div style='display: flex; gap: 20px; margin-bottom: 4px;'>
@@ -164,7 +133,7 @@ st.markdown(f"""
 <hr style='border-top: 1px solid #ccc; margin-bottom: 8px;' />
 """, unsafe_allow_html=True)
 
-# --- Table Rendering ---
+# Table rendering
 header_html = ''.join(f"<th>{col}</th>" for col in df.columns)
 row_html = ""
 for _, row in df.iterrows():
