@@ -25,61 +25,65 @@ with st.sidebar:
         <style>
         /* Sidebar container */
         section[data-testid="stSidebar"] {
-            background-color: #000000; /* black background */
-            padding: 12px;
+            background-color: #000000;
+            padding: 16px;
         }
-
-        /* Text and label styling in sidebar */
+        
+        /* General text and inputs */
         section[data-testid="stSidebar"] * {
             color: #f1f5f9 !important;
-            font-size: 14px !important;
             font-family: 'Lato', sans-serif;
+            font-size: 14px !important;
         }
-
-        /* Label size specifically */
+        
+        /* Labels */
         section[data-testid="stSidebar"] label {
             font-size: 13px !important;
             font-weight: 500;
             color: #cbd5e1 !important;
         }
-
-        /* Headers in sidebar */
-        section[data-testid="stSidebar"] h1,
-        section[data-testid="stSidebar"] h2,
-        section[data-testid="stSidebar"] h3,
-        section[data-testid="stSidebar"] h4 {
-            color: #facc15 !important; /* gold-yellow headers */
-            font-size: 15px !important;
-            margin-top: 12px;
+        
+        /* Text inputs */
+        section[data-testid="stSidebar"] input[type="number"],
+        section[data-testid="stSidebar"] input[type="text"] {
+            background-color: #1e293b !important;
+            color: #f1f5f9 !important;
+            border: 1px solid #334155 !important;
+            border-radius: 6px !important;
+            padding: 6px 8px !important;
+            font-size: 13px !important;
+        }
+        
+        /* Toggle switches */
+        div[data-testid="stToggle"] {
+            padding-top: 6px;
+            padding-bottom: 6px;
         }
         </style>
     """, unsafe_allow_html=True)
 
-    with st.expander("Filters"):
-        col1, col2, col3 = st.columns([2, 1, 1])
-        with col1: st.markdown("<div class='sidebar-label'>PEG</div>", unsafe_allow_html=True)
-        with col2: peg_min = st.number_input(" ", value=0.0, key="peg_min")
-        with col3: peg_max = st.number_input("  ", value=2.0, key="peg_max")
-
-        col1, col2, col3 = st.columns([2, 1, 1])
-        with col1: st.markdown("<div class='sidebar-label'>EPS Growth</div>", unsafe_allow_html=True)
-        with col2: eps_min = st.number_input("  ", value=10, key="eps_min")
-        with col3: eps_max = st.number_input("   ", value=100, key="eps_max")
-
-        col1, col2, col3 = st.columns([2, 1, 1])
-        with col1: st.markdown("<div class='sidebar-label'>Analyst Rating</div>", unsafe_allow_html=True)
-        with col2: rating_min = st.number_input("    ", value=1.0, key="rating_min")
-        with col3: rating_max = st.number_input("     ", value=3.5, key="rating_max")
-
-        col1, col2, col3 = st.columns([2, 1, 1])
-        with col1: st.markdown("<div class='sidebar-label'>Target Upside</div>", unsafe_allow_html=True)
-        with col2: upside_min = st.number_input("      ", value=10, key="upside_min")
-        with col3: upside_max = st.number_input("       ", value=100, key="upside_max")
+    with st.expander("📊 Filter Stocks", expanded=True):
+        st.markdown("#### PEG Range")
+        peg_col1, peg_col2 = st.columns(2)
+        peg_min = peg_col1.number_input("Min PEG", key="peg_min", value=0.0, label_visibility="collapsed")
+        peg_max = peg_col2.number_input("Max PEG", key="peg_max", value=2.0, label_visibility="collapsed")
+    
+        st.markdown("#### EPS Growth (%) Range")
+        eps_col1, eps_col2 = st.columns(2)
+        eps_min = eps_col1.number_input("Min EPS Growth", key="eps_min", value=10, label_visibility="collapsed")
+        eps_max = eps_col2.number_input("Max EPS Growth", key="eps_max", value=100, label_visibility="collapsed")
+    
+        st.markdown("#### Analyst Rating Range")
+        rating_col1, rating_col2 = st.columns(2)
+        rating_min = rating_col1.number_input("Min Rating", key="rating_min", value=1.0, step=0.1, label_visibility="collapsed")
+        rating_max = rating_col2.number_input("Max Rating", key="rating_max", value=3.5, step=0.1, label_visibility="collapsed")
 
         st.divider()
-        us_only = st.checkbox("🇺🇸 US Only", value=True)
-        nasdaq_only = st.checkbox("NASDAQ Only")
-        nyse_only = st.checkbox("NYSE Only")
+        # Dummy toggle filters
+        with st.expander("🌐 Market Filters"):
+            us_only = st.toggle("US Only", value=True)
+            nasdaq_only = st.toggle("Nasdaq Only", value=False)
+            nyse_only = st.toggle("NYSE Only", value=False)
 
     with st.expander("Smart Score Weights"):
         peg_w = st.slider("PEG Weight", 0, 100, 20)
