@@ -92,6 +92,17 @@ a.ticker-link {
 a.ticker-link:hover {
     text-decoration: underline;
 }
+/* Hide spin buttons in Firefox */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Hide spin buttons in Firefox */
+input[type="number"] {
+    -moz-appearance: textfield;
+}
 </style>
 """, unsafe_allow_html=True)
 
