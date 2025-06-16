@@ -26,8 +26,9 @@ html, body, .stApp, .block-container {
     color: #f1f5f9 !important;
 }
 section[data-testid="stSidebar"] {
-    background-color: #0f172a !important;
-    padding: 8px 16px 8px 16px;
+    background-color: #070b15 !important;
+    color: #f1f5f9 !important;
+    padding: 8px 8px 8px 8px;
     width: 240px !important;
 }
 .sidebar-section {
@@ -35,6 +36,7 @@ section[data-testid="stSidebar"] {
 }
 .sidebar-label {
     font-size: 13px;
+    color: #f1f5f9 !important;
     margin-bottom: 2px;
 }
 .filter-row {
@@ -92,7 +94,7 @@ a.ticker-link:hover {
 
 # Sidebar content
 with st.sidebar:
-    with st.expander("ð Filter Stocks", expanded=True):
+    with st.expander("Filter Stocks", expanded=False):
         st.markdown('<div class="sidebar-label">PEG</div>', unsafe_allow_html=True)
         st.markdown('<div class="filter-row"><input type="number" placeholder="Min"/><input type="number" placeholder="Max"/></div>', unsafe_allow_html=True)
 
@@ -105,11 +107,11 @@ with st.sidebar:
         st.markdown('<div class="sidebar-label">Target Upside</div>', unsafe_allow_html=True)
         st.markdown('<div class="filter-row"><input type="number" placeholder="Min"/><input type="number" placeholder="Max"/></div>', unsafe_allow_html=True)
 
-        st.toggle("ðºð¸ US Only")
-        st.toggle("ð£ Nasdaq Only")
-        st.toggle("ð  NYSE Only")
+        st.toggle("US Only")
+        st.toggle("Nasdaq Only")
+        st.toggle("NYSE Only")
 
-    with st.expander("âï¸ Smart Score Weights", expanded=False):
+    with st.expander("Smart Score Weights", expanded=False):
         st.slider("PEG", 0, 100, 20)
         st.slider("EPS Growth", 0, 100, 15)
         st.slider("Analyst Rating", 0, 100, 20)
@@ -118,10 +120,10 @@ with st.sidebar:
         st.slider("Insider Depth", 0, 100, 15)
 
     st.divider()
-    st.markdown("ð **Charts**")
-    st.markdown("ð **Research**")
-    st.markdown("ð§ª **Misc**")
-    st.markdown("ð **Information Hub**")
+    st.markdown("Charts")
+    st.markdown("Research")
+    st.markdown("Misc")
+    st.markdown("Information Hub")
 
 # Main area
 st.title("Terminal")
