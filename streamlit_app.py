@@ -33,7 +33,7 @@ with st.sidebar:
         </style>
     """, unsafe_allow_html=True)
 
-    with st.expander("📊 Filter Stocks", expanded=True):
+    with st.expander("Filters"):
         col1, col2, col3 = st.columns([2, 1, 1])
         with col1: st.markdown("<div class='sidebar-label'>PEG</div>", unsafe_allow_html=True)
         with col2: peg_min = st.number_input(" ", value=0.0, key="peg_min")
@@ -59,7 +59,7 @@ with st.sidebar:
         nasdaq_only = st.checkbox("NASDAQ Only")
         nyse_only = st.checkbox("NYSE Only")
 
-    with st.expander("⚖️ Smart Score Weights", expanded=True):
+    with st.expander("Smart Score Weights"):
         peg_w = st.slider("PEG Weight", 0, 100, 20)
         eps_w = st.slider("EPS Growth Weight", 0, 100, 15)
         rating_w = st.slider("Analyst Rating Weight", 0, 100, 20)
