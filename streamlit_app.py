@@ -95,10 +95,16 @@ a.ticker-link:hover {
 
 # Sidebar content
 with st.sidebar:
-    with st.expander("Filter Stocks", expanded=False):
+        with st.expander("Filter Stocks", expanded=True):
+        st.markdown('<div class="sidebar-label">Price</div>', unsafe_allow_html=True)
+        st.markdown('<div class="filter-row"><input type="number" placeholder="Min"/><input type="number" placeholder="Max"/></div>', unsafe_allow_html=True)
+
         st.markdown('<div class="sidebar-label">PEG</div>', unsafe_allow_html=True)
         st.markdown('<div class="filter-row"><input type="number" placeholder="Min"/><input type="number" placeholder="Max"/></div>', unsafe_allow_html=True)
 
+        st.markdown('<div class="sidebar-label">PE</div>', unsafe_allow_html=True)
+        st.markdown('<div class="filter-row"><input type="number" placeholder="Min"/><input type="number" placeholder="Max"/></div>', unsafe_allow_html=True)
+    
         st.markdown('<div class="sidebar-label">EPS Growth</div>', unsafe_allow_html=True)
         st.markdown('<div class="filter-row"><input type="number" placeholder="Min"/><input type="number" placeholder="Max"/></div>', unsafe_allow_html=True)
 
@@ -107,7 +113,12 @@ with st.sidebar:
 
         st.markdown('<div class="sidebar-label">Target Upside</div>', unsafe_allow_html=True)
         st.markdown('<div class="filter-row"><input type="number" placeholder="Min"/><input type="number" placeholder="Max"/></div>', unsafe_allow_html=True)
-    
+
+        st.markdown('<div class="sidebar-label">Market Cap</div>', unsafe_allow_html=True)
+        st.markdown('<div class="filter-row"><input type="number" placeholder="Min"/><input type="number" placeholder="Max"/></div>', unsafe_allow_html=True)
+
+        st.markdown('<div class="sidebar-label">30-Day Volume</div>', unsafe_allow_html=True)
+        st.markdown('<div class="filter-row"><input type="number" placeholder="Min"/><input type="number" placeholder="Max"/></div>', unsafe_allow_html=True)    
     st.divider()
            
     st.toggle("US Only")
