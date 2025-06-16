@@ -10,9 +10,9 @@ df = pd.read_csv("mock_stock_data.csv")
 
 # Define and enforce column order
 column_order = [
-    "Ticker", "Price", "SmartScore", "PEG", "PE", "EPSGrowth", "MarketCap",
-    "30DayVol", "AnalystRating", "TargetUpside", "Sector", "InsiderDepth",
-    "SentimentScore", "RedditSentiment", "HiLoProximity"
+    "Ticker", "Price", "TerminalScore", "PEG", "PE", "EPSGr", "MktCap",
+    "30DayVol", "AnalystSc", "TrgtUpside", "Sector", "InsiderSc",
+    "SentSc", "RedditSc", "52wH"
 ]
 df = df[[col for col in column_order if col in df.columns]]
 
