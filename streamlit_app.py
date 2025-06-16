@@ -110,9 +110,9 @@ with st.sidebar:
     
     st.divider()
            
-        st.toggle("US Only")
-        st.toggle("Nasdaq Only")
-        st.toggle("NYSE Only")
+    st.toggle("US Only")
+    st.toggle("Nasdaq Only")
+    st.toggle("NYSE Only")
     
     st.divider()
     
