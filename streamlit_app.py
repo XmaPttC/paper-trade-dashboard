@@ -48,13 +48,29 @@ div[data-testid="stNumberInput"] {
     padding: 2px !important;
     box-shadow: none !important;
 }
-/* Style the actual <input> field inside */
+/* Outer wrapper around each input (catch-all for input containers) */
+div[data-testid="stNumberInput"], div[data-baseweb="input"], div[class*="StyledBox"] {
+    background-color: transparent !important;
+    border: 0px solid #334155 !important;
+    border-radius: 0px !important;
+    padding: 0px !important;
+    box-shadow: none !important;
+    margin: 0px !important;
+}
+
+/* The actual <input> field */
 div[data-testid="stNumberInput"] input {
     background-color: #0f172a !important;
     color: #f1f5f9 !important;
-    border: 0px solid #FFA500 !important;
+    border: none !important;
     box-shadow: none !important;
-    padding: 0px 0px !important
+    padding: 6px 8px !important;
+}
+
+/* Remove focus outline for a cleaner look */
+input:focus {
+    outline: none !important;
+    box-shadow: none !important;
 }
 .custom-table {
     background-color: #1e293b;
