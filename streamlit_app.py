@@ -94,8 +94,8 @@ a.ticker-link:hover {
 
 [data-baseweb="base-input"]{
 background:linear-gradient(to bottom, #3399ff 0%,#00ffff 100%);
-border: 2px;
-border-radius: 3px;
+border: 10px;
+border-radius: 10px;
 }
 
 input[class]{
