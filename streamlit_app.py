@@ -94,8 +94,10 @@ with st.sidebar:
         def number_input_pair(label):
             st.markdown(f'<div class="sidebar-label">{label}</div>', unsafe_allow_html=True)
             col1, col2 = st.columns(2)
-            with col1: min_val = st.number_input(f"Min {label}", key=f"{label}_min")
-            with col2: max_val = st.number_input(f"Max {label}", key=f"{label}_max")
+            col_min = float(df[label].min()) if label in df.columns else 0.0
+            col_max = float(df[label].max()) if label in df.columns else 100.0
+            with col1: min_val = st.number_input(f"Min {label}", value=col_min, key=f"{label}_min")
+            with col2: max_val = st.number_input(f"Max {label}", value=col_max, key=f"{label}_max")
             return min_val, max_val
 
         price_min, price_max = number_input_pair("Price")
