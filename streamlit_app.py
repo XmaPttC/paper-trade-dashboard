@@ -7,7 +7,7 @@ st.set_page_config(layout="wide", page_title="Terminal")
 # --- Load data ---
 df = pd.read_csv("mock_stock_data.csv")
 
-# --- Define and enforce column order ---
+# --- Define column order ---
 column_order = [
     "Ticker", "Price", "TerminalScore", "PEG", "PE", "EPSGr", "MktCap",
     "30DayVol", "AnalystSc", "TrgtUpside", "Sector", "InsiderSc",
@@ -15,7 +15,7 @@ column_order = [
 ]
 df = df[[col for col in column_order if col in df.columns]]
 
-# --- Sidebar styling ---
+# --- Style ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Lato&display=swap');
@@ -26,14 +26,12 @@ html, body, .stApp, .block-container {
 }
 section[data-testid="stSidebar"] {
     background-color: #070b15 !important;
-    color: #f1f5f9 !important;
     font-size: 13px;
-    padding: 8px;
+    padding: 8px 8px 8px 8px;
     width: 240px !important;
 }
 .sidebar-label {
     font-size: 13px;
-    color: #f1f5f9 !important;
     margin-bottom: 4px;
     border-bottom: 0.5px solid #262a32;
 }
@@ -98,61 +96,31 @@ input[type="number"] {
 </style>
 """, unsafe_allow_html=True)
 
-# --- Sidebar content with working filter logic ---
-# Define the reusable filter input function
-def filter_input(label, min_default=0, max_default=10000000, step=1.0):
+# --- Sidebar filters ---
+def filter_input(label, min_default, max_default):
     st.markdown(f'<div class="sidebar-label">{label}</div>', unsafe_allow_html=True)
-
-    # Begin custom row container for inputs
-    st.markdown('<div class="filter-row">', unsafe_allow_html=True)
-
-    min_val = st.number_input(
-        f"{label}_min",
-        value=min_default,
-        key=f"{label}_min",
-        label_visibility="collapsed",
-        step=step,
-        format="%.2f" if isinstance(step, float) else "%d"
-    )
-    max_val = st.number_input(
-        f"{label}_max",
-        value=max_default,
-        key=f"{label}_max",
-        label_visibility="collapsed",
-        step=step,
-        format="%.2f" if isinstance(step, float) else "%d"
-    )
-
-    # End custom row container
-    st.markdown('</div>', unsafe_allow_html=True)
-
+    min_key, max_key = f"{label}_min", f"{label}_max"
+    min_val = st.number_input(min_key, value=min_default, label_visibility="collapsed", key=min_key)
+    max_val = st.number_input(max_key, value=max_default, label_visibility="collapsed", key=max_key)
+    html = f"""
+    <div class="filter-row">
+        <input type="number" value="{min_val}" placeholder="Min" oninput="document.getElementById('{min_key}').value=this.value">
+        <input type="number" value="{max_val}" placeholder="Max" oninput="document.getElementById('{max_key}').value=this.value">
+    </div>
+    """
+    st.markdown(html, unsafe_allow_html=True)
     return min_val, max_val
 
-# Use the function inside the sidebar
 with st.sidebar:
     with st.expander("Filter Stocks", expanded=True):
         price_min, price_max = filter_input("Price", 0, 1000)
-        peg_min, peg_max = filter_input("PEG", 0.0, 5.0, step=0.1)
+        peg_min, peg_max = filter_input("PEG", 0.0, 5.0)
         pe_min, pe_max = filter_input("PE", 0.0, 100.0)
         eps_min, eps_max = filter_input("EPSGr", 0.0, 100.0)
-        rating_min, rating_max = filter_input("AnalystSc", 1.0, 5.0, step=0.1)
+        rating_min, rating_max = filter_input("AnalystSc", 1.0, 5.0)
         upside_min, upside_max = filter_input("TrgtUpside", 0.0, 100.0)
-        mcap_min, mcap_max = filter_input("MktCap", 0, 10_000_000_000_000)
-        vol_min, vol_max = filter_input("30DayVol", 0, 500_000_000)
-
-    st.divider()
-    st.toggle("US Only")
-    st.toggle("Nasdaq Only")
-    st.toggle("NYSE Only")
-
-    st.divider()
-    with st.expander("Smart Score Weights", expanded=True):
-        peg_w = st.slider("PEG", 0, 100, 50)
-        eps_w = st.slider("EPS Growth", 0, 100, 50)
-        rating_w = st.slider("Analyst Rating", 0, 100, 50)
-        upside_w = st.slider("Target Upside", 0, 100, 50)
-        sentiment_w = st.slider("Sentiment", 0, 100, 50)
-        insider_w = st.slider("Insider Depth", 0, 100, 50)
+        mcap_min, mcap_max = filter_input("MktCap", 0, 10**13)
+        vol_min, vol_max = filter_input("30DayVol", 0, 10**9)
 
 # --- Apply filters ---
 df = df[
@@ -166,26 +134,7 @@ df = df[
     (df["30DayVol"].between(vol_min, vol_max))
 ]
 
-# --- Smart Score logic ---
-total = sum([peg_w, eps_w, rating_w, upside_w, sentiment_w, insider_w]) or 1
-weights = {
-    "PEG": peg_w / total,
-    "EPSGr": eps_w / total,
-    "AnalystSc": rating_w / total,
-    "TrgtUpside": upside_w / total,
-    "SentSc": sentiment_w / total,
-    "InsiderSc": insider_w / total
-}
-df["TerminalScore"] = (
-    (1 / df["PEG"].clip(lower=0.01)) * weights["PEG"] +
-    df["EPSGr"] * weights["EPSGr"] +
-    (5 - df["AnalystSc"]) * weights["AnalystSc"] +
-    df["TrgtUpside"] * weights["TrgtUpside"] +
-    df["SentSc"] * weights["SentSc"] +
-    df["InsiderSc"] * weights["InsiderSc"]
-).round(2)
-
-# --- Main area header ---
+# --- Header ---
 st.title("Terminal")
 st.markdown(f"""
 <div style='display: flex; gap: 20px; margin-bottom: 4px;'>
