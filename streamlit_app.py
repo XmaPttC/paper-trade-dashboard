@@ -4,10 +4,10 @@ from datetime import datetime
 
 st.set_page_config(layout="wide", page_title="Terminal")
 
-# Load data
+# --- Load data ---
 df = pd.read_csv("mock_stock_data.csv")
 
-# Define and enforce column order
+# --- Enforce column order ---
 column_order = [
     "Ticker", "Price", "TerminalScore", "PEG", "PE", "EPSGr", "MktCap",
     "30DayVol", "AnalystSc", "TrgtUpside", "Sector", "InsiderSc",
@@ -15,7 +15,7 @@ column_order = [
 ]
 df = df[[col for col in column_order if col in df.columns]]
 
-# Sidebar styling
+# --- Sidebar CSS and layout ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Lato&display=swap');
@@ -26,9 +26,7 @@ html, body, .stApp, .block-container {
 }
 section[data-testid="stSidebar"] {
     background-color: #070b15 !important;
-    color: #f1f5f9 !important;
-    font-size: 13px;
-    padding: 8px 8px 8px 8px;
+    padding: 8px;
     width: 240px !important;
 }
 .sidebar-label {
@@ -70,7 +68,6 @@ input:focus {
 }
 .custom-table th {
     background-color: #334155;
-    cursor: pointer;
 }
 .custom-table tr:nth-child(even) {
     background-color: #3d5975;
@@ -88,69 +85,63 @@ a.ticker-link {
 a.ticker-link:hover {
     text-decoration: underline;
 }
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-input[type="number"] {
-    -moz-appearance: textfield;
-}
 </style>
 """, unsafe_allow_html=True)
 
-# --- Sidebar logic ---
+# --- Sidebar ---
 with st.sidebar:
     with st.expander("Filter Stocks", expanded=True):
-        def get_input(label, default_min, default_max):
+        def number_input_pair(label):
             st.markdown(f'<div class="sidebar-label">{label}</div>', unsafe_allow_html=True)
             col1, col2 = st.columns(2)
-            with col1: min_val = st.number_input(f"{label}_min", label_visibility="collapsed", value=default_min)
-            with col2: max_val = st.number_input(f"{label}_max", label_visibility="collapsed", value=default_max)
+            with col1: min_val = st.number_input(f"Min {label}", key=f"{label}_min")
+            with col2: max_val = st.number_input(f"Max {label}", key=f"{label}_max")
             return min_val, max_val
 
-        price_min, price_max = get_input("Price", 0.0, 1000.0)
-        peg_min, peg_max = get_input("PEG", 0.0, 3.0)
-        pe_min, pe_max = get_input("PE", 0.0, 50.0)
-        eps_min, eps_max = get_input("EPS Growth", 0.0, 100.0)
-        analyst_min, analyst_max = get_input("Analyst Rating", 1.0, 5.0)
-        upside_min, upside_max = get_input("Target Upside", 0.0, 100.0)
-        mcap_min, mcap_max = get_input("Market Cap", 0.0, 5e12)
-        vol_min, vol_max = get_input("30-Day Volume", 0.0, 5e8)
+        price_min, price_max = number_input_pair("Price")
+        peg_min, peg_max = number_input_pair("PEG")
+        pe_min, pe_max = number_input_pair("PE")
+        eps_min, eps_max = number_input_pair("EPSGr")
+        rating_min, rating_max = number_input_pair("AnalystSc")
+        upside_min, upside_max = number_input_pair("TrgtUpside")
+        mcap_min, mcap_max = number_input_pair("MktCap (M)")
+        vol_min, vol_max = number_input_pair("30DayVol (M)")
 
-    st.divider()
     st.toggle("US Only")
     st.toggle("Nasdaq Only")
     st.toggle("NYSE Only")
 
-    st.divider()
     with st.expander("Smart Score Weights", expanded=False):
-        peg_w = st.slider("PEG", 0, 100, 20)
-        eps_w = st.slider("EPS Growth", 0, 100, 15)
-        rating_w = st.slider("Analyst Rating", 0, 100, 20)
-        upside_w = st.slider("Target Upside", 0, 100, 15)
-        sentiment_w = st.slider("Sentiment", 0, 100, 15)
-        insider_w = st.slider("Insider Depth", 0, 100, 15)
+        peg_w = st.slider("PEG", 0, 100, 50)
+        eps_w = st.slider("EPS Growth", 0, 100, 50)
+        rating_w = st.slider("Analyst Rating", 0, 100, 50)
+        upside_w = st.slider("Target Upside", 0, 100, 50)
+        sentiment_w = st.slider("Sentiment", 0, 100, 50)
+        insider_w = st.slider("Insider Depth", 0, 100, 50)
 
-    st.divider()
-    st.markdown("Charts")
-    st.markdown("Research")
-    st.markdown("Misc")
-    st.markdown("Information Hub")
+    st.markdown("---")
+    st.markdown("📈 Charts")
+    st.markdown("🔬 Research")
+    st.markdown("🧪 Misc")
+    st.markdown("📚 Information Hub")
 
-# --- Apply filters ---
+# --- Convert fields for filtering ---
+df["MktCap"] = pd.to_numeric(df["MktCap"], errors="coerce") / 1e6  # Convert to millions
+df["30DayVol"] = pd.to_numeric(df["30DayVol"], errors="coerce") / 1e6
+
+# --- Filtering ---
 df = df[
     (df["Price"].between(price_min, price_max)) &
     (df["PEG"].between(peg_min, peg_max)) &
     (df["PE"].between(pe_min, pe_max)) &
     (df["EPSGr"].between(eps_min, eps_max)) &
-    (df["AnalystSc"].between(analyst_min, analyst_max)) &
+    (df["AnalystSc"].between(rating_min, rating_max)) &
     (df["TrgtUpside"].between(upside_min, upside_max)) &
     (df["MktCap"].between(mcap_min, mcap_max)) &
     (df["30DayVol"].between(vol_min, vol_max))
 ]
 
-# --- TerminalScore calculation ---
+# --- TerminalScore Calculation ---
 total = sum([peg_w, eps_w, rating_w, upside_w, sentiment_w, insider_w]) or 1
 weights = {
     "PEG": peg_w / total,
@@ -169,22 +160,40 @@ df["TerminalScore"] = (
     df["InsiderSc"] * weights["InsiderSc"]
 ).round(2)
 
-# --- Main content ---
+# --- Format display fields ---
+def format_market_cap(m):
+    if m >= 1e6: return f"<span style='color:#f87171'>{m/1e6:.1f}T</span>"
+    elif m >= 1e3: return f"<span style='color:#4ade80'>{m/1e3:.1f}B</span>"
+    else: return f"<span style='color:#c084fc'>{m:.0f}M</span>"
+
+df["MktCapDisplay"] = df["MktCap"].apply(format_market_cap)
+df["30DayVolDisplay"] = df["30DayVol"].apply(lambda v: f"{v:.1f}M")
+df["TrgtUpsideDisplay"] = df["TrgtUpside"].apply(lambda x: f"{x:.1f}%")
+
+# --- Display ---
 st.title("Terminal")
 st.markdown(f"""
 <div style='display: flex; gap: 20px; margin-bottom: 4px;'>
-  <div style='border:1px solid #ccc; font-size: 10px; padding:4px 8px;'><strong>Total Results:</strong> {len(df)}</div>
-  <div style='border:1px solid #ccc; font-size: 10px; padding:4px 8px;'><strong>Date:</strong> {datetime.now().strftime('%Y-%m-%d')}</div>
+  <div style='border:1px solid #ccc; font-size: 10px; padding:4px 8px;'>
+    <strong>Total Results:</strong> {len(df)}
+  </div>
+  <div style='border:1px solid #ccc; font-size: 10px; padding:4px 8px;'>
+    <strong>Date:</strong> {datetime.now().strftime('%Y-%m-%d')}
+  </div>
 </div>
 <hr style='border-top: 1px solid #ccc; margin-bottom: 8px;' />
 """, unsafe_allow_html=True)
 
-# --- Table rendering ---
-header_html = ''.join(f"<th>{col}</th>" for col in df.columns)
+# --- Table Rendering ---
+visible_columns = ["Ticker", "Price", "TerminalScore", "PEG", "PE", "EPSGr", "MktCapDisplay",
+                   "30DayVolDisplay", "AnalystSc", "TrgtUpsideDisplay", "Sector", "InsiderSc",
+                   "SentSc", "RedditSc", "52wH"]
+
+header_html = ''.join(f"<th>{col}</th>" for col in visible_columns)
 row_html = ""
 for _, row in df.iterrows():
     row_cells = ""
-    for col in df.columns:
+    for col in visible_columns:
         val = row[col]
         if col == "Ticker":
             val = f"<a class='ticker-link' href='https://finance.yahoo.com/quote/{val}' target='_blank'>{val}</a>"
