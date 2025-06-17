@@ -4,8 +4,10 @@ from datetime import datetime
 
 st.set_page_config(layout="wide", page_title="Terminal")
 
-# Load and order data
+# Load data
 df = pd.read_csv("mock_stock_data.csv")
+
+# Define and enforce column order
 column_order = [
     "Ticker", "Price", "TerminalScore", "PEG", "PE", "EPSGr", "MktCap",
     "30DayVol", "AnalystSc", "TrgtUpside", "Sector", "InsiderSc",
@@ -13,7 +15,7 @@ column_order = [
 ]
 df = df[[col for col in column_order if col in df.columns]]
 
-# --- Styling ---
+# Sidebar styling
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Lato&display=swap');
@@ -26,57 +28,100 @@ section[data-testid="stSidebar"] {
     background-color: #070b15 !important;
     color: #f1f5f9 !important;
     font-size: 13px;
-    padding: 8px;
+    padding: 8px 8px 8px 8px;
     width: 240px !important;
 }
-.sidebar-label { font-size: 13px; color: #f1f5f9; margin-bottom: 2px; }
-.filter-row { display: flex; justify-content: space-between; gap: 6px; margin-bottom: 10px; }
-.filter-row input {
-    background-color: #1e293b; color: #f1f5f9;
-    border: 1px solid #475569; border-radius: 2px;
-    padding: 4px; width: 100%; font-size: 12px;
+.sidebar-label {
+    font-size: 13px;
+    color: #f1f5f9 !important;
+    margin-bottom: 4px;
+    border-bottom: 0.5px solid #262a32;
 }
-input:focus { outline: none; border: 1px solid #38bdf8; }
+.filter-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+.filter-row input {
+    background-color: #1e293b;
+    color: #f1f5f9;
+    border: 1px solid #475569;
+    border-radius: 2px;
+    padding: 4px;
+    width: 100%;
+    font-size: 12px;
+}
+input:focus {
+    outline: none;
+    border: 1px solid #38bdf8;
+}
 .custom-table {
-    background-color: #1e293b; color: #f1f5f9;
-    border-collapse: collapse; font-size: 13px; width: 100%;
+    background-color: #1e293b;
+    color: #f1f5f9;
+    border-collapse: collapse;
+    font-size: 13px;
+    width: 100%;
 }
 .custom-table th, .custom-table td {
-    border: 1px solid #334155; padding: 6px 10px; text-align: left;
+    border: 1px solid #334155;
+    padding: 6px 10px;
+    text-align: left;
 }
-.custom-table th { background-color: #334155; cursor: pointer; }
-.custom-table tr:nth-child(even) { background-color: #3d5975; }
-.custom-table tr:nth-child(odd) { background-color: #466686; }
-.custom-table tr:hover { background-color: #64748b; }
-a.ticker-link { color: #93c5fd; text-decoration: none; }
-a.ticker-link:hover { text-decoration: underline; }
+.custom-table th {
+    background-color: #334155;
+    cursor: pointer;
+}
+.custom-table tr:nth-child(even) {
+    background-color: #3d5975;
+}
+.custom-table tr:nth-child(odd) {
+    background-color: #466686;
+}
+.custom-table tr:hover {
+    background-color: #64748b;
+}
+a.ticker-link {
+    color: #93c5fd;
+    text-decoration: none;
+}
+a.ticker-link:hover {
+    text-decoration: underline;
+}
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type="number"] {
+    -moz-appearance: textfield;
+}
 </style>
 """, unsafe_allow_html=True)
 
-# --- Sidebar ---
+# --- Sidebar logic ---
 with st.sidebar:
-    with st.expander("Filter Stocks", expanded=False):
-        def number_input_pair(label):
+    with st.expander("Filter Stocks", expanded=True):
+        def get_input(label, default_min, default_max):
             st.markdown(f'<div class="sidebar-label">{label}</div>', unsafe_allow_html=True)
-            c1, c2 = st.columns(2)
-            min_val = c1.number_input(f"Min {label}", key=f"{label}_min", value=0.0)
-            max_val = c2.number_input(f"Max {label}", key=f"{label}_max", value=9999.0)
+            col1, col2 = st.columns(2)
+            with col1: min_val = st.number_input(f"{label}_min", label_visibility="collapsed", value=default_min)
+            with col2: max_val = st.number_input(f"{label}_max", label_visibility="collapsed", value=default_max)
             return min_val, max_val
 
-        peg_min, peg_max = number_input_pair("PEG")
-        eps_min, eps_max = number_input_pair("EPSGr")
-        rating_min, rating_max = number_input_pair("AnalystSc")
-        upside_min, upside_max = number_input_pair("TrgtUpside")
-        price_min, price_max = number_input_pair("Price")
-        pe_min, pe_max = number_input_pair("PE")
-        mcap_min, mcap_max = number_input_pair("MktCap")
-        vol_min, vol_max = number_input_pair("30DayVol")
+        price_min, price_max = get_input("Price", 0.0, 1000.0)
+        peg_min, peg_max = get_input("PEG", 0.0, 3.0)
+        pe_min, pe_max = get_input("PE", 0.0, 50.0)
+        eps_min, eps_max = get_input("EPS Growth", 0.0, 100.0)
+        analyst_min, analyst_max = get_input("Analyst Rating", 1.0, 5.0)
+        upside_min, upside_max = get_input("Target Upside", 0.0, 100.0)
+        mcap_min, mcap_max = get_input("Market Cap", 0.0, 5e12)
+        vol_min, vol_max = get_input("30-Day Volume", 0.0, 5e8)
 
     st.divider()
-
-    us_only = st.toggle("🇺🇸 US Only")
-    nasdaq = st.toggle("🟣 Nasdaq Only")
-    nyse = st.toggle("🟠 NYSE Only")
+    st.toggle("US Only")
+    st.toggle("Nasdaq Only")
+    st.toggle("NYSE Only")
 
     st.divider()
     with st.expander("Smart Score Weights", expanded=False):
@@ -88,24 +133,24 @@ with st.sidebar:
         insider_w = st.slider("Insider Depth", 0, 100, 15)
 
     st.divider()
-    st.markdown("📈 Charts")
-    st.markdown("🔍 Research")
-    st.markdown("🧪 Misc")
-    st.markdown("📚 Information Hub")
+    st.markdown("Charts")
+    st.markdown("Research")
+    st.markdown("Misc")
+    st.markdown("Information Hub")
 
-# --- Filter Logic ---
+# --- Apply filters ---
 df = df[
-    (df["PEG"].between(peg_min, peg_max)) &
-    (df["EPSGr"].between(eps_min, eps_max)) &
-    (df["AnalystSc"].between(rating_min, rating_max)) &
-    (df["TrgtUpside"].between(upside_min, upside_max)) &
     (df["Price"].between(price_min, price_max)) &
+    (df["PEG"].between(peg_min, peg_max)) &
     (df["PE"].between(pe_min, pe_max)) &
+    (df["EPSGr"].between(eps_min, eps_max)) &
+    (df["AnalystSc"].between(analyst_min, analyst_max)) &
+    (df["TrgtUpside"].between(upside_min, upside_max)) &
     (df["MktCap"].between(mcap_min, mcap_max)) &
     (df["30DayVol"].between(vol_min, vol_max))
 ]
 
-# --- SmartScore Logic ---
+# --- TerminalScore calculation ---
 total = sum([peg_w, eps_w, rating_w, upside_w, sentiment_w, insider_w]) or 1
 weights = {
     "PEG": peg_w / total,
@@ -124,16 +169,7 @@ df["TerminalScore"] = (
     df["InsiderSc"] * weights["InsiderSc"]
 ).round(2)
 
-# --- Score Badge ---
-q1, q2, q3 = df["TerminalScore"].quantile([0.25, 0.5, 0.75])
-def badge(score):
-    if score >= q3: return "TQ"
-    elif score >= q2: return "TH"
-    elif score >= q1: return "BH"
-    else: return "BQ"
-df["Badge"] = df["TerminalScore"].apply(badge)
-
-# --- Table UI ---
+# --- Main content ---
 st.title("Terminal")
 st.markdown(f"""
 <div style='display: flex; gap: 20px; margin-bottom: 4px;'>
@@ -143,7 +179,7 @@ st.markdown(f"""
 <hr style='border-top: 1px solid #ccc; margin-bottom: 8px;' />
 """, unsafe_allow_html=True)
 
-# --- Table Rendering ---
+# --- Table rendering ---
 header_html = ''.join(f"<th>{col}</th>" for col in df.columns)
 row_html = ""
 for _, row in df.iterrows():
