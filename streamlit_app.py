@@ -103,11 +103,18 @@ with st.sidebar:
     with st.expander("Filter Stocks", expanded=True):
         def filter_input(label, min_default=0, max_default=10000000):
             st.markdown(f'<div class="sidebar-label">{label}</div>', unsafe_allow_html=True)
-            col1, col2 = st.columns(2)
-            with col1:
-                min_val = st.number_input(f"Min {label}", key=f"{label}_min", value=min_default)
-            with col2:
-                max_val = st.number_input(f"Max {label}", key=f"{label}_max", value=max_default)
+            
+            min_val = st.number_input(f"{label}_min", label_visibility="collapsed", key=f"{label}_min", value=min_default)
+            max_val = st.number_input(f"{label}_max", label_visibility="collapsed", key=f"{label}_max", value=max_default)
+    
+            # Inject both fields into the custom filter-row layout
+            html = f"""
+            <div class="filter-row">
+                <input type="number" value="{min_val}" placeholder="Min" oninput="document.querySelector('input[id={label}_min]').value=this.value">
+                <input type="number" value="{max_val}" placeholder="Max" oninput="document.querySelector('input[id={label}_max]').value=this.value">
+            </div>
+            """
+            st.markdown(html, unsafe_allow_html=True)
             return min_val, max_val
 
         price_min, price_max = filter_input("Price", 0, 1000)
