@@ -94,15 +94,16 @@ a.ticker-link:hover {
 
 [data-baseweb="base-input"]{
 background-color: #1e293b !important;
-border: 1px solid #475569 !important;
-border-radius: 1px !important;
+border: 0px !important;
 }
 
 input[class]{
 font-size:14px;
 color: #f1f5f9;
-border: 1px solid #475569 !important;
+border: 0px !important;
 }
+
+[data-testid="stForm"] {border: 0px}
 </style>
 """, unsafe_allow_html=True)
 
