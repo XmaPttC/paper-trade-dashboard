@@ -93,6 +93,18 @@ input[type="number"]::-webkit-outer-spin-button {
 input[type="number"] {
     -moz-appearance: textfield;
 }
+[data-baseweb="base-input"] {
+    background-color: #1e293b;
+    color: #f1f5f9;
+    border: 1px solid #475569;
+    border-radius: 2px;
+    font-size: 12px;
+    padding: 4px;
+}
+
+[data-baseweb="base-input"]:focus-within {
+    border-color: #38bdf8;
+}
 </style>
 """, unsafe_allow_html=True)
 
