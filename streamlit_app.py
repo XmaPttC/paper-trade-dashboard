@@ -99,40 +99,46 @@ input[type="number"] {
 """, unsafe_allow_html=True)
 
 # --- Sidebar content with working filter logic ---
+# Define the reusable filter input function
+def filter_input(label, min_default=0, max_default=10000000, step=1.0):
+    st.markdown(f'<div class="sidebar-label">{label}</div>', unsafe_allow_html=True)
+
+    # Begin custom row container for inputs
+    st.markdown('<div class="filter-row">', unsafe_allow_html=True)
+
+    min_val = st.number_input(
+        f"{label}_min",
+        value=min_default,
+        key=f"{label}_min",
+        label_visibility="collapsed",
+        step=step,
+        format="%.2f" if isinstance(step, float) else "%d"
+    )
+    max_val = st.number_input(
+        f"{label}_max",
+        value=max_default,
+        key=f"{label}_max",
+        label_visibility="collapsed",
+        step=step,
+        format="%.2f" if isinstance(step, float) else "%d"
+    )
+
+    # End custom row container
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    return min_val, max_val
+
+# Use the function inside the sidebar
 with st.sidebar:
     with st.expander("Filter Stocks", expanded=True):
-        # Define the function first
-        def filter_input(label, min_default=0, max_default=10000000, step=1.0):
-            st.markdown(f'<div class="sidebar-label">{label}</div>', unsafe_allow_html=True)
-        
-            # Custom filter row container
-            st.markdown('<div class="filter-row">', unsafe_allow_html=True)
-        
-            min_val = st.number_input(
-                f"{label}_min", value=min_default, key=f"{label}_min",
-                label_visibility="collapsed", step=step,
-                format="%.2f" if isinstance(step, float) else "%d"
-            )
-            max_val = st.number_input(
-                f"{label}_max", value=max_default, key=f"{label}_max",
-                label_visibility="collapsed", step=step,
-                format="%.2f" if isinstance(step, float) else "%d"
-            )
-        
-            st.markdown('</div>', unsafe_allow_html=True)
-            return min_val, max_val
-
-        # Then call it inside the sidebar
-        with st.sidebar:
-            with st.expander("Filter Stocks", expanded=True):
-                price_min, price_max = filter_input("Price", 0, 1000)
-                peg_min, peg_max = filter_input("PEG", 0.0, 5.0, step=0.1)
-                pe_min, pe_max = filter_input("PE", 0.0, 100.0)
-                eps_min, eps_max = filter_input("EPSGr", 0.0, 100.0)
-                rating_min, rating_max = filter_input("AnalystSc", 1.0, 5.0, step=0.1)
-                upside_min, upside_max = filter_input("TrgtUpside", 0.0, 100.0)
-                mcap_min, mcap_max = filter_input("MktCap", 0, 10_000_000_000_000)
-                vol_min, vol_max = filter_input("30DayVol", 0, 500_000_000)
+        price_min, price_max = filter_input("Price", 0, 1000)
+        peg_min, peg_max = filter_input("PEG", 0.0, 5.0, step=0.1)
+        pe_min, pe_max = filter_input("PE", 0.0, 100.0)
+        eps_min, eps_max = filter_input("EPSGr", 0.0, 100.0)
+        rating_min, rating_max = filter_input("AnalystSc", 1.0, 5.0, step=0.1)
+        upside_min, upside_max = filter_input("TrgtUpside", 0.0, 100.0)
+        mcap_min, mcap_max = filter_input("MktCap", 0, 10_000_000_000_000)
+        vol_min, vol_max = filter_input("30DayVol", 0, 500_000_000)
 
     st.divider()
     st.toggle("US Only")
