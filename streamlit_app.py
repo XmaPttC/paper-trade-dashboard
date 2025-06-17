@@ -91,6 +91,18 @@ a.ticker-link:hover {
 .suffix-M { color: #c084fc; font-weight: bold; }
 .suffix-B { color: #86efac; font-weight: bold; }
 .suffix-T { color: #f87171; font-weight: bold; }
+
+[data-baseweb="base-input"]{
+background:linear-gradient(to bottom, #3399ff 0%,#00ffff 100%);
+border: 2px;
+border-radius: 3px;
+}
+
+input[class]{
+font-weight: bold;
+font-size:18px;
+color: orange;
+}
 </style>
 """, unsafe_allow_html=True)
 
