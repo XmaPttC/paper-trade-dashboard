@@ -93,22 +93,24 @@ a.ticker-link:hover {
 
 # --- Sidebar Content ---
 with st.sidebar:
-    with st.expander("📊 Filter Stocks", expanded=True):
-        def dual_input(label, colname):
-            min_val = float(df[colname].min())
-            max_val = float(df[colname].max())
+    with st.expander("Filter Stocks", expanded=True):
+        def styled_filter_row(label, key_min, key_max, default_min=0.0, default_max=1000.0):
             st.markdown(f'<div class="sidebar-label">{label}</div>', unsafe_allow_html=True)
-            return st.columns([1,1])[0].number_input(f"{label} Min", value=min_val, key=f"{colname}_min"), \
-                   st.columns([1,1])[1].number_input(f"{label} Max", value=max_val, key=f"{colname}_max")
+            cols = st.columns([1, 1])
+            with cols[0]:
+                min_val = st.number_input(f"Min {label}", key=key_min, label_visibility="collapsed", value=default_min, step=1.0)
+            with cols[1]:
+                max_val = st.number_input(f"Max {label}", key=key_max, label_visibility="collapsed", value=default_max, step=1.0)
+            return min_val, max_val
 
-        price_min, price_max = dual_input("Price", "Price")
-        peg_min, peg_max = dual_input("PEG", "PEG")
-        pe_min, pe_max = dual_input("PE", "PE")
-        eps_min, eps_max = dual_input("EPS Growth", "EPSGr")
-        rating_min, rating_max = dual_input("Analyst Rating", "AnalystSc")
-        upside_min, upside_max = dual_input("Target Upside", "TrgtUpside")
-        mcap_min, mcap_max = dual_input("Market Cap", "MktCap")
-        vol_min, vol_max = dual_input("30-Day Volume", "30DayVol")
+        price_min, price_max = styled_filter_row("Price", "price_min", "price_max", 0.0, 2000.0)
+        peg_min, peg_max = styled_filter_row("PEG", "peg_min", "peg_max", 0.0, 5.0)
+        pe_min, pe_max = styled_filter_row("PE", "pe_min", "pe_max", 0.0, 100.0)
+        eps_min, eps_max = styled_filter_row("EPS Growth", "eps_min", "eps_max", 0.0, 100.0)
+        rating_min, rating_max = styled_filter_row("Analyst Rating", "rating_min", "rating_max", 1.0, 5.0)
+        upside_min, upside_max = styled_filter_row("Target Upside", "upside_min", "upside_max", 0.0, 100.0)
+        mcap_min, mcap_max = styled_filter_row("Market Cap", "mcap_min", "mcap_max", 0.0, 10_000_000_000_000)
+        vol_min, vol_max = styled_filter_row("30-Day Volume", "vol_min", "vol_max", 0.0, 2_000_000_000)
 
     st.toggle("🇺🇸 US Only")
     st.toggle("🟣 Nasdaq Only")
