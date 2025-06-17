@@ -117,14 +117,14 @@ with st.sidebar:
             st.markdown(html, unsafe_allow_html=True)
             return min_val, max_val
 
-        price_min, price_max = filter_input("Price", 0, 1000)
-        peg_min, peg_max = filter_input("PEG", 0.0, 5.0)
-        pe_min, pe_max = filter_input("PE", 0.0, 100.0)
-        eps_min, eps_max = filter_input("EPSGr", 0.0, 100.0)
-        rating_min, rating_max = filter_input("AnalystSc", 1.0, 5.0)
-        upside_min, upside_max = filter_input("TrgtUpside", 0.0, 100.0)
-        mcap_min, mcap_max = filter_input("MktCap", 0, 10000000000000)
-        vol_min, vol_max = filter_input("30DayVol", 0, 500000000)
+        # price_min, price_max = filter_input("Price", 0, 1000)
+        # peg_min, peg_max = filter_input("PEG", 0.0, 5.0)
+        # pe_min, pe_max = filter_input("PE", 0.0, 100.0)
+        # eps_min, eps_max = filter_input("EPSGr", 0.0, 100.0)
+        # rating_min, rating_max = filter_input("AnalystSc", 1.0, 5.0)
+        # upside_min, upside_max = filter_input("TrgtUpside", 0.0, 100.0)
+        # mcap_min, mcap_max = filter_input("MktCap", 0, 10000000000000)
+        # vol_min, vol_max = filter_input("30DayVol", 0, 500000000)
 
     st.divider()
     st.toggle("US Only")
