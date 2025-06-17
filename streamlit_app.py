@@ -4,10 +4,10 @@ from datetime import datetime
 
 st.set_page_config(layout="wide", page_title="Terminal")
 
-# --- Load data ---
+# Load data
 df = pd.read_csv("mock_stock_data.csv")
 
-# --- Enforce column order ---
+# Define column order
 column_order = [
     "Ticker", "Price", "TerminalScore", "PEG", "PE", "EPSGr", "MktCap",
     "30DayVol", "AnalystSc", "TrgtUpside", "Sector", "InsiderSc",
@@ -15,7 +15,7 @@ column_order = [
 ]
 df = df[[col for col in column_order if col in df.columns]]
 
-# --- Sidebar CSS and layout ---
+# --- Styling ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Lato&display=swap');
@@ -26,7 +26,9 @@ html, body, .stApp, .block-container {
 }
 section[data-testid="stSidebar"] {
     background-color: #070b15 !important;
-    padding: 8px;
+    color: #f1f5f9 !important;
+    font-size: 13px;
+    padding: 8px 8px 8px 8px;
     width: 240px !important;
 }
 .sidebar-label {
@@ -68,6 +70,7 @@ input:focus {
 }
 .custom-table th {
     background-color: #334155;
+    cursor: pointer;
 }
 .custom-table tr:nth-child(even) {
     background-color: #3d5975;
@@ -88,50 +91,30 @@ a.ticker-link:hover {
 </style>
 """, unsafe_allow_html=True)
 
-# --- Sidebar ---
+# --- Sidebar Content ---
 with st.sidebar:
-    with st.expander("Filter Stocks", expanded=True):
-        def number_input_pair(label):
+    with st.expander("📊 Filter Stocks", expanded=True):
+        def dual_input(label, colname):
+            min_val = float(df[colname].min())
+            max_val = float(df[colname].max())
             st.markdown(f'<div class="sidebar-label">{label}</div>', unsafe_allow_html=True)
-            col1, col2 = st.columns(2)
-            col_min = float(df[label].min()) if label in df.columns else 0.0
-            col_max = float(df[label].max()) if label in df.columns else 100.0
-            with col1: min_val = st.number_input(f"Min {label}", value=col_min, key=f"{label}_min")
-            with col2: max_val = st.number_input(f"Max {label}", value=col_max, key=f"{label}_max")
-            return min_val, max_val
+            return st.columns([1,1])[0].number_input(f"{label} Min", value=min_val, key=f"{colname}_min"), \
+                   st.columns([1,1])[1].number_input(f"{label} Max", value=max_val, key=f"{colname}_max")
 
-        price_min, price_max = number_input_pair("Price")
-        peg_min, peg_max = number_input_pair("PEG")
-        pe_min, pe_max = number_input_pair("PE")
-        eps_min, eps_max = number_input_pair("EPSGr")
-        rating_min, rating_max = number_input_pair("AnalystSc")
-        upside_min, upside_max = number_input_pair("TrgtUpside")
-        mcap_min, mcap_max = number_input_pair("MktCap (M)")
-        vol_min, vol_max = number_input_pair("30DayVol (M)")
+        price_min, price_max = dual_input("Price", "Price")
+        peg_min, peg_max = dual_input("PEG", "PEG")
+        pe_min, pe_max = dual_input("PE", "PE")
+        eps_min, eps_max = dual_input("EPS Growth", "EPSGr")
+        rating_min, rating_max = dual_input("Analyst Rating", "AnalystSc")
+        upside_min, upside_max = dual_input("Target Upside", "TrgtUpside")
+        mcap_min, mcap_max = dual_input("Market Cap", "MktCap")
+        vol_min, vol_max = dual_input("30-Day Volume", "30DayVol")
 
-    st.toggle("US Only")
-    st.toggle("Nasdaq Only")
-    st.toggle("NYSE Only")
+    st.toggle("🇺🇸 US Only")
+    st.toggle("🟣 Nasdaq Only")
+    st.toggle("🟠 NYSE Only")
 
-    with st.expander("Smart Score Weights", expanded=False):
-        peg_w = st.slider("PEG", 0, 100, 50)
-        eps_w = st.slider("EPS Growth", 0, 100, 50)
-        rating_w = st.slider("Analyst Rating", 0, 100, 50)
-        upside_w = st.slider("Target Upside", 0, 100, 50)
-        sentiment_w = st.slider("Sentiment", 0, 100, 50)
-        insider_w = st.slider("Insider Depth", 0, 100, 50)
-
-    st.markdown("---")
-    st.markdown("📈 Charts")
-    st.markdown("🔬 Research")
-    st.markdown("🧪 Misc")
-    st.markdown("📚 Information Hub")
-
-# --- Convert fields for filtering ---
-df["MktCap"] = pd.to_numeric(df["MktCap"], errors="coerce") / 1e6  # Convert to millions
-df["30DayVol"] = pd.to_numeric(df["30DayVol"], errors="coerce") / 1e6
-
-# --- Filtering ---
+# --- Apply Filters ---
 df = df[
     (df["Price"].between(price_min, price_max)) &
     (df["PEG"].between(peg_min, peg_max)) &
@@ -143,62 +126,41 @@ df = df[
     (df["30DayVol"].between(vol_min, vol_max))
 ]
 
-# --- TerminalScore Calculation ---
-total = sum([peg_w, eps_w, rating_w, upside_w, sentiment_w, insider_w]) or 1
-weights = {
-    "PEG": peg_w / total,
-    "EPSGr": eps_w / total,
-    "AnalystSc": rating_w / total,
-    "TrgtUpside": upside_w / total,
-    "SentSc": sentiment_w / total,
-    "InsiderSc": insider_w / total
-}
-df["TerminalScore"] = (
-    (1 / df["PEG"].clip(lower=0.01)) * weights["PEG"] +
-    df["EPSGr"] * weights["EPSGr"] +
-    (5 - df["AnalystSc"]) * weights["AnalystSc"] +
-    df["TrgtUpside"] * weights["TrgtUpside"] +
-    df["SentSc"] * weights["SentSc"] +
-    df["InsiderSc"] * weights["InsiderSc"]
-).round(2)
-
-# --- Format display fields ---
-def format_market_cap(m):
-    if m >= 1e6: return f"<span style='color:#f87171'>{m/1e6:.1f}T</span>"
-    elif m >= 1e3: return f"<span style='color:#4ade80'>{m/1e3:.1f}B</span>"
-    else: return f"<span style='color:#c084fc'>{m:.0f}M</span>"
-
-df["MktCapDisplay"] = df["MktCap"].apply(format_market_cap)
-df["30DayVolDisplay"] = df["30DayVol"].apply(lambda v: f"{v:.1f}M")
-df["TrgtUpsideDisplay"] = df["TrgtUpside"].apply(lambda x: f"{x:.1f}%")
-
-# --- Display ---
+# --- Table Title and Meta ---
 st.title("Terminal")
 st.markdown(f"""
 <div style='display: flex; gap: 20px; margin-bottom: 4px;'>
-  <div style='border:1px solid #ccc; font-size: 10px; padding:4px 8px;'>
-    <strong>Total Results:</strong> {len(df)}
-  </div>
-  <div style='border:1px solid #ccc; font-size: 10px; padding:4px 8px;'>
-    <strong>Date:</strong> {datetime.now().strftime('%Y-%m-%d')}
-  </div>
+  <div style='border:1px solid #ccc; font-size: 10px; padding:4px 8px;'><strong>Total Results:</strong> {len(df)}</div>
+  <div style='border:1px solid #ccc; font-size: 10px; padding:4px 8px;'><strong>Date:</strong> {datetime.now().strftime('%Y-%m-%d')}</div>
 </div>
 <hr style='border-top: 1px solid #ccc; margin-bottom: 8px;' />
 """, unsafe_allow_html=True)
 
-# --- Table Rendering ---
-visible_columns = ["Ticker", "Price", "TerminalScore", "PEG", "PE", "EPSGr", "MktCapDisplay",
-                   "30DayVolDisplay", "AnalystSc", "TrgtUpsideDisplay", "Sector", "InsiderSc",
-                   "SentSc", "RedditSc", "52wH"]
+# --- Format market cap and volume ---
+def format_mcap(val):
+    if val >= 1e12: return f"{val/1e12:.1f}<span style='color:#f87171;'>T</span>"
+    elif val >= 1e9: return f"{val/1e9:.1f}<span style='color:#4ade80;'>B</span>"
+    elif val >= 1e6: return f"{val/1e6:.1f}<span style='color:#a78bfa;'>M</span>"
+    else: return f"{val:.0f}"
 
-header_html = ''.join(f"<th>{col}</th>" for col in visible_columns)
+def format_volume(val):
+    return f"{val/1e6:.1f}M"
+
+# --- Render table ---
+header_html = ''.join(f"<th>{col}</th>" for col in df.columns)
 row_html = ""
 for _, row in df.iterrows():
     row_cells = ""
-    for col in visible_columns:
+    for col in df.columns:
         val = row[col]
         if col == "Ticker":
             val = f"<a class='ticker-link' href='https://finance.yahoo.com/quote/{val}' target='_blank'>{val}</a>"
+        elif col == "MktCap":
+            val = format_mcap(val)
+        elif col == "30DayVol":
+            val = format_volume(val)
+        elif col == "TrgtUpside":
+            val = f"{val:.1f}%"
         row_cells += f"<td>{val}</td>"
     row_html += f"<tr>{row_cells}</tr>"
 
