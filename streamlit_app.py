@@ -94,14 +94,14 @@ a.ticker-link:hover {
 
 [data-baseweb="base-input"]{
 background-color: #1e293b !important;
-border: 2px !important;
+border: 1px solid #475569 !important;
 border-radius: 1px !important;
 }
 
 input[class]{
-font-weight: bold;
-font-size:18px;
-color: orange;
+font-size:14px;
+color: #f1f5f9;
+border: 1px solid #475569 !important;
 }
 </style>
 """, unsafe_allow_html=True)
