@@ -93,9 +93,9 @@ a.ticker-link:hover {
 .suffix-T { color: #f87171; font-weight: bold; }
 
 [data-baseweb="base-input"]{
-background:linear-gradient(to bottom, #3399ff 0%,#00ffff 100%);
-border: 2px;
-border-radius: 1px;
+background-color: #1e293b !important;
+border: 2px !important;
+border-radius: 1px !important;
 }
 
 input[class]{
