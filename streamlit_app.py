@@ -105,7 +105,7 @@ border: 0px !important;
 
 [data-testid="stForm"] {border: 0px}
 </style>
-"""", unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
 # ----- Default Weight Setup -----
 default_weights = {
