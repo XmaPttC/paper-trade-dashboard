@@ -182,9 +182,32 @@ with st.sidebar:
         sentiment_w = st.slider("Sentiment", 0, 100, 15)
         insider_w = st.slider("Insider Depth", 0, 100, 15)
 
-    with st.expander("Alt Data", expanded=False):
-        # ----- Optional: Display All Weights -----
-        st.json(st.session_state.weights)
+        with st.expander("Alt-Data Weights (by Industry)", expanded=False):
+        # Industry selector
+        industry = st.selectbox("Select Industry", list(default_weights.keys()), key="industry_select_sidebar")
+
+        st.markdown("#### Adjust Weights")
+
+        new_weights = {}
+        total_weight = 0
+
+        for signal in ["Web", "App", "Spend", "Jobs", "Buzz", "Ship"]:
+            default_val = st.session_state.weights[industry][signal]
+            new_val = st.slider(f"{signal} Weight", 0.0, 1.0, default_val, 0.01, key=f"{industry}_{signal}_sidebar")
+            new_weights[signal] = new_val
+            total_weight += new_val
+
+        if total_weight > 0:
+            normalized_weights = {k: round(v / total_weight, 3) for k, v in new_weights.items()}
+        else:
+            normalized_weights = new_weights
+
+        st.write("Normalized:")
+        st.json(normalized_weights)
+
+        if st.button("💾 Save Weights", key="save_alt_weights"):
+            st.session_state.weights[industry] = normalized_weights
+            st.success(f"Weights for `{industry}` saved!")
         
 
     st.divider()
