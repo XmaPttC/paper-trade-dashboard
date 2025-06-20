@@ -29,7 +29,7 @@ section[data-testid="stSidebar"] {
     color: #f1f5f9 !important;
     font-size: 13px;
     padding: 8px;
-    width: 240px !important;
+    width: 340px !important;
 }
 .sidebar-label {
     font-size: 13px;
@@ -107,6 +107,46 @@ border: 0px !important;
 </style>
 """, unsafe_allow_html=True)
 
+# ----- Default Weight Setup -----
+default_weights = {
+    "Retail": {"Web": 0.25, "App": 0.15, "Spend": 0.30, "Jobs": 0.10, "Buzz": 0.10, "Ship": 0.10},
+    "Software": {"Web": 0.15, "App": 0.20, "Spend": 0.10, "Jobs": 0.30, "Buzz": 0.20, "Ship": 0.05},
+    "Fintech": {"Web": 0.20, "App": 0.25, "Spend": 0.20, "Jobs": 0.15, "Buzz": 0.15, "Ship": 0.05},
+}
+
+# ----- Session State Init -----
+if "weights" not in st.session_state:
+    st.session_state.weights = default_weights.copy()
+
+# ----- UI: Industry Selection -----
+industry = st.selectbox("Select Industry", list(default_weights.keys()), key="industry_select")
+
+st.markdown("### 🎛️ Adjust Alt-Data Weights")
+
+# ----- UI: Weight Sliders -----
+new_weights = {}
+total_weight = 0
+
+for signal in ["Web", "App", "Spend", "Jobs", "Buzz", "Ship"]:
+    default_val = st.session_state.weights[industry][signal]
+    new_val = st.slider(f"{signal} Weight", 0.0, 1.0, default_val, 0.01, key=f"{industry}_{signal}")
+    new_weights[signal] = new_val
+    total_weight += new_val
+
+# ----- Normalize to 100% -----
+if total_weight > 0:
+    normalized_weights = {k: round(v / total_weight, 3) for k, v in new_weights.items()}
+else:
+    normalized_weights = new_weights
+
+st.write(f"Normalized Weights for `{industry}`:")
+st.json(normalized_weights)
+
+# ----- Save to Session State -----
+if st.button("💾 Save Weights"):
+    st.session_state.weights[industry] = normalized_weights
+    st.success(f"Weights for `{industry}` saved!")
+
 # --- Sidebar Content ---
 with st.sidebar:
     def filter_input(label, min_default=0, max_default=10000000):
@@ -118,7 +158,7 @@ with st.sidebar:
             max_val = st.number_input(f"{label}_max", label_visibility="collapsed", value=max_default, key=f"{label}_max")
         return min_val, max_val
 
-    with st.expander("Filter Stocks", expanded=True):
+    with st.expander("Filter Stocks", expanded=False):
         price_min, price_max = filter_input("Price", 0, 2000)
         peg_min, peg_max = filter_input("PEG", 0.0, 5.0)
         pe_min, pe_max = filter_input("PE", 0.0, 50.0)
@@ -128,11 +168,11 @@ with st.sidebar:
         mcap_min, mcap_max = filter_input("MktCap", 0, 10_000_000_000_000)
         vol_min, vol_max = filter_input("30DayVol", 0, 1_000_000_000)
 
-    st.divider()
-    st.toggle("US Only")
-    st.toggle("Nasdaq Only")
-    st.toggle("NYSE Only")
-    st.divider()
+    with st.expander("Geography | Exchange", expanded=False):
+        st.toggle("US Only")
+        st.toggle("Nasdaq Only")
+        st.toggle("NYSE Only")
+        st.divider()
 
     with st.expander("Smart Score Weights", expanded=False):
         peg_w = st.slider("PEG", 0, 100, 20)
@@ -141,6 +181,11 @@ with st.sidebar:
         upside_w = st.slider("Target Upside", 0, 100, 15)
         sentiment_w = st.slider("Sentiment", 0, 100, 15)
         insider_w = st.slider("Insider Depth", 0, 100, 15)
+
+    with st.expander("Alt Data", expanded=False):
+        # ----- Optional: Display All Weights -----
+        st.json(st.session_state.weights)
+        
 
     st.divider()
     st.markdown("Charts")
