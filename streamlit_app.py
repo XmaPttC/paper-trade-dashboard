@@ -105,7 +105,7 @@ border: 0px !important;
 
 [data-testid="stForm"] {border: 0px}
 </style>
-""", unsafe_allow_html=True)
+"""", unsafe_allow_html=True)
 
 # ----- Default Weight Setup -----
 default_weights = {
@@ -114,40 +114,9 @@ default_weights = {
     "Fintech": {"Web": 0.20, "App": 0.25, "Spend": 0.20, "Jobs": 0.15, "Buzz": 0.15, "Ship": 0.05},
 }
 
-# ----- Session State Init -----
 if "weights" not in st.session_state:
     st.session_state.weights = default_weights.copy()
 
-# ----- UI: Industry Selection -----
-industry = st.selectbox("Select Industry", list(default_weights.keys()), key="industry_select")
-
-st.markdown("### 🎛️ Adjust Alt-Data Weights")
-
-# ----- UI: Weight Sliders -----
-new_weights = {}
-total_weight = 0
-
-for signal in ["Web", "App", "Spend", "Jobs", "Buzz", "Ship"]:
-    default_val = st.session_state.weights[industry][signal]
-    new_val = st.slider(f"{signal} Weight", 0.0, 1.0, default_val, 0.01, key=f"{industry}_{signal}")
-    new_weights[signal] = new_val
-    total_weight += new_val
-
-# ----- Normalize to 100% -----
-if total_weight > 0:
-    normalized_weights = {k: round(v / total_weight, 3) for k, v in new_weights.items()}
-else:
-    normalized_weights = new_weights
-
-st.write(f"Normalized Weights for `{industry}`:")
-st.json(normalized_weights)
-
-# ----- Save to Session State -----
-if st.button("💾 Save Weights"):
-    st.session_state.weights[industry] = normalized_weights
-    st.success(f"Weights for `{industry}` saved!")
-
-# --- Sidebar Content ---
 with st.sidebar:
     def filter_input(label, min_default=0, max_default=10000000):
         st.markdown(f'<div class="sidebar-label">{label}</div>', unsafe_allow_html=True)
@@ -182,8 +151,7 @@ with st.sidebar:
         sentiment_w = st.slider("Sentiment", 0, 100, 15)
         insider_w = st.slider("Insider Depth", 0, 100, 15)
 
-        with st.expander("Alt-Data Weights (by Industry)", expanded=False):
-        # Industry selector
+    with st.expander("Alt-Data Weights (by Industry)", expanded=False):
         industry = st.selectbox("Select Industry", list(default_weights.keys()), key="industry_select_sidebar")
 
         st.markdown("#### Adjust Weights")
@@ -205,10 +173,9 @@ with st.sidebar:
         st.write("Normalized:")
         st.json(normalized_weights)
 
-        if st.button("💾 Save Weights", key="save_alt_weights"):
+        if st.button("ð¾ Save Weights", key="save_alt_weights"):
             st.session_state.weights[industry] = normalized_weights
             st.success(f"Weights for `{industry}` saved!")
-        
 
     st.divider()
     st.markdown("Charts")
@@ -216,7 +183,6 @@ with st.sidebar:
     st.markdown("Misc")
     st.markdown("Information Hub")
 
-# --- Apply Filters ---
 df = df[
     (df["Price"].between(price_min, price_max)) &
     (df["PEG"].between(peg_min, peg_max)) &
@@ -292,4 +258,4 @@ st.markdown(f"""
     <thead><tr>{header_html}</tr></thead>
     <tbody>{row_html}</tbody>
 </table>
-""", unsafe_allow_html=True)
+""", unsafe_allow_html=True) 
