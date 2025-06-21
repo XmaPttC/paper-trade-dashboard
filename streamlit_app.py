@@ -143,36 +143,6 @@ with st.sidebar:
         st.toggle("NYSE Only")
         st.divider()
 
-df = df[
-    (df["Price"].between(price_min, price_max)) &
-    (df["PEG"].between(peg_min, peg_max)) &
-    (df["PE"].between(pe_min, pe_max)) &
-    (df["EPSGr"].between(eps_min, eps_max)) &
-    (df["AnalystSc"].between(rating_min, rating_max)) &
-    (df["TrgtUpside"].between(upside_min, upside_max)) &
-    (df["MktCap"].between(mcap_min, mcap_max)) &
-    (df["30DayVol"].between(vol_min, vol_max))
-]
-
-# --- SmartScore Calculation ---
-total_weight = sum([peg_w, eps_w, rating_w, upside_w, sentiment_w, insider_w]) or 1
-weights = {
-    "PEG": peg_w / total_weight,
-    "EPSGr": eps_w / total_weight,
-    "AnalystSc": rating_w / total_weight,
-    "TrgtUpside": upside_w / total_weight,
-    "SentSc": sentiment_w / total_weight,
-    "InsiderSc": insider_w / total_weight
-}
-df["TerminalScore"] = (
-    (1 / df["PEG"].clip(lower=0.01)) * weights["PEG"] +
-    df["EPSGr"] * weights["EPSGr"] +
-    (5 - df["AnalystSc"]) * weights["AnalystSc"] +
-    df["TrgtUpside"] * weights["TrgtUpside"] +
-    df["SentSc"] * weights["SentSc"] +
-    df["InsiderSc"] * weights["InsiderSc"]
-).round(2)
-
 # --- Display Header ---
 st.title("Terminal")
 st.markdown(f"""
