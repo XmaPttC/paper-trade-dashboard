@@ -125,13 +125,17 @@ with tab2:
         font-weight: 600;
         padding: 6px 10px;
         border-bottom: 1px solid #475569;
+        max-height: 260px;
+        max-width: 300px;
     }
     div[data-testid="stExpander"] {
         border: 1px solid #475569;
         border-radius: 6px;
         background-color: #1f2d3d;
-        margin-bottom: 12px;
+        margin-bottom: 8px;
         padding: 0px;
+        max-height: 260px;
+        max-width: 300px;
     }
     div[data-testid="stExpander"] > div:nth-child(1) {
         padding: 4px 12px;
@@ -149,19 +153,19 @@ with tab2:
     # Layout in 3x2 format
     col1, col2, col3 = st.columns(3)
     with col1:
-        render_expander_card("📊 Options Flow", "options", True, 10.0, (0.0, 100.0), 0.2)
+        render_expander_card("Options Flow", "options", True, 10.0, (0.0, 100.0), 0.2)
     with col2:
-        render_expander_card("🕳️ Dark Pool Activity", "darkpool", True, 5.0, (0.0, 100.0), 0.2)
+        render_expander_card("Dark Pool Activity", "darkpool", True, 5.0, (0.0, 100.0), 0.2)
     with col3:
-        render_expander_card("⚡ GEX Exposure", "gex", True, 1.5, (0.0, 5.0), 0.1)
+        render_expander_card("GEX Exposure", "gex", True, 1.5, (0.0, 5.0), 0.1)
 
     col4, col5, col6 = st.columns(3)
     with col4:
-        render_expander_card("💬 Reddit Sentiment", "reddit", True, 10.0, (0.0, 100.0), 0.15)
+        render_expander_card("Reddit Sentiment", "reddit", True, 10.0, (0.0, 100.0), 0.15)
     with col5:
-        render_expander_card("📰 News Sentiment", "sent", True, 20.0, (0.0, 100.0), 0.15)
+        render_expander_card("News Sentiment", "sent", True, 20.0, (0.0, 100.0), 0.15)
     with col6:
-        render_expander_card("📈 Insider Buying", "insider", True, 5.0, (0.0, 100.0), 0.2)
+        render_expander_card("Insider Buying", "insider", True, 5.0, (0.0, 100.0), 0.2)
 
     st.divider()
     if st.button("✅ Apply Settings"):
