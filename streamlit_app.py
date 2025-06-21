@@ -127,7 +127,7 @@ with st.sidebar:
             max_val = st.number_input(f"{label}_max", label_visibility="collapsed", value=max_default, key=f"{label}_max")
         return min_val, max_val
 
-    with st.expander("Filter Stocks", expanded=False):
+    with st.expander("Filters", expanded=False):
         price_min, price_max = filter_input("Price", 0, 2000)
         peg_min, peg_max = filter_input("PEG", 0.0, 5.0)
         pe_min, pe_max = filter_input("PE", 0.0, 50.0)
@@ -142,46 +142,6 @@ with st.sidebar:
         st.toggle("Nasdaq Only")
         st.toggle("NYSE Only")
         st.divider()
-
-    with st.expander("Smart Score Weights", expanded=False):
-        peg_w = st.slider("PEG", 0, 100, 20)
-        eps_w = st.slider("EPS Growth", 0, 100, 15)
-        rating_w = st.slider("Analyst Rating", 0, 100, 20)
-        upside_w = st.slider("Target Upside", 0, 100, 15)
-        sentiment_w = st.slider("Sentiment", 0, 100, 15)
-        insider_w = st.slider("Insider Depth", 0, 100, 15)
-
-    with st.expander("Alt-Data Weights (by Industry)", expanded=False):
-        industry = st.selectbox("Select Industry", list(default_weights.keys()), key="industry_select_sidebar")
-
-        st.markdown("#### Adjust Weights")
-
-        new_weights = {}
-        total_weight = 0
-
-        for signal in ["Web", "App", "Spend", "Jobs", "Buzz", "Ship"]:
-            default_val = st.session_state.weights[industry][signal]
-            new_val = st.slider(f"{signal} Weight", 0.0, 1.0, default_val, 0.01, key=f"{industry}_{signal}_sidebar")
-            new_weights[signal] = new_val
-            total_weight += new_val
-
-        if total_weight > 0:
-            normalized_weights = {k: round(v / total_weight, 3) for k, v in new_weights.items()}
-        else:
-            normalized_weights = new_weights
-
-        st.write("Normalized:")
-        st.json(normalized_weights)
-
-        if st.button("ð¾ Save Weights", key="save_alt_weights"):
-            st.session_state.weights[industry] = normalized_weights
-            st.success(f"Weights for {industry} saved!")
-
-    st.divider()
-    st.markdown("Charts")
-    st.markdown("Research")
-    st.markdown("Misc")
-    st.markdown("Information Hub")
 
 df = df[
     (df["Price"].between(price_min, price_max)) &
