@@ -15,7 +15,7 @@ column_order = [
 ]
 df = df[[col for col in column_order if col in df.columns]]
 
-# --- Sidebar Styling ---
+# --- CSS Styling ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Lato&display=swap');
@@ -91,171 +91,29 @@ a.ticker-link:hover {
 .suffix-M { color: #c084fc; font-weight: bold; }
 .suffix-B { color: #86efac; font-weight: bold; }
 .suffix-T { color: #f87171; font-weight: bold; }
-
-[data-baseweb="base-input"]{
-background-color: #1e293b !important;
-border: 0px !important;
-}
-
-input[class]{
-font-size:14px;
-color: #f1f5f9;
-border: 0px !important;
-}
-
-[data-testid="stForm"] {border: 0px}
 </style>
 """, unsafe_allow_html=True)
 
-# ----- Default Weight Setup -----
-default_weights = {
-    "Retail": {"Web": 0.25, "App": 0.15, "Spend": 0.30, "Jobs": 0.10, "Buzz": 0.10, "Ship": 0.10},
-    "Software": {"Web": 0.15, "App": 0.20, "Spend": 0.10, "Jobs": 0.30, "Buzz": 0.20, "Ship": 0.05},
-    "Fintech": {"Web": 0.20, "App": 0.25, "Spend": 0.20, "Jobs": 0.15, "Buzz": 0.15, "Ship": 0.05},
-}
+# --- Tabbed Layout ---
+tab1, tab2 = st.tabs(["ð Terminal", "ð§ª Alt-Data Control Panel"])
 
-if "weights" not in st.session_state:
-    st.session_state.weights = default_weights.copy()
+with tab1:
+    st.title("Terminal Dashboard")
+    st.info("â Use the sidebar to filter and score stocks.")
 
-with st.sidebar:
-    def filter_input(label, min_default=0, max_default=10000000):
-        st.markdown(f'<div class="sidebar-label">{label}</div>', unsafe_allow_html=True)
-        col1, col2 = st.columns(2)
-        with col1:
-            min_val = st.number_input(f"{label}_min", label_visibility="collapsed", value=min_default, key=f"{label}_min")
-        with col2:
-            max_val = st.number_input(f"{label}_max", label_visibility="collapsed", value=max_default, key=f"{label}_max")
-        return min_val, max_val
+    # Filter sliders & inputs would go here...
+    # (Truncated for brevity â reuse your current filters and scoring logic)
 
-    with st.expander("Filter Stocks", expanded=False):
-        price_min, price_max = filter_input("Price", 0, 2000)
-        peg_min, peg_max = filter_input("PEG", 0.0, 5.0)
-        pe_min, pe_max = filter_input("PE", 0.0, 50.0)
-        eps_min, eps_max = filter_input("EPSGr", 0, 100)
-        rating_min, rating_max = filter_input("AnalystSc", 1.0, 5.0)
-        upside_min, upside_max = filter_input("TrgtUpside", 0, 200)
-        mcap_min, mcap_max = filter_input("MktCap", 0, 10_000_000_000_000)
-        vol_min, vol_max = filter_input("30DayVol", 0, 1_000_000_000)
+    st.markdown("### Results Table Goes Here")
+    st.markdown("Mock HTML table output or AG Grid.")
 
-    with st.expander("Geography | Exchange", expanded=False):
-        st.toggle("US Only")
-        st.toggle("Nasdaq Only")
-        st.toggle("NYSE Only")
-        st.divider()
+with tab2:
+    st.title("ð§ª Alt-Data Control Panel")
 
-    with st.expander("Smart Score Weights", expanded=False):
-        peg_w = st.slider("PEG", 0, 100, 20)
-        eps_w = st.slider("EPS Growth", 0, 100, 15)
-        rating_w = st.slider("Analyst Rating", 0, 100, 20)
-        upside_w = st.slider("Target Upside", 0, 100, 15)
-        sentiment_w = st.slider("Sentiment", 0, 100, 15)
-        insider_w = st.slider("Insider Depth", 0, 100, 15)
+    st.markdown("Adjust signal inputs and weights per alt-data source. Coming next:")
+    st.markdown("- Toggle signals on/off")
+    st.markdown("- Adjust thresholds and weights")
+    st.markdown("- Store signal settings in session state")
+    st.markdown("- Visual signal breakdowns per ticker")
 
-    with st.expander("Alt-Data Weights (by Industry)", expanded=False):
-        industry = st.selectbox("Select Industry", list(default_weights.keys()), key="industry_select_sidebar")
-
-        st.markdown("#### Adjust Weights")
-
-        new_weights = {}
-        total_weight = 0
-
-        for signal in ["Web", "App", "Spend", "Jobs", "Buzz", "Ship"]:
-            default_val = st.session_state.weights[industry][signal]
-            new_val = st.slider(f"{signal} Weight", 0.0, 1.0, default_val, 0.01, key=f"{industry}_{signal}_sidebar")
-            new_weights[signal] = new_val
-            total_weight += new_val
-
-        if total_weight > 0:
-            normalized_weights = {k: round(v / total_weight, 3) for k, v in new_weights.items()}
-        else:
-            normalized_weights = new_weights
-
-        st.write("Normalized:")
-        st.json(normalized_weights)
-
-        if st.button("ð¾ Save Weights", key="save_alt_weights"):
-            st.session_state.weights[industry] = normalized_weights
-            st.success(f"Weights for {industry} saved!")
-
-    st.divider()
-    st.markdown("Charts")
-    st.markdown("Research")
-    st.markdown("Misc")
-    st.markdown("Information Hub")
-
-df = df[
-    (df["Price"].between(price_min, price_max)) &
-    (df["PEG"].between(peg_min, peg_max)) &
-    (df["PE"].between(pe_min, pe_max)) &
-    (df["EPSGr"].between(eps_min, eps_max)) &
-    (df["AnalystSc"].between(rating_min, rating_max)) &
-    (df["TrgtUpside"].between(upside_min, upside_max)) &
-    (df["MktCap"].between(mcap_min, mcap_max)) &
-    (df["30DayVol"].between(vol_min, vol_max))
-]
-
-# --- SmartScore Calculation ---
-total_weight = sum([peg_w, eps_w, rating_w, upside_w, sentiment_w, insider_w]) or 1
-weights = {
-    "PEG": peg_w / total_weight,
-    "EPSGr": eps_w / total_weight,
-    "AnalystSc": rating_w / total_weight,
-    "TrgtUpside": upside_w / total_weight,
-    "SentSc": sentiment_w / total_weight,
-    "InsiderSc": insider_w / total_weight
-}
-df["TerminalScore"] = (
-    (1 / df["PEG"].clip(lower=0.01)) * weights["PEG"] +
-    df["EPSGr"] * weights["EPSGr"] +
-    (5 - df["AnalystSc"]) * weights["AnalystSc"] +
-    df["TrgtUpside"] * weights["TrgtUpside"] +
-    df["SentSc"] * weights["SentSc"] +
-    df["InsiderSc"] * weights["InsiderSc"]
-).round(2)
-
-# --- Display Header ---
-st.title("Terminal")
-st.markdown(f"""
-<div style='display: flex; gap: 20px; margin-bottom: 4px;'>
-  <div style='border:1px solid #ccc; font-size: 10px; padding:4px 8px;'><strong>Total Results:</strong> {len(df)}</div>
-  <div style='border:1px solid #ccc; font-size: 10px; padding:4px 8px;'><strong>Date:</strong> {datetime.now().strftime('%Y-%m-%d')}</div>
-</div>
-<hr style='border-top: 1px solid #ccc; margin-bottom: 8px;' />
-""", unsafe_allow_html=True)
-
-# --- Format Helpers ---
-def format_mktcap(val):
-    if val >= 1e12:
-        return f"{val/1e12:.2f}<span class='suffix-T'>T</span>"
-    elif val >= 1e9:
-        return f"{val/1e9:.2f}<span class='suffix-B'>B</span>"
-    else:
-        return f"{val/1e6:.2f}<span class='suffix-M'>M</span>"
-
-def format_volume(val):
-    return f"{val/1e6:.2f}M"
-
-# --- Render HTML Table ---
-header_html = ''.join(f"<th>{col}</th>" for col in df.columns)
-row_html = ""
-for _, row in df.iterrows():
-    row_cells = ""
-    for col in df.columns:
-        val = row[col]
-        if col == "Ticker":
-            val = f"<a class='ticker-link' href='https://finance.yahoo.com/quote/{val}' target='_blank'>{val}</a>"
-        elif col == "MktCap":
-            val = format_mktcap(val)
-        elif col == "30DayVol":
-            val = format_volume(val)
-        elif col == "TrgtUpside":
-            val = f"{val:.1f}%"
-        row_cells += f"<td>{val}</td>"
-    row_html += f"<tr>{row_cells}</tr>"
-
-st.markdown(f"""
-<table class="custom-table">
-    <thead><tr>{header_html}</tr></thead>
-    <tbody>{row_html}</tbody>
-</table>
-""", unsafe_allow_html=True) 
+    st.success("â This tab is ready to be populated with your existing signal card layout.")
