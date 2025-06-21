@@ -105,44 +105,55 @@ with tab2:
 
     st.markdown("""
     <style>
+    .signal-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+    }
     .signal-card {
-        background-color: #1e293b;
-        border: 1px solid #334155;
-        padding: 12px 16px;
-        margin-bottom: 10px;
+        background-color: #263142;
+        border: 1px solid #3b4454;
         border-radius: 4px;
-        font-size: 13px;
+        padding: 10px 12px;
+        font-size: 12px;
     }
     .signal-card h4 {
-        margin-top: 0;
-        margin-bottom: 0px;
-        font-size: 14px;
+        font-size: 13px;
+        margin: 0 0 6px 0;
         color: #f8fafc;
     }
-    .signal-card .stSlider, .signal-card .stNumberInput, .signal-card .stCheckbox {
-        font-size: 12px !important;
+    .signal-card label {
+        font-size: 11px !important;
+        margin-bottom: 2px !important;
+    }
+    .signal-card .stSlider,
+    .signal-card .stNumberInput,
+    .signal-card .stCheckbox {
+        padding: 0 !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
+    st.markdown("Use the controls below to configure which alt-data signals are enabled and how much weight they carry.")
+
     def render_signal_card(title, key_prefix, default_enabled, default_thresh, range_thresh, default_weight):
         with st.container():
-            st.markdown(f"<div class='signal-card'><h4>{title}</h4>", unsafe_allow_html=True)
+            st.markdown("<div class='signal-card'>", unsafe_allow_html=True)
+            st.markdown(f"<h4>{title}</h4>", unsafe_allow_html=True)
             st.checkbox("Enable", value=default_enabled, key=f"{key_prefix}_toggle")
             st.number_input("Threshold", range_thresh[0], range_thresh[1], default_thresh, key=f"{key_prefix}_thresh")
             st.slider("Weight", 0.0, 1.0, default_weight, 0.01, key=f"{key_prefix}_weight")
             st.markdown("</div>", unsafe_allow_html=True)
 
-    left, middle, right = st.columns(3)
-    with left:
-        render_signal_card("Options Flow", "options", True, 10.0, (0.0, 100.0), 0.2)
-        render_signal_card("Reddit Sentiment", "reddit", True, 10.0, (0.0, 100.0), 0.15)
-    with middle:
-        render_signal_card("Dark Pool Activity", "darkpool", True, 5.0, (0.0, 100.0), 0.2)
-        render_signal_card("News Sentiment", "sent", True, 20.0, (0.0, 100.0), 0.15)
-    with right:
-        render_signal_card("GEX Exposure", "gex", True, 1.5, (0.0, 5.0), 0.1)
-        render_signal_card("Insider Buying", "insider", True, 5.0, (0.0, 100.0), 0.2)
+    # Render the grid manually
+    st.markdown('<div class="signal-grid">', unsafe_allow_html=True)
+    render_signal_card("📊 Options Flow", "options", True, 10.0, (0.0, 100.0), 0.2)
+    render_signal_card("🔒 Dark Pool Activity", "darkpool", True, 5.0, (0.0, 100.0), 0.2)
+    render_signal_card("⚛️ GEX Exposure", "gex", True, 1.5, (0.0, 5.0), 0.1)
+    render_signal_card("📢 Reddit Sentiment", "reddit", True, 10.0, (0.0, 100.0), 0.15)
+    render_signal_card("📰 News Sentiment", "sent", True, 20.0, (0.0, 100.0), 0.15)
+    render_signal_card("🧑‍💼 Insider Buying", "insider", True, 5.0, (0.0, 100.0), 0.2)
+    st.markdown('</div>', unsafe_allow_html=True)
 
     st.divider()
     if st.button("✅ Apply Settings"):
