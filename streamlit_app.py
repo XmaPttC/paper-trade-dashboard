@@ -248,29 +248,38 @@ with tab2:
 
     st.success("â This tab is ready to be populated with your existing signal card layout.")
 from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
-from st_aggrid.shared import JsCode
 
-# --- AG Grid Setup (Hidden or Minimal Table for Row Selection) ---
-with st.expander("ð¦ Row Selector", expanded=False):
-    gb = GridOptionsBuilder.from_dataframe(df[["Ticker"]])
-    gb.configure_selection("single", use_checkbox=True)
-    grid_options = gb.build()
-    grid_response = AgGrid(
-        df[["Ticker"]],
-        gridOptions=grid_options,
-        update_mode=GridUpdateMode.SELECTION_CHANGED,
-        height=150,
-        theme="streamlit",
-    )
-    selected_rows = grid_response["selected_rows"]
-    selected_ticker = selected_rows[0]["Ticker"] if selected_rows else None
-    st.session_state.selected_ticker = selected_ticker
+# --- Visible AG Grid Row Selector ---
+st.markdown("### ð Select a Stock to View Signal Summary")
+ag_df = df[["Ticker", "Price", "AltDataScore"]].copy()
+gb = GridOptionsBuilder.from_dataframe(ag_df)
+gb.configure_selection("single", use_checkbox=False, use_row_click=True)
+gb.configure_grid_options(domLayout='normal')
+grid_options = gb.build()
+
+grid_response = AgGrid(
+    ag_df,
+    gridOptions=grid_options,
+    update_mode=GridUpdateMode.SELECTION_CHANGED,
+    height=200,
+    theme="streamlit",
+    fit_columns_on_grid_load=True
+)
+
+selected_rows = grid_response["selected_rows"]
+if selected_rows:
+    st.session_state.selected_ticker = selected_rows[0]["Ticker"]
 
 
 
-# --- Signal Summary Panel ---
+# --- Right Sidebar Signal Summary ---
 if st.session_state.get("selected_ticker"):
-    st.sidebar.markdown("### ð Signal Summary")
-    row = df[df["Ticker"] == st.session_state.selected_ticker].iloc[0]
-    for signal_key in ["AltDataScore", "SentSc", "RedditSc", "InsiderSc", "TrgtUpside", "AnalystSc"]:
-        st.sidebar.markdown(f"**{signal_key}**: {row[signal_key]}")
+    ticker = st.session_state.selected_ticker
+    row = df[df["Ticker"] == ticker]
+    if not row.empty:
+        row = row.iloc[0]
+        with st.sidebar:
+            st.markdown(f"### ð Signal Summary: {ticker}")
+            st.markdown("---")
+            for signal_key in ["AltDataScore", "SentSc", "RedditSc", "InsiderSc", "TrgtUpside", "AnalystSc"]:
+                st.markdown(f"**{signal_key}**: {row[signal_key]}")
