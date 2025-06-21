@@ -99,63 +99,41 @@ tab1, tab2 = st.tabs(["ð Terminal", "ð§ª Alt-Data Control Panel"])
 
 with tab1:
 
-    # === Load and Process Stock Data ===
     import pandas as pd
     from datetime import datetime
 
+    # === Load and Process Stock Data ===
     df = pd.read_csv("mock_stock_data.csv")
     column_order = [
-        "Ticker", "Price", "TerminalScore", "AltDataScore", "PEG", "PE", "EPSGr", "MktCap",
-        "30DayVol", "AnalystSc", "TrgtUpside", "Sector", "InsiderSc",
-        "SentSc", "RedditSc", "52wH"
+        "Ticker", "Price", "PEG", "PE", "EPSGr", "MktCap", "30DayVol",
+        "AnalystSc", "TrgtUpside", "Sector", "InsiderSc", "SentSc", "RedditSc", "52wH"
     ]
     df = df[[col for col in column_order if col in df.columns]]
 
     # --- AltData Score Calculation ---
     def compute_altdata_score(row):
-        total_score = 0.0
+        score = 0.0
         total_weight = 0.0
         for key, settings in st.session_state.get("altdata_settings", {}).items():
             if settings["enabled"]:
                 value = row.get(f"{key.capitalize()}Sc", 0)
-                weight = settings["weight"]
-                total_score += value * weight
+                weight = settings.get("weight", 0)
+                score += value * weight
                 total_weight += weight
-        return round(total_score / total_weight, 2) if total_weight > 0 else 0.0
+        return round(score / total_weight, 2) if total_weight > 0 else 0.0
 
     df["AltDataScore"] = df.apply(compute_altdata_score, axis=1)
 
     # --- Terminal Score Calculation ---
-    total_weight = sum([20, 15, 20, 15, 15, 15])  # fundamentals
-    smart_weights = {
-        "PEG": 20 / total_weight,
-        "EPSGr": 15 / total_weight,
-        "AnalystSc": 20 / total_weight,
-        "TrgtUpside": 15 / total_weight,
-        "SentSc": 15 / total_weight,
-        "InsiderSc": 15 / total_weight
-    }
     df["TerminalScore"] = (
-        (1 / df["PEG"].clip(lower=0.01)) * smart_weights["PEG"] +
-        df["EPSGr"] * smart_weights["EPSGr"] +
-        (5 - df["AnalystSc"]) * smart_weights["AnalystSc"] +
-        df["TrgtUpside"] * smart_weights["TrgtUpside"] +
-        df["SentSc"] * smart_weights["SentSc"] +
-        df["InsiderSc"] * smart_weights["InsiderSc"] +
+        (1 / df["PEG"].clip(lower=0.01)) * 0.2 +
+        df["EPSGr"] * 0.15 +
+        (5 - df["AnalystSc"]) * 0.2 +
+        df["TrgtUpside"] * 0.15 +
+        df["SentSc"] * 0.15 +
+        df["InsiderSc"] * 0.15 +
         df["AltDataScore"]
     ).round(2)
-
-    # --- Sidebar signal summary for selected ticker ---
-    selected_ticker = st.selectbox("ð Select Ticker", df["Ticker"].unique(), index=0)
-    if selected_ticker:
-        st.sidebar.markdown(f"### ð Signal Summary: `{selected_ticker}`")
-        selected_row = df[df["Ticker"] == selected_ticker].iloc[0]
-        for signal in st.session_state.altdata_settings:
-            signal_label = signal.capitalize() + "Sc"
-            value = selected_row.get(signal_label, None)
-            if value is not None:
-                st.sidebar.write(f"**{signal.capitalize()}**: {value:.2f}")
-
 
     # --- Format Helpers ---
     def format_mktcap(val):
@@ -169,7 +147,7 @@ with tab1:
     def format_volume(val):
         return f"{val/1e6:.2f}M"
 
-    # --- Render Table ---
+    # --- Display Table ---
     st.title("Terminal")
     st.markdown(f"""
     <div style='display: flex; gap: 20px; margin-bottom: 4px;'>
@@ -179,7 +157,7 @@ with tab1:
     <hr style='border-top: 1px solid #ccc; margin-bottom: 8px;' />
     """, unsafe_allow_html=True)
 
-    header_html = ''.join(f"<th>{col}</th>" for col in df.columns)
+    header_html = ''.join(f"<th>{col}</th>" for col in df.columns.insert(2, "AltDataScore"))
     row_html = ""
     for _, row in df.iterrows():
         row_cells = ""
@@ -268,4 +246,4 @@ with tab2:
     st.markdown("- Store signal settings in session state")
     st.markdown("- Visual signal breakdowns per ticker")
 
-    st.success("â This tab is ready to be populated with your existing signal card layout."
+    st.success("â This tab is ready to be populated with your existing signal card layout.")
