@@ -95,9 +95,114 @@ a.ticker-link:hover {
 """, unsafe_allow_html=True)
 
 # --- Tabbed Layout ---
-tab1, tab2 = st.tabs(["Terminal", "Control Panel"])
+tab1, tab2 = st.tabs(["ð Terminal", "ð§ª Alt-Data Control Panel"])
 
 with tab1:
+
+    # === Load and Process Stock Data ===
+    import pandas as pd
+    from datetime import datetime
+
+    df = pd.read_csv("mock_stock_data.csv")
+    column_order = [
+        "Ticker", "Price", "TerminalScore", "AltDataScore", "PEG", "PE", "EPSGr", "MktCap",
+        "30DayVol", "AnalystSc", "TrgtUpside", "Sector", "InsiderSc",
+        "SentSc", "RedditSc", "52wH"
+    ]
+    df = df[[col for col in column_order if col in df.columns]]
+
+    # --- AltData Score Calculation ---
+    def compute_altdata_score(row):
+        total_score = 0.0
+        total_weight = 0.0
+        for key, settings in st.session_state.get("altdata_settings", {}).items():
+            if settings["enabled"]:
+                value = row.get(f"{key.capitalize()}Sc", 0)
+                weight = settings["weight"]
+                total_score += value * weight
+                total_weight += weight
+        return round(total_score / total_weight, 2) if total_weight > 0 else 0.0
+
+    df["AltDataScore"] = df.apply(compute_altdata_score, axis=1)
+
+    # --- Terminal Score Calculation ---
+    total_weight = sum([20, 15, 20, 15, 15, 15])  # fundamentals
+    smart_weights = {
+        "PEG": 20 / total_weight,
+        "EPSGr": 15 / total_weight,
+        "AnalystSc": 20 / total_weight,
+        "TrgtUpside": 15 / total_weight,
+        "SentSc": 15 / total_weight,
+        "InsiderSc": 15 / total_weight
+    }
+    df["TerminalScore"] = (
+        (1 / df["PEG"].clip(lower=0.01)) * smart_weights["PEG"] +
+        df["EPSGr"] * smart_weights["EPSGr"] +
+        (5 - df["AnalystSc"]) * smart_weights["AnalystSc"] +
+        df["TrgtUpside"] * smart_weights["TrgtUpside"] +
+        df["SentSc"] * smart_weights["SentSc"] +
+        df["InsiderSc"] * smart_weights["InsiderSc"] +
+        df["AltDataScore"]
+    ).round(2)
+
+    # --- Sidebar signal summary for selected ticker ---
+    selected_ticker = st.selectbox("ð Select Ticker", df["Ticker"].unique(), index=0)
+    if selected_ticker:
+        st.sidebar.markdown(f"### ð Signal Summary: `{selected_ticker}`")
+        selected_row = df[df["Ticker"] == selected_ticker].iloc[0]
+        for signal in st.session_state.altdata_settings:
+            signal_label = signal.capitalize() + "Sc"
+            value = selected_row.get(signal_label, None)
+            if value is not None:
+                st.sidebar.write(f"**{signal.capitalize()}**: {value:.2f}")
+
+
+    # --- Format Helpers ---
+    def format_mktcap(val):
+        if val >= 1e12:
+            return f"{val/1e12:.2f}<span class='suffix-T'>T</span>"
+        elif val >= 1e9:
+            return f"{val/1e9:.2f}<span class='suffix-B'>B</span>"
+        else:
+            return f"{val/1e6:.2f}<span class='suffix-M'>M</span>"
+
+    def format_volume(val):
+        return f"{val/1e6:.2f}M"
+
+    # --- Render Table ---
+    st.title("Terminal")
+    st.markdown(f"""
+    <div style='display: flex; gap: 20px; margin-bottom: 4px;'>
+      <div style='border:1px solid #ccc; font-size: 10px; padding:4px 8px;'><strong>Total Results:</strong> {len(df)}</div>
+      <div style='border:1px solid #ccc; font-size: 10px; padding:4px 8px;'><strong>Date:</strong> {datetime.now().strftime('%Y-%m-%d')}</div>
+    </div>
+    <hr style='border-top: 1px solid #ccc; margin-bottom: 8px;' />
+    """, unsafe_allow_html=True)
+
+    header_html = ''.join(f"<th>{col}</th>" for col in df.columns)
+    row_html = ""
+    for _, row in df.iterrows():
+        row_cells = ""
+        for col in df.columns:
+            val = row[col]
+            if col == "Ticker":
+                val = f"<a class='ticker-link' href='https://finance.yahoo.com/quote/{val}' target='_blank'>{val}</a>"
+            elif col == "MktCap":
+                val = format_mktcap(val)
+            elif col == "30DayVol":
+                val = format_volume(val)
+            elif col == "TrgtUpside":
+                val = f"{val:.1f}%"
+            row_cells += f"<td>{val}</td>"
+        row_html += f"<tr>{row_cells}</tr>"
+
+    st.markdown(f"""
+    <table class="custom-table">
+        <thead><tr>{header_html}</tr></thead>
+        <tbody>{row_html}</tbody>
+    </table>
+    """, unsafe_allow_html=True)
+
     st.title("Terminal Dashboard")
     st.info("â Use the sidebar to filter and score stocks.")
 
@@ -134,28 +239,28 @@ with tab2:
                 "weight": weight
             }
 
-    st.markdown("Signals")
+    st.markdown("### ð¦ Alt-Data Signals")
 
     col1, col2, col3 = st.columns(3)
-    render_signal_card(col1, "Web Traffic", "web", True, 10, (0.0, 100.0), 0.25)
-    render_signal_card(col2, "Mobile App Usage", "app", True, 15, (0.0, 100.0), 0.20)
-    render_signal_card(col3, "Institutional Spend", "spend", True, 20, (0.0, 100.0), 0.20)
+    render_signal_card(col1, "ð Web Traffic", "web", True, 10, (0.0, 100.0), 0.25)
+    render_signal_card(col2, "ð± Mobile App Usage", "app", True, 15, (0.0, 100.0), 0.20)
+    render_signal_card(col3, "ð¦ Institutional Spend", "spend", True, 20, (0.0, 100.0), 0.20)
 
     col4, col5, col6 = st.columns(3)
-    render_signal_card(col4, "Job Postings", "jobs", True, 5, (0.0, 100.0), 0.10)
-    render_signal_card(col5, "Reddit Sentiment", "reddit", True, 10, (0.0, 100.0), 0.10)
-    render_signal_card(col6, "Shipping / Inventory", "ship", True, 8, (0.0, 100.0), 0.10)
+    render_signal_card(col4, "ð¼ Job Postings", "jobs", True, 5, (0.0, 100.0), 0.10)
+    render_signal_card(col5, "ð§µ Reddit Sentiment", "reddit", True, 10, (0.0, 100.0), 0.10)
+    render_signal_card(col6, "ð¦ Shipping / Inventory", "ship", True, 8, (0.0, 100.0), 0.10)
 
     col7, col8, col9 = st.columns(3)
-    render_signal_card(col7, "Options Flow", "options", True, 20, (0.0, 100.0), 0.10)
-    render_signal_card(col8, "Dark Pool Activity", "darkpool", True, 20, (0.0, 100.0), 0.10)
-    render_signal_card(col9, "Gamma Exposure (GEX)", "gex", True, 1.5, (0.0, 5.0), 0.05)
+    render_signal_card(col7, "ð° Options Flow", "options", True, 20, (0.0, 100.0), 0.10)
+    render_signal_card(col8, "ð¦ Dark Pool Activity", "darkpool", True, 20, (0.0, 100.0), 0.10)
+    render_signal_card(col9, "ð Gamma Exposure (GEX)", "gex", True, 1.5, (0.0, 5.0), 0.05)
 
     st.divider()
-    if st.button("Apply Settings"):
-        st.success("Weights and thresholds applied.")
+    if st.button("â Apply Alt-Data Settings"):
+        st.success("Alt-data weights and thresholds applied.")
 
-    st.title("Control Panel")
+    st.title("ð§ª Alt-Data Control Panel")
 
     st.markdown("Adjust signal inputs and weights per alt-data source. Coming next:")
     st.markdown("- Toggle signals on/off")
@@ -163,4 +268,4 @@ with tab2:
     st.markdown("- Store signal settings in session state")
     st.markdown("- Visual signal breakdowns per ticker")
 
-    st.success("This tab is ready to be populated with your existing signal card layout.")
+    st.success("â This tab is ready to be populated with your existing signal card layout."
