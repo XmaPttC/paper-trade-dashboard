@@ -2,33 +2,67 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 
-# --- Page Setup ---
 st.set_page_config(layout="wide", page_title="Terminal")
 
-# --- Sample Data ---
-data = {
-    "Ticker": ["AAPL", "MSFT", "GOOGL"],
-    "Price": [192.3, 338.1, 142.8],
-    "TerminalScore": [78.2, 80.4, 76.1],
-    "PEG": [1.25, 1.19, 1.45],
-    "PE": [28.5, 32.3, 27.9],
-    "EPSGr": [15.2, 13.6, 14.3],
-    "MktCap": [2.7e12, 2.8e12, 1.85e12],
-    "30DayVol": [125e6, 180e6, 145e6],
-    "AnalystSc": [2.1, 2.0, 2.4],
-    "TrgtUpside": [18.5, 15.2, 22.4],
-    "Sector": ["Technology", "Technology", "Technology"],
-    "InsiderSc": [0.72, 0.68, 0.63],
-    "SentSc": [0.61, 0.59, 0.55],
-    "RedditSc": [0.74, 0.70, 0.62],
-    "52wH": [91, 88, 85]
-}
-df = pd.DataFrame(data)
+# Load data
+df = pd.read_csv("mock_stock_data.csv")
 
-# --- CSS Styling ---
+# Define and enforce column order
+column_order = [
+    "Ticker", "Price", "TerminalScore", "PEG", "PE", "EPSGr", "MktCap",
+    "30DayVol", "AnalystSc", "TrgtUpside", "Sector", "InsiderSc",
+    "SentSc", "RedditSc", "52wH"
+]
+df = df[[col for col in column_order if col in df.columns]]
+
+# --- Sidebar Styling ---
 st.markdown("""
 <style>
-.custom-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+@import url('https://fonts.googleapis.com/css2?family=Lato&display=swap');
+html, body, .stApp, .block-container {
+    font-family: 'Lato', sans-serif;
+    background-color: #1e293b !important;
+    color: #f1f5f9 !important;
+}
+section[data-testid="stSidebar"] {
+    background-color: #070b15 !important;
+    color: #f1f5f9 !important;
+    font-size: 13px;
+    padding: 8px;
+    width: 340px !important;
+}
+.sidebar-label {
+    font-size: 13px;
+    color: #f1f5f9 !important;
+    margin-bottom: 4px;
+    border-bottom: 0.5px solid #262a32;
+}
+.filter-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+.filter-row input {
+    background-color: #1e293b;
+    color: #f1f5f9;
+    border: 1px solid #475569;
+    border-radius: 2px;
+    padding: 4px;
+    width: 100%;
+    font-size: 12px;
+}
+input:focus {
+    outline: none;
+    border: 1px solid #38bdf8;
+}
+.custom-table {
+    background-color: #1e293b;
+    color: #f1f5f9;
+    border-collapse: collapse;
+    font-size: 13px;
+    width: 100%;
+}
 .custom-table th, .custom-table td {
     border: 1px solid #334155;
     padding: 6px 10px;
@@ -36,81 +70,192 @@ st.markdown("""
 }
 .custom-table th {
     background-color: #334155;
-    color: white;
     cursor: pointer;
 }
-.custom-table tr:nth-child(even) { background-color: #3d5975; }
-.custom-table tr:nth-child(odd) { background-color: #466686; }
-.custom-table tr:hover { background-color: #64748b; }
+.custom-table tr:nth-child(even) {
+    background-color: #3d5975;
+}
+.custom-table tr:nth-child(odd) {
+    background-color: #466686;
+}
+.custom-table tr:hover {
+    background-color: #64748b;
+}
 a.ticker-link {
     color: #93c5fd;
     text-decoration: none;
 }
-a.ticker-link:hover { text-decoration: underline; }
+a.ticker-link:hover {
+    text-decoration: underline;
+}
+.suffix-M { color: #c084fc; font-weight: bold; }
+.suffix-B { color: #86efac; font-weight: bold; }
+.suffix-T { color: #f87171; font-weight: bold; }
+
+[data-baseweb="base-input"]{
+background-color: #1e293b !important;
+border: 0px !important;
+}
+
+input[class]{
+font-size:14px;
+color: #f1f5f9;
+border: 0px !important;
+}
+
+[data-testid="stForm"] {border: 0px}
 </style>
 """, unsafe_allow_html=True)
 
-# --- Tabs ---
-tab1, tab2 = st.tabs(["ð Terminal", "ð§  Alt-Data Control Panel"])
+# ----- Default Weight Setup -----
+default_weights = {
+    "Retail": {"Web": 0.25, "App": 0.15, "Spend": 0.30, "Jobs": 0.10, "Buzz": 0.10, "Ship": 0.10},
+    "Software": {"Web": 0.15, "App": 0.20, "Spend": 0.10, "Jobs": 0.30, "Buzz": 0.20, "Ship": 0.05},
+    "Fintech": {"Web": 0.20, "App": 0.25, "Spend": 0.20, "Jobs": 0.15, "Buzz": 0.15, "Ship": 0.05},
+}
 
-with tab1:
-    st.title("Terminal")
+if "weights" not in st.session_state:
+    st.session_state.weights = default_weights.copy()
 
-    if "selected_ticker" not in st.session_state:
-        st.session_state.selected_ticker = None
+with st.sidebar:
+    def filter_input(label, min_default=0, max_default=10000000):
+        st.markdown(f'<div class="sidebar-label">{label}</div>', unsafe_allow_html=True)
+        col1, col2 = st.columns(2)
+        with col1:
+            min_val = st.number_input(f"{label}_min", label_visibility="collapsed", value=min_default, key=f"{label}_min")
+        with col2:
+            max_val = st.number_input(f"{label}_max", label_visibility="collapsed", value=max_default, key=f"{label}_max")
+        return min_val, max_val
 
-    # Table rendering with clickable links that update state
-    def render_table():
-        st.markdown("<table class='custom-table'><thead><tr>" +
-                    "".join([f"<th>{col}</th>" for col in df.columns]) +
-                    "</tr></thead><tbody>", unsafe_allow_html=True)
+    with st.expander("Filter Stocks", expanded=False):
+        price_min, price_max = filter_input("Price", 0, 2000)
+        peg_min, peg_max = filter_input("PEG", 0.0, 5.0)
+        pe_min, pe_max = filter_input("PE", 0.0, 50.0)
+        eps_min, eps_max = filter_input("EPSGr", 0, 100)
+        rating_min, rating_max = filter_input("AnalystSc", 1.0, 5.0)
+        upside_min, upside_max = filter_input("TrgtUpside", 0, 200)
+        mcap_min, mcap_max = filter_input("MktCap", 0, 10_000_000_000_000)
+        vol_min, vol_max = filter_input("30DayVol", 0, 1_000_000_000)
 
-        for _, row in df.iterrows():
-            ticker = row["Ticker"]
-            cells = ""
-            for col in df.columns:
-                val = row[col]
-                if col == "Ticker":
-                    val = f"<a href='?selected={ticker}' class='ticker-link'>{ticker}</a>"
-                elif col == "TrgtUpside":
-                    val = f"{val:.1f}%"
-                elif col == "MktCap":
-                    if val >= 1e12:
-                        val = f"{val/1e12:.2f}T"
-                    elif val >= 1e9:
-                        val = f"{val/1e9:.2f}B"
-                    else:
-                        val = f"{val/1e6:.2f}M"
-                elif col == "30DayVol":
-                    val = f"{val/1e6:.1f}M"
-                cells += f"<td>{val}</td>"
-            st.markdown(f"<tr>{cells}</tr>", unsafe_allow_html=True)
-        st.markdown("</tbody></table>", unsafe_allow_html=True)
+    with st.expander("Geography | Exchange", expanded=False):
+        st.toggle("US Only")
+        st.toggle("Nasdaq Only")
+        st.toggle("NYSE Only")
+        st.divider()
 
-    # Capture ticker from query params
-    query_params = st.experimental_get_query_params()
-    if "selected" in query_params:
-        st.session_state.selected_ticker = query_params["selected"][0]
+    with st.expander("Smart Score Weights", expanded=False):
+        peg_w = st.slider("PEG", 0, 100, 20)
+        eps_w = st.slider("EPS Growth", 0, 100, 15)
+        rating_w = st.slider("Analyst Rating", 0, 100, 20)
+        upside_w = st.slider("Target Upside", 0, 100, 15)
+        sentiment_w = st.slider("Sentiment", 0, 100, 15)
+        insider_w = st.slider("Insider Depth", 0, 100, 15)
 
-    # Display table
-    render_table()
+    with st.expander("Alt-Data Weights (by Industry)", expanded=False):
+        industry = st.selectbox("Select Industry", list(default_weights.keys()), key="industry_select_sidebar")
 
-    # Right-side inspector
-    if st.session_state.selected_ticker:
-        selected_row = df[df["Ticker"] == st.session_state.selected_ticker]
-        if not selected_row.empty:
-            row = selected_row.iloc[0]
-            st.markdown("---")
-            with st.container():
-                st.markdown(f"### ð§ª Signal Inspector: {row['Ticker']}")
-                st.write(f"**Terminal Score**: {row['TerminalScore']}")
-                st.write(f"**PEG**: {row['PEG']}")
-                st.write(f"**EPS Growth**: {row['EPSGr']}%")
-                st.write(f"**Analyst Score**: {row['AnalystSc']}")
-                st.write(f"**Target Upside**: {row['TrgtUpside']}%")
-                st.write(f"**Reddit Sentiment**: {row['RedditSc']}")
-                st.write(f"**Sector**: {row['Sector']}")
+        st.markdown("#### Adjust Weights")
 
-with tab2:
-    st.title("ð§  Alt-Data Control Panel")
-    st.info("This tab will be extended with alt-data sliders and controls.")
+        new_weights = {}
+        total_weight = 0
+
+        for signal in ["Web", "App", "Spend", "Jobs", "Buzz", "Ship"]:
+            default_val = st.session_state.weights[industry][signal]
+            new_val = st.slider(f"{signal} Weight", 0.0, 1.0, default_val, 0.01, key=f"{industry}_{signal}_sidebar")
+            new_weights[signal] = new_val
+            total_weight += new_val
+
+        if total_weight > 0:
+            normalized_weights = {k: round(v / total_weight, 3) for k, v in new_weights.items()}
+        else:
+            normalized_weights = new_weights
+
+        st.write("Normalized:")
+        st.json(normalized_weights)
+
+        if st.button("ð¾ Save Weights", key="save_alt_weights"):
+            st.session_state.weights[industry] = normalized_weights
+            st.success(f"Weights for {industry} saved!")
+
+    st.divider()
+    st.markdown("Charts")
+    st.markdown("Research")
+    st.markdown("Misc")
+    st.markdown("Information Hub")
+
+df = df[
+    (df["Price"].between(price_min, price_max)) &
+    (df["PEG"].between(peg_min, peg_max)) &
+    (df["PE"].between(pe_min, pe_max)) &
+    (df["EPSGr"].between(eps_min, eps_max)) &
+    (df["AnalystSc"].between(rating_min, rating_max)) &
+    (df["TrgtUpside"].between(upside_min, upside_max)) &
+    (df["MktCap"].between(mcap_min, mcap_max)) &
+    (df["30DayVol"].between(vol_min, vol_max))
+]
+
+# --- SmartScore Calculation ---
+total_weight = sum([peg_w, eps_w, rating_w, upside_w, sentiment_w, insider_w]) or 1
+weights = {
+    "PEG": peg_w / total_weight,
+    "EPSGr": eps_w / total_weight,
+    "AnalystSc": rating_w / total_weight,
+    "TrgtUpside": upside_w / total_weight,
+    "SentSc": sentiment_w / total_weight,
+    "InsiderSc": insider_w / total_weight
+}
+df["TerminalScore"] = (
+    (1 / df["PEG"].clip(lower=0.01)) * weights["PEG"] +
+    df["EPSGr"] * weights["EPSGr"] +
+    (5 - df["AnalystSc"]) * weights["AnalystSc"] +
+    df["TrgtUpside"] * weights["TrgtUpside"] +
+    df["SentSc"] * weights["SentSc"] +
+    df["InsiderSc"] * weights["InsiderSc"]
+).round(2)
+
+# --- Display Header ---
+st.title("Terminal")
+st.markdown(f"""
+<div style='display: flex; gap: 20px; margin-bottom: 4px;'>
+  <div style='border:1px solid #ccc; font-size: 10px; padding:4px 8px;'><strong>Total Results:</strong> {len(df)}</div>
+  <div style='border:1px solid #ccc; font-size: 10px; padding:4px 8px;'><strong>Date:</strong> {datetime.now().strftime('%Y-%m-%d')}</div>
+</div>
+<hr style='border-top: 1px solid #ccc; margin-bottom: 8px;' />
+""", unsafe_allow_html=True)
+
+# --- Format Helpers ---
+def format_mktcap(val):
+    if val >= 1e12:
+        return f"{val/1e12:.2f}<span class='suffix-T'>T</span>"
+    elif val >= 1e9:
+        return f"{val/1e9:.2f}<span class='suffix-B'>B</span>"
+    else:
+        return f"{val/1e6:.2f}<span class='suffix-M'>M</span>"
+
+def format_volume(val):
+    return f"{val/1e6:.2f}M"
+
+# --- Render HTML Table ---
+header_html = ''.join(f"<th>{col}</th>" for col in df.columns)
+row_html = ""
+for _, row in df.iterrows():
+    row_cells = ""
+    for col in df.columns:
+        val = row[col]
+        if col == "Ticker":
+            val = f"<a class='ticker-link' href='https://finance.yahoo.com/quote/{val}' target='_blank'>{val}</a>"
+        elif col == "MktCap":
+            val = format_mktcap(val)
+        elif col == "30DayVol":
+            val = format_volume(val)
+        elif col == "TrgtUpside":
+            val = f"{val:.1f}%"
+        row_cells += f"<td>{val}</td>"
+    row_html += f"<tr>{row_cells}</tr>"
+
+st.markdown(f"""
+<table class="custom-table">
+    <thead><tr>{header_html}</tr></thead>
+    <tbody>{row_html}</tbody>
+</table>
+""", unsafe_allow_html=True) 
