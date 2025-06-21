@@ -114,35 +114,35 @@ with tab1:
 
 with tab2:
     st.title("Alt-Data Control Panel")
-    st.markdown("Preview layout for a single alt-data signal:")
+    st.markdown("Preview of a fully-contained and styled signal card:")
 
-    # --- CSS for one clean card layout ---
+    # Card Styling via native Streamlit markdown + container
     st.markdown("""
     <style>
-    .single-card {
-        border: 1px solid #475569;
+    .signal-card {
         background-color: #2a3b4d;
-        padding: 16px;
+        border: 1px solid #475569;
         border-radius: 6px;
+        padding: 16px;
         margin-bottom: 20px;
     }
-    .single-card h4 {
-        font-size: 15px;
-        margin-bottom: 12px;
+    .signal-card h5 {
+        font-size: 16px;
         color: #f1f5f9;
+        margin-bottom: 12px;
     }
-    .single-card label {
-        font-size: 13px !important;
-        color: #f1f5f9 !important;
+    .signal-card .stNumberInput, .signal-card .stSlider, .signal-card .stCheckbox {
+        padding: 4px 0;
     }
     </style>
     """, unsafe_allow_html=True)
 
-    # --- Card Container ---
-    with st.container():
-        st.markdown("<div class='single-card'>", unsafe_allow_html=True)
-        st.markdown("<h4>Options Flow</h4>", unsafe_allow_html=True)
+    # One test card rendered with a Streamlit container
+    card_container = st.container()
+    with card_container:
+        st.markdown('<div class="signal-card">', unsafe_allow_html=True)
+        st.markdown("<h5>📊 Options Flow</h5>", unsafe_allow_html=True)
         st.checkbox("Enable", value=True, key="opt_toggle")
-        st.number_input("Threshold", min_value=0.0, max_value=100.0, value=10.0, key="opt_thresh")
+        st.number_input("Threshold", 0.0, 100.0, 10.0, key="opt_thresh")
         st.slider("Weight", 0.0, 1.0, 0.2, 0.01, key="opt_weight")
         st.markdown("</div>", unsafe_allow_html=True)
