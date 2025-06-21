@@ -112,14 +112,14 @@ with tab2:
             weight = st.slider("Weight", 0.0, 1.0, default_weight, 0.01, key=f"{key_prefix}_weight")
 
     col1, col2, col3 = st.columns(3)
-    render_signal_card(col1, "ð Options Flow", "options", True, 10, (0.0, 100.0), 0.2)
-    render_signal_card(col2, "ð Dark Pool Activity", "darkpool", True, 5, (0.0, 100.0), 0.2)
-    render_signal_card(col3, "ðº GEX Exposure", "gex", True, 1.5, (0.0, 5.0), 0.1)
+    render_signal_card(col1, "Options Flow", "options", True, 10.0, (0.0, 100.0), 0.2)
+    render_signal_card(col2, "Dark Pool Activity", "darkpool", True, 5.0, (0.0, 100.0), 0.2)
+    render_signal_card(col3, "GEX Exposure", "gex", True, 1.5, (0.0, 5.0), 0.1)
 
     col4, col5, col6 = st.columns(3)
-    render_signal_card(col4, "ð Reddit Sentiment", "reddit", True, 10, (0.0, 100.0), 0.15)
-    render_signal_card(col5, "ð¬ News Sentiment", "sent", True, 20, (0.0, 100.0), 0.15)
-    render_signal_card(col6, "ðµï¸ Insider Buying", "insider", True, 5, (0.0, 100.0), 0.2)
+    render_signal_card(col4, "Reddit Sentiment", "reddit", True, 10.0, (0.0, 100.0), 0.15)
+    render_signal_card(col5, "News Sentiment", "sent", True, 20.0, (0.0, 100.0), 0.15)
+    render_signal_card(col6, "Insider Buying", "insider", True, 5.0, (0.0, 100.0), 0.2)
 
     st.divider()
     if st.button("â Apply Settings"):
