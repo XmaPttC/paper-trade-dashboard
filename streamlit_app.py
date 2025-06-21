@@ -102,60 +102,45 @@ with tab1:
 
 with tab2:
     st.title("Alt-Data Control Panel")
+    st.markdown("Use sliders and toggles below to configure alt-data signals.")
 
     st.markdown("""
     <style>
     .signal-box {
         background-color: #263142;
         border: 1px solid #3b4454;
-        border-radius: 5px;
-        padding: 10px 14px;
-        margin-bottom: 10px;
+        border-radius: 6px;
+        padding: 12px;
+        margin-bottom: 12px;
         font-size: 13px;
     }
     .signal-title {
-        font-weight: bold;
-        font-size: 13px;
+        font-weight: 600;
         margin-bottom: 6px;
-        color: #f1f5f9;
+        font-size: 14px;
     }
     </style>
     """, unsafe_allow_html=True)
 
-    signals = [
-        {"title": "📊 Options Flow", "key": "options", "thresh": 10.0, "range": (0.0, 100.0), "weight": 0.2},
-        {"title": "🔒 Dark Pool Activity", "key": "darkpool", "thresh": 5.0, "range": (0.0, 100.0), "weight": 0.2},
-        {"title": "⚛️ GEX Exposure", "key": "gex", "thresh": 1.5, "range": (0.0, 5.0), "weight": 0.1},
-        {"title": "📢 Reddit Sentiment", "key": "reddit", "thresh": 10.0, "range": (0.0, 100.0), "weight": 0.15},
-        {"title": "📰 News Sentiment", "key": "sent", "thresh": 20.0, "range": (0.0, 100.0), "weight": 0.15},
-        {"title": "🧑‍💼 Insider Buying", "key": "insider", "thresh": 5.0, "range": (0.0, 100.0), "weight": 0.2},
-    ]
+    def render_signal_card(col, title, key_prefix, default_enabled, default_thresh, range_thresh, default_weight):
+        with col:
+            st.markdown('<div class="signal-box">', unsafe_allow_html=True)
+            st.markdown(f'<div class="signal-title">{title}</div>', unsafe_allow_html=True)
+            st.checkbox("Enable", value=default_enabled, key=f"{key_prefix}_toggle")
+            st.slider("Weight", 0.0, 1.0, default_weight, 0.01, key=f"{key_prefix}_weight")
+            st.number_input("Threshold", range_thresh[0], range_thresh[1], default_thresh, key=f"{key_prefix}_thresh")
+            st.markdown('</div>', unsafe_allow_html=True)
 
-    for i in range(0, len(signals), 3):
-        cols = st.columns(3)
-        for j, signal in enumerate(signals[i:i+3]):
-            with cols[j]:
-                with st.container():
-                    st.markdown(f"""
-                    <div class="signal-box" style="
-                        background-color: #263142;
-                        border: 1px solid #3b4454;
-                        border-radius: 6px;
-                        padding: 12px;
-                        margin-bottom: 12px;
-                    ">
-                    """, unsafe_allow_html=True)
-            
-                    st.markdown(f"<div style='font-weight:600; margin-bottom:6px;'>{signal['title']}</div>", unsafe_allow_html=True)
-            
-                    st.checkbox("Enable", value=True, key=f"{signal['key']}_toggle")
-                    st.number_input("Threshold", min_value=signal["range"][0], max_value=signal["range"][1],
-                                    value=signal["thresh"], key=f"{signal['key']}_thresh")
-                    st.slider("Weight", min_value=0.0, max_value=1.0, value=signal["weight"],
-                              step=0.01, key=f"{signal['key']}_weight")
-            
-                    st.markdown("</div>", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns(3)
+    render_signal_card(col1, "Options Flow", "options", True, 10.0, (0.0, 100.0), 0.2)
+    render_signal_card(col2, "Dark Pool Activity", "darkpool", True, 5.0, (0.0, 100.0), 0.2)
+    render_signal_card(col3, "GEX Exposure", "gex", True, 1.5, (0.0, 5.0), 0.1)
+
+    col4, col5, col6 = st.columns(3)
+    render_signal_card(col4, "Reddit Sentiment", "reddit", True, 10.0, (0.0, 100.0), 0.15)
+    render_signal_card(col5, "News Sentiment", "sent", True, 20.0, (0.0, 100.0), 0.15)
+    render_signal_card(col6, "Insider Buying", "insider", True, 5.0, (0.0, 100.0), 0.2)
 
     st.divider()
-    if st.button("✅ Apply Settings"):
+    if st.button("Apply Settings"):
         st.success("Alt-data settings saved.")
