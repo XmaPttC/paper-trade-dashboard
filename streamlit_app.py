@@ -147,44 +147,7 @@ with tab1:
     def format_volume(val):
         return f"{val/1e6:.2f}M"
 
-    
-    import streamlit as st
-
-    # Initialize selected ticker
-    if "selected_ticker" not in st.session_state:
-        st.session_state.selected_ticker = None
-
-    # Custom JS to capture clicks and notify Python
-    st.markdown("""
-    <script>
-    const rows = parent.document.querySelectorAll('table tr');
-    rows.forEach(row => {
-        row.onclick = () => {
-            const ticker = row.querySelector('a.ticker-link')?.textContent;
-            if (ticker) {
-                window.parent.postMessage({type: 'SELECT_TICKER', ticker: ticker}, '*');
-            }
-        };
-    });
-
-    window.addEventListener('message', event => {
-        if (event.data?.type === 'SELECT_TICKER') {
-            const tickerInput = window.parent.document.querySelector('input[data-testid="stTextInput"]');
-            if (tickerInput) {
-                tickerInput.value = event.data.ticker;
-                tickerInput.dispatchEvent(new Event('input', { bubbles: true }));
-            }
-        }
-    });
-    </script>
-    """, unsafe_allow_html=True)
-
-    selected = st.text_input("Ticker", value="", key="row_selector", label_visibility="collapsed")
-    if selected in df["Ticker"].values:
-        st.session_state.selected_ticker = selected
-    selected_ticker = st.session_state.selected_ticker
-
-# --- Display Table ---
+    # --- Display Table ---
     st.title("Terminal")
     st.markdown(f"""
     <div style='display: flex; gap: 20px; margin-bottom: 4px;'>
@@ -284,10 +247,30 @@ with tab2:
     st.markdown("- Visual signal breakdowns per ticker")
 
     st.success("â This tab is ready to be populated with your existing signal card layout.")
+from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
+from st_aggrid.shared import JsCode
 
-    # --- Signal Summary Panel ---
-    if selected_ticker:
-        st.sidebar.markdown("### ð Signal Summary")
-        row = df[df["Ticker"] == selected_ticker].iloc[0]
-        for signal_key in ["AltDataScore", "SentSc", "RedditSc", "InsiderSc", "TrgtUpside", "AnalystSc"]:
-            st.sidebar.markdown(f"**{signal_key}**: {row[signal_key]}")
+# --- AG Grid Setup (Hidden or Minimal Table for Row Selection) ---
+with st.expander("ð¦ Row Selector", expanded=False):
+    gb = GridOptionsBuilder.from_dataframe(df[["Ticker"]])
+    gb.configure_selection("single", use_checkbox=True)
+    grid_options = gb.build()
+    grid_response = AgGrid(
+        df[["Ticker"]],
+        gridOptions=grid_options,
+        update_mode=GridUpdateMode.SELECTION_CHANGED,
+        height=150,
+        theme="streamlit",
+    )
+    selected_rows = grid_response["selected_rows"]
+    selected_ticker = selected_rows[0]["Ticker"] if selected_rows else None
+    st.session_state.selected_ticker = selected_ticker
+
+
+
+# --- Signal Summary Panel ---
+if st.session_state.get("selected_ticker"):
+    st.sidebar.markdown("### ð Signal Summary")
+    row = df[df["Ticker"] == st.session_state.selected_ticker].iloc[0]
+    for signal_key in ["AltDataScore", "SentSc", "RedditSc", "InsiderSc", "TrgtUpside", "AnalystSc"]:
+        st.sidebar.markdown(f"**{signal_key}**: {row[signal_key]}")
