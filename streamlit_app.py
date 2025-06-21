@@ -15,7 +15,7 @@ column_order = [
 ]
 df = df[[col for col in column_order if col in df.columns]]
 
-# Shared Styling
+# --- Global Style ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Lato&display=swap');
@@ -55,6 +55,18 @@ a.ticker-link:hover {
 .suffix-M { color: #c084fc; font-weight: bold; }
 .suffix-B { color: #86efac; font-weight: bold; }
 .suffix-T { color: #f87171; font-weight: bold; }
+.signal-card {
+    background-color: #263041;
+    padding: 12px;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    margin-bottom: 10px;
+}
+.signal-card h4 {
+    margin-top: 0;
+    font-size: 15px;
+    color: #f1f5f9;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -104,43 +116,25 @@ with tab2:
     st.title("Alt-Data Control Panel")
     st.markdown("Use sliders and toggles below to configure alt-data signals.")
 
-    st.markdown("""
-    <style>
-    .signal-box {
-        background-color: #263142;
-        border: 1px solid #3b4454;
-        border-radius: 6px;
-        padding: 12px;
-        margin-bottom: 12px;
-        font-size: 13px;
-    }
-    .signal-title {
-        font-weight: 600;
-        margin-bottom: 6px;
-        font-size: 14px;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-    def render_signal_card(col, title, key_prefix, default_enabled, default_thresh, range_thresh, default_weight):
-        with col:
-            st.markdown('<div class="signal-box">', unsafe_allow_html=True)
-            st.markdown(f'<div class="signal-title">{title}</div>', unsafe_allow_html=True)
+    def render_signal_card(title, key_prefix, default_enabled, default_thresh, range_thresh, default_weight):
+        with st.container():
+            st.markdown(f"<div class='signal-card'><h4>{title}</h4>", unsafe_allow_html=True)
             st.checkbox("Enable", value=default_enabled, key=f"{key_prefix}_toggle")
-            st.slider("Weight", 0.0, 1.0, default_weight, 0.01, key=f"{key_prefix}_weight")
             st.number_input("Threshold", range_thresh[0], range_thresh[1], default_thresh, key=f"{key_prefix}_thresh")
-            st.markdown('</div>', unsafe_allow_html=True)
+            st.slider("Weight", 0.0, 1.0, default_weight, 0.01, key=f"{key_prefix}_weight")
+            st.markdown("</div>", unsafe_allow_html=True)
 
     col1, col2, col3 = st.columns(3)
-    render_signal_card(col1, "Options Flow", "options", True, 10.0, (0.0, 100.0), 0.2)
-    render_signal_card(col2, "Dark Pool Activity", "darkpool", True, 5.0, (0.0, 100.0), 0.2)
-    render_signal_card(col3, "GEX Exposure", "gex", True, 1.5, (0.0, 5.0), 0.1)
-
-    col4, col5, col6 = st.columns(3)
-    render_signal_card(col4, "Reddit Sentiment", "reddit", True, 10.0, (0.0, 100.0), 0.15)
-    render_signal_card(col5, "News Sentiment", "sent", True, 20.0, (0.0, 100.0), 0.15)
-    render_signal_card(col6, "Insider Buying", "insider", True, 5.0, (0.0, 100.0), 0.2)
+    with col1:
+        render_signal_card("Options Flow", "options", True, 10.0, (0.0, 100.0), 0.2)
+        render_signal_card("Reddit Sentiment", "reddit", True, 10.0, (0.0, 100.0), 0.15)
+    with col2:
+        render_signal_card("Dark Pool Activity", "darkpool", True, 5.0, (0.0, 100.0), 0.2)
+        render_signal_card("News Sentiment", "sent", True, 20.0, (0.0, 100.0), 0.15)
+    with col3:
+        render_signal_card("GEX Exposure", "gex", True, 1.5, (0.0, 5.0), 0.1)
+        render_signal_card("Insider Buying", "insider", True, 5.0, (0.0, 100.0), 0.2)
 
     st.divider()
-    if st.button("Apply Settings"):
+    if st.button("â Apply Settings"):
         st.success("Alt-data settings saved.")
