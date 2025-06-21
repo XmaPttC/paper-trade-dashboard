@@ -89,3 +89,52 @@ with tab2:
 with tab1:
     st.title("📈 Harbourne Screener")
     st.dataframe(df)
+
+
+# --- Alt-Data Signal Cards ---
+
+import streamlit as st
+
+# Ensure session state initialization
+if "altdata_settings" not in st.session_state:
+    st.session_state.altdata_settings = {}
+
+# Helper function to create a signal card
+def render_signal_card(col, title, key_prefix, default_enabled, default_weight, threshold_range, default_thresh):
+    with col.expander(title):
+        st.session_state.altdata_settings.setdefault(key_prefix, {
+            "enabled": default_enabled,
+            "weight": default_weight,
+            "threshold": default_thresh
+        })
+
+        enabled = st.checkbox("Enable", value=st.session_state.altdata_settings[key_prefix]["enabled"], key=f"{key_prefix}_toggle")
+        weight = st.slider("Weight", 0, 100, int(st.session_state.altdata_settings[key_prefix]["weight"]), key=f"{key_prefix}_weight")
+        threshold = st.number_input(
+            "Threshold",
+            min_value=float(threshold_range[0]),
+            max_value=float(threshold_range[1]),
+            value=float(st.session_state.altdata_settings[key_prefix]["threshold"]),
+            step=float(0.01),
+            key=f"{key_prefix}_thresh"
+        )
+
+        st.session_state.altdata_settings[key_prefix]["enabled"] = enabled
+        st.session_state.altdata_settings[key_prefix]["weight"] = weight
+        st.session_state.altdata_settings[key_prefix]["threshold"] = threshold
+
+# Layout in 3 columns
+col1, col2, col3 = st.columns(3)
+
+# High-Quality Signals
+render_signal_card(col1, "📈 Options Flow", "optionsflow", True, 25, (0.0, 5.0), 1.0)
+render_signal_card(col2, "🔒 Dark Pool Prints", "darkpool", True, 20, (0.0, 1000.0), 100.0)
+render_signal_card(col3, "📊 Gamma Exposure", "gex", True, 25, (0.0, 5.0), 1.5)
+
+# Medium-Quality Signals
+render_signal_card(col1, "🧑‍💼 Insider Buying", "insider", True, 15, (0.0, 100.0), 10.0)
+render_signal_card(col2, "📱 App Usage Growth", "appusage", True, 10, (0.0, 500.0), 50.0)
+
+# Sentiment Signals
+render_signal_card(col3, "📣 Reddit Mentions", "reddit", True, 5, (0.0, 1.0), 0.3)
+render_signal_card(col1, "🌐 Google Trends", "googletrends", True, 5, (0.0, 100.0), 10.0)
