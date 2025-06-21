@@ -108,15 +108,15 @@ def render_signal_card(col, title, key_prefix, default_enabled, default_weight, 
             "threshold": default_thresh
         })
 
-        enabled = st.checkbox("Enable", value=st.session_state.altdata_settings[key_prefix]["enabled"], key=f"{key_prefix}_toggle")
-        weight = st.slider("Weight", 0, 100, int(st.session_state.altdata_settings[key_prefix]["weight"]), key=f"{key_prefix}_weight")
+        enabled = st.checkbox("Enable", value=st.session_state.altdata_settings[key_prefix]["enabled"], key=f"{key_prefix}_toggle_widget")
+        weight = st.slider("Weight", 0, 100, int(st.session_state.altdata_settings[key_prefix]["weight"]), key=f"{key_prefix}_weight_widget")
         threshold = st.number_input(
             "Threshold",
             min_value=float(threshold_range[0]),
             max_value=float(threshold_range[1]),
             value=float(st.session_state.altdata_settings[key_prefix]["threshold"]),
             step=float(0.01),
-            key=f"{key_prefix}_thresh"
+            key=f"{key_prefix}_thresh_widget"
         )
 
         st.session_state.altdata_settings[key_prefix]["enabled"] = enabled
