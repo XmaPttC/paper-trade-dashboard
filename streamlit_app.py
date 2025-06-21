@@ -114,50 +114,35 @@ with tab1:
 
 with tab2:
     st.title("Alt-Data Control Panel")
-    st.markdown("Use the toggles and sliders below to adjust alternative data signal settings for scoring.")
+    st.markdown("Preview layout for a single alt-data signal:")
 
-    # --- Inject CSS for styling each card ---
+    # --- CSS for one clean card layout ---
     st.markdown("""
     <style>
-    .signal-card {
+    .single-card {
         border: 1px solid #475569;
         background-color: #2a3b4d;
-        padding: 14px;
+        padding: 16px;
         border-radius: 6px;
-        margin-bottom: 14px;
+        margin-bottom: 20px;
     }
-    .signal-card h4 {
+    .single-card h4 {
         font-size: 15px;
-        margin-bottom: 10px;
+        margin-bottom: 12px;
         color: #f1f5f9;
+    }
+    .single-card label {
+        font-size: 13px !important;
+        color: #f1f5f9 !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-    # --- Helper to render a styled signal card using Streamlit-native layout ---
-    def render_signal_card(title, key_prefix, default_enabled, default_thresh, range_thresh, default_weight):
-        st.markdown(f"<div class='signal-card'>", unsafe_allow_html=True)
-        st.markdown(f"<h4>{title}</h4>", unsafe_allow_html=True)
-        st.checkbox("Enable", value=default_enabled, key=f"{key_prefix}_toggle")
-        st.number_input("Threshold", range_thresh[0], range_thresh[1], default_thresh, key=f"{key_prefix}_thresh")
-        st.slider("Weight", 0.0, 1.0, default_weight, 0.01, key=f"{key_prefix}_weight")
+    # --- Card Container ---
+    with st.container():
+        st.markdown("<div class='single-card'>", unsafe_allow_html=True)
+        st.markdown("<h4>Options Flow</h4>", unsafe_allow_html=True)
+        st.checkbox("Enable", value=True, key="opt_toggle")
+        st.number_input("Threshold", min_value=0.0, max_value=100.0, value=10.0, key="opt_thresh")
+        st.slider("Weight", 0.0, 1.0, 0.2, 0.01, key="opt_weight")
         st.markdown("</div>", unsafe_allow_html=True)
-
-    # --- Lay out cards in rows ---
-    cols = st.columns(3)
-    signal_data = [
-        ("Options Flow", "options", True, 10.0, (0.0, 100.0), 0.2),
-        ("Dark Pool Activity", "darkpool", True, 5.0, (0.0, 100.0), 0.2),
-        ("GEX Exposure", "gex", True, 1.5, (0.0, 5.0), 0.1),
-        ("Reddit Sentiment", "reddit", True, 10.0, (0.0, 100.0), 0.15),
-        ("News Sentiment", "sent", True, 20.0, (0.0, 100.0), 0.15),
-        ("Insider Buying", "insider", True, 5.0, (0.0, 100.0), 0.2)
-    ]
-
-    for i, (title, prefix, enabled, thresh, rng, weight) in enumerate(signal_data):
-        with cols[i % 3]:
-            render_signal_card(title, prefix, enabled, thresh, rng, weight)
-
-    st.divider()
-    if st.button("✅ Apply Settings"):
-        st.success("Alt-data settings saved.")
