@@ -137,25 +137,23 @@ with tab2:
             with cols[j]:
                 with st.container():
                     st.markdown(f"""
-                        <div style="
-                            background-color: #263142;
-                            border: 1px solid #3b4454;
-                            border-radius: 5px;
-                            padding: 10px 12px;
-                            margin-bottom: 10px;
-                            font-size: 13px;
-                            ">
-                            <div style="font-weight: bold; font-size: 13px; color: #f1f5f9; margin-bottom: 6px;">
-                                {signal['title']}
-                            </div>
+                    <div class="signal-box" style="
+                        background-color: #263142;
+                        border: 1px solid #3b4454;
+                        border-radius: 6px;
+                        padding: 12px;
+                        margin-bottom: 12px;
+                    ">
                     """, unsafe_allow_html=True)
-    
+            
+                    st.markdown(f"<div style='font-weight:600; margin-bottom:6px;'>{signal['title']}</div>", unsafe_allow_html=True)
+            
                     st.checkbox("Enable", value=True, key=f"{signal['key']}_toggle")
                     st.number_input("Threshold", min_value=signal["range"][0], max_value=signal["range"][1],
                                     value=signal["thresh"], key=f"{signal['key']}_thresh")
                     st.slider("Weight", min_value=0.0, max_value=1.0, value=signal["weight"],
                               step=0.01, key=f"{signal['key']}_weight")
-    
+            
                     st.markdown("</div>", unsafe_allow_html=True)
 
     st.divider()
