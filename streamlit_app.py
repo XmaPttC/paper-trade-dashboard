@@ -95,7 +95,7 @@ a.ticker-link:hover {
 """, unsafe_allow_html=True)
 
 # --- Tabbed Layout ---
-tab1, tab2 = st.tabs(["ð Terminal", "ð§ª Alt-Data Control Panel"])
+tab1, tab2 = st.tabs(["Terminal", "Control Panel"])
 
 with tab1:
     st.title("Terminal Dashboard")
@@ -134,28 +134,28 @@ with tab2:
                 "weight": weight
             }
 
-    st.markdown("### ð¦ Alt-Data Signals")
+    st.markdown("Signals")
 
     col1, col2, col3 = st.columns(3)
-    render_signal_card(col1, "ð Web Traffic", "web", True, 10, (0.0, 100.0), 0.25)
-    render_signal_card(col2, "ð± Mobile App Usage", "app", True, 15, (0.0, 100.0), 0.20)
-    render_signal_card(col3, "ð¦ Institutional Spend", "spend", True, 20, (0.0, 100.0), 0.20)
+    render_signal_card(col1, "Web Traffic", "web", True, 10, (0.0, 100.0), 0.25)
+    render_signal_card(col2, "Mobile App Usage", "app", True, 15, (0.0, 100.0), 0.20)
+    render_signal_card(col3, "Institutional Spend", "spend", True, 20, (0.0, 100.0), 0.20)
 
     col4, col5, col6 = st.columns(3)
-    render_signal_card(col4, "ð¼ Job Postings", "jobs", True, 5, (0.0, 100.0), 0.10)
-    render_signal_card(col5, "ð§µ Reddit Sentiment", "reddit", True, 10, (0.0, 100.0), 0.10)
-    render_signal_card(col6, "ð¦ Shipping / Inventory", "ship", True, 8, (0.0, 100.0), 0.10)
+    render_signal_card(col4, "Job Postings", "jobs", True, 5, (0.0, 100.0), 0.10)
+    render_signal_card(col5, "Reddit Sentiment", "reddit", True, 10, (0.0, 100.0), 0.10)
+    render_signal_card(col6, "Shipping / Inventory", "ship", True, 8, (0.0, 100.0), 0.10)
 
     col7, col8, col9 = st.columns(3)
-    render_signal_card(col7, "ð° Options Flow", "options", True, 20, (0.0, 100.0), 0.10)
-    render_signal_card(col8, "ð¦ Dark Pool Activity", "darkpool", True, 20, (0.0, 100.0), 0.10)
-    render_signal_card(col9, "ð Gamma Exposure (GEX)", "gex", True, 1.5, (0.0, 5.0), 0.05)
+    render_signal_card(col7, "Options Flow", "options", True, 20, (0.0, 100.0), 0.10)
+    render_signal_card(col8, "Dark Pool Activity", "darkpool", True, 20, (0.0, 100.0), 0.10)
+    render_signal_card(col9, "Gamma Exposure (GEX)", "gex", True, 1.5, (0.0, 5.0), 0.05)
 
     st.divider()
-    if st.button("â Apply Alt-Data Settings"):
-        st.success("Alt-data weights and thresholds applied.")
+    if st.button("Apply Settings"):
+        st.success("Weights and thresholds applied.")
 
-    st.title("ð§ª Alt-Data Control Panel")
+    st.title("Control Panel")
 
     st.markdown("Adjust signal inputs and weights per alt-data source. Coming next:")
     st.markdown("- Toggle signals on/off")
@@ -163,4 +163,4 @@ with tab2:
     st.markdown("- Store signal settings in session state")
     st.markdown("- Visual signal breakdowns per ticker")
 
-    st.success("â This tab is ready to be populated with your existing signal card layout.")
+    st.success("This tab is ready to be populated with your existing signal card layout.")
