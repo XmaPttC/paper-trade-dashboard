@@ -2,8 +2,8 @@ name: Fetch EODHD Fundamentals
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "15 10 * * *"  # Runs daily at 10:15 UTC (~6:15am Eastern)
+  # schedule:
+    # - cron: "15 10 * * *"  # Runs daily at 10:15 UTC (~6:15am Eastern)
 
 jobs:
   run-fundamentals-fetch:
