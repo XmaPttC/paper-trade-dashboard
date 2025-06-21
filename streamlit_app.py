@@ -140,6 +140,14 @@ with tab2:
     div[data-testid="stExpander"] > div:nth-child(1) {
         padding: 4px 12px;
     }
+    .element-container {
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    }
+    /* Optional: reduce horizontal gap between columns */
+    [data-testid="column"] {
+    padding-right: 1rem !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
