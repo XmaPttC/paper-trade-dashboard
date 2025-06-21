@@ -134,7 +134,11 @@ with tab1:
     )
 
     selected_rows = grid_response.get("selected_rows", [])
-    if selected_rows is not None and len(selected_rows) > 0:
+
+    if isinstance(selected_rows, pd.DataFrame):
+        selected_rows = selected_rows.to_dict(orient="records")
+    
+    if selected_rows and isinstance(selected_rows, list) and "Ticker" in selected_rows[0]:
         st.session_state["selected_ticker"] = selected_rows[0]["Ticker"]
 
     if "selected_ticker" in st.session_state:
