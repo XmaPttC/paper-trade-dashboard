@@ -115,7 +115,7 @@ with tab2:
     }
     .signal-card h4 {
         margin-top: 0;
-        margin-bottom: 6px;
+        margin-bottom: 0px;
         font-size: 14px;
         color: #f8fafc;
     }
@@ -135,14 +135,14 @@ with tab2:
 
     left, middle, right = st.columns(3)
     with left:
-        render_signal_card("📊 Options Flow", "options", True, 10.0, (0.0, 100.0), 0.2)
-        render_signal_card("📢 Reddit Sentiment", "reddit", True, 10.0, (0.0, 100.0), 0.15)
+        render_signal_card("Options Flow", "options", True, 10.0, (0.0, 100.0), 0.2)
+        render_signal_card("Reddit Sentiment", "reddit", True, 10.0, (0.0, 100.0), 0.15)
     with middle:
-        render_signal_card("🔒 Dark Pool Activity", "darkpool", True, 5.0, (0.0, 100.0), 0.2)
-        render_signal_card("📰 News Sentiment", "sent", True, 20.0, (0.0, 100.0), 0.15)
+        render_signal_card("Dark Pool Activity", "darkpool", True, 5.0, (0.0, 100.0), 0.2)
+        render_signal_card("News Sentiment", "sent", True, 20.0, (0.0, 100.0), 0.15)
     with right:
-        render_signal_card("⚛️ GEX Exposure", "gex", True, 1.5, (0.0, 5.0), 0.1)
-        render_signal_card("🧑‍💼 Insider Buying", "insider", True, 5.0, (0.0, 100.0), 0.2)
+        render_signal_card("GEX Exposure", "gex", True, 1.5, (0.0, 5.0), 0.1)
+        render_signal_card("Insider Buying", "insider", True, 5.0, (0.0, 100.0), 0.2)
 
     st.divider()
     if st.button("✅ Apply Settings"):
