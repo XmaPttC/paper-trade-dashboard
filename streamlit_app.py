@@ -171,14 +171,18 @@ st.markdown(f"""
 
 # --- Hidden AG Grid for Row Selection ---
 ag_df = df[["Ticker", "Price", "AltDataScore", "SentSc", "RedditSc", "InsiderSc", "TrgtUpside", "AnalystSc"]].copy()
+
 gb = GridOptionsBuilder.from_dataframe(ag_df)
-gb.configure_selection("single", use_checkbox=False, use_row_click=True)
+gb.configure_selection("single", use_checkbox=False)  # ← FIXED
+gb.configure_grid_options(domLayout='normal')
 grid_options = gb.build()
+
 grid_response = AgGrid(
     ag_df,
     gridOptions=grid_options,
     update_mode=GridUpdateMode.SELECTION_CHANGED,
-    height=0,
+    height=200,
+    theme="streamlit",
     fit_columns_on_grid_load=True
 )
 
