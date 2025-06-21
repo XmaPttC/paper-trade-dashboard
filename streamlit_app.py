@@ -133,8 +133,8 @@ with tab1:
         fit_columns_on_grid_load=True
     )
 
-    selected_rows = grid_response["selected_rows"]
-    if selected_rows and isinstance(selected_rows, list) and len(selected_rows) > 0:
+    selected_rows = grid_response.get("selected_rows", [])
+    if selected_rows is not None and len(selected_rows) > 0:
         st.session_state["selected_ticker"] = selected_rows[0]["Ticker"]
 
     if "selected_ticker" in st.session_state:
