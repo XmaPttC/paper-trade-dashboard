@@ -24,134 +24,76 @@ html, body, .stApp, .block-container {
     background-color: #1e293b !important;
     color: #f1f5f9 !important;
 }
-section[data-testid="stSidebar"] {
-    background-color: #070b15 !important;
-    color: #f1f5f9 !important;
-    font-size: 13px;
-    padding: 8px;
-    width: 340px !important;
-}
-.sidebar-label {
-    font-size: 13px;
-    color: #f1f5f9 !important;
-    margin-bottom: 4px;
-    border-bottom: 0.5px solid #262a32;
-}
-.custom-table {
-    background-color: #1e293b;
-    color: #f1f5f9;
-    border-collapse: collapse;
-    font-size: 13px;
-    width: 100%;
-}
-.custom-table th, .custom-table td {
-    border: 1px solid #334155;
-    padding: 6px 10px;
-    text-align: left;
-}
-.custom-table th {
+.custom-panel {
     background-color: #334155;
+    padding: 12px 16px;
+    margin-bottom: 14px;
+    border-radius: 4px;
+    font-size: 13px;
+}
+.custom-panel h5 {
+    margin: 0 0 8px 0;
+    color: #93c5fd;
+}
+.inline-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+.inline-row label {
+    flex: 1;
+}
+.inline-row input, .inline-row .stSlider {
+    flex: 2;
+}
+.apply-btn {
+    background-color: #2563eb;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    font-size: 14px;
+    border-radius: 4px;
     cursor: pointer;
 }
-.custom-table tr:nth-child(even) {
-    background-color: #3d5975;
+.apply-btn:hover {
+    background-color: #1d4ed8;
 }
-.custom-table tr:nth-child(odd) {
-    background-color: #466686;
-}
-.custom-table tr:hover {
-    background-color: #64748b;
-}
-a.ticker-link {
-    color: #93c5fd;
-    text-decoration: none;
-}
-a.ticker-link:hover {
-    text-decoration: underline;
-}
-.suffix-M { color: #c084fc; font-weight: bold; }
-.suffix-B { color: #86efac; font-weight: bold; }
-.suffix-T { color: #f87171; font-weight: bold; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- Tabs ---
-tab1, tab2 = st.tabs(["ð Terminal Dashboard", "ð§  Alt-Data Control Panel"])
+# Tabs
+tab1, tab2 = st.tabs(["Terminal", "Control Panel"])
 
-# --- Terminal Dashboard ---
-with tab1:
-    st.title("Terminal Dashboard")
-    st.markdown(f"""
-    <div style='display: flex; gap: 20px; margin-bottom: 4px;'>
-      <div style='border:1px solid #ccc; font-size: 10px; padding:4px 8px;'><strong>Total Results:</strong> {len(df)}</div>
-      <div style='border:1px solid #ccc; font-size: 10px; padding:4px 8px;'><strong>Date:</strong> {datetime.now().strftime('%Y-%m-%d')}</div>
-    </div>
-    <hr style='border-top: 1px solid #ccc; margin-bottom: 8px;' />
-    """, unsafe_allow_html=True)
-
-    def format_mktcap(val):
-        if val >= 1e12:
-            return f"{val/1e12:.2f}<span class='suffix-T'>T</span>"
-        elif val >= 1e9:
-            return f"{val/1e9:.2f}<span class='suffix-B'>B</span>"
-        else:
-            return f"{val/1e6:.2f}<span class='suffix-M'>M</span>"
-
-    def format_volume(val):
-        return f"{val/1e6:.2f}M"
-
-    header_html = ''.join(f"<th>{col}</th>" for col in df.columns)
-    row_html = ""
-    for _, row in df.iterrows():
-        row_cells = ""
-        for col in df.columns:
-            val = row[col]
-            if col == "Ticker":
-                val = f"<a class='ticker-link' href='https://finance.yahoo.com/quote/{val}' target='_blank'>{val}</a>"
-            elif col == "MktCap":
-                val = format_mktcap(val)
-            elif col == "30DayVol":
-                val = format_volume(val)
-            elif col == "TrgtUpside":
-                val = f"{val:.1f}%"
-            row_cells += f"<td>{val}</td>"
-        row_html += f"<tr>{row_cells}</tr>"
-
-    st.markdown(f"""
-    <table class="custom-table">
-        <thead><tr>{header_html}</tr></thead>
-        <tbody>{row_html}</tbody>
-    </table>
-    """, unsafe_allow_html=True)
-
-# --- Alt-Data Control Panel ---
 with tab2:
-    st.title("ð§  Alt-Data Control Panel")
+    st.markdown("<h3 style='margin-bottom: 20px;'>Signal Settings</h3>", unsafe_allow_html=True)
 
-    if "altdata_settings" not in st.session_state:
-        st.session_state.altdata_settings = {}
+    signals = [
+        ("Web Traffic", "web", 0.25, 10),
+        ("Mobile App Usage", "app", 0.20, 15),
+        ("Institutional Spend", "spend", 0.20, 20),
+        ("Job Postings", "jobs", 0.10, 5),
+        ("Reddit Sentiment", "reddit", 0.10, 10),
+        ("Shipping / Inventory", "ship", 0.10, 8),
+        ("Options Flow", "options", 0.10, 20),
+        ("Dark Pool Activity", "darkpool", 0.10, 20),
+        ("Gamma Exposure (GEX)", "gex", 0.05, 1.5)
+    ]
 
-    def render_signal_card(title, key_prefix, default_weight):
-        if key_prefix not in st.session_state.altdata_settings:
-            st.session_state.altdata_settings[key_prefix] = {
-                "enabled": True,
-                "weight": default_weight
-            }
-        with st.expander(f"{title}", expanded=True):
-            enabled = st.checkbox("Enable", value=st.session_state.altdata_settings[key_prefix]["enabled"], key=f"{key_prefix}_toggle")
-            weight = st.slider("Weight", 0.0, 1.0, float(st.session_state.altdata_settings[key_prefix]["weight"]), 0.01, key=f"{key_prefix}_weight")
-            st.session_state.altdata_settings[key_prefix] = {
-                "enabled": enabled,
-                "weight": weight
-            }
+    cols = st.columns(3)
+    for i, (label, key, default_weight, default_thresh) in enumerate(signals):
+        col = cols[i % 3]
+        with col:
+            st.markdown(f"<div class='custom-panel'>", unsafe_allow_html=True)
+            st.markdown(f"<h5>{label}</h5>", unsafe_allow_html=True)
 
-    st.markdown("### Tune Weights and Enable Signals")
-    render_signal_card("ð° Options Flow", "options", 0.2)
-    render_signal_card("ð¦ Dark Pool Activity", "darkpool", 0.15)
-    render_signal_card("ð Gamma Exposure (GEX)", "gex", 0.1)
-    render_signal_card("ð¬ Sentiment Score", "sentiment", 0.2)
-    render_signal_card("ð§µ Reddit Buzz", "reddit", 0.15)
+            enabled = st.checkbox("Enable", key=f"{key}_enabled", value=True)
+            weight = st.slider("Weight", 0.0, 1.0, value=default_weight, step=0.05, key=f"{key}_weight")
+            threshold = st.number_input("Threshold", value=default_thresh, key=f"{key}_threshold")
 
-    st.divider()
-    if st.button("â Apply Alt-Data Settings"):
-        st.success("Alt-data signal settings saved.")
+            st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown("<div style='text-align: center; margin-top: 24px;'>", unsafe_allow_html=True)
+    if st.button("â Apply Settings"):
+        st.success("Alt-data settings applied.")
+    st.markdown("</div>", unsafe_allow_html=True)
