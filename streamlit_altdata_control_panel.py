@@ -20,7 +20,7 @@ df = pd.DataFrame({
 if "altdata_settings" not in st.session_state:
     st.session_state.altdata_settings = {
         "Reddit": {"enabled": True, "weight": 20, "threshold": 0.3},
-        "WebTraffic": {"enabled": False, "weight": 15, "threshold": 10},
+        "WebTraffic": {"enabled": False, "weight": 15, "threshold": 10.0},
         "GEX": {"enabled": True, "weight": 25, "threshold": 1.5},
     }
 
@@ -35,19 +35,40 @@ with tab2:
     with col1.expander("📣 Reddit Mentions"):
         enabled = st.checkbox("Enable Reddit Score", value=st.session_state.altdata_settings["Reddit"]["enabled"], key="reddit_toggle")
         weight = st.slider("Weight", 0, 100, st.session_state.altdata_settings["Reddit"]["weight"], key="reddit_weight")
-        threshold = st.number_input("Sentiment Threshold", 0.0, 1.0, float(st.session_state.altdata_settings["Reddit"]["threshold"]), key="reddit_thresh")
+        threshold = st.number_input(
+            "Sentiment Threshold",
+            min_value=0.0,
+            max_value=1.0,
+            value=float(st.session_state.altdata_settings["Reddit"]["threshold"]),
+            step=0.01,
+            key="reddit_thresh"
+        )
 
     # Web Traffic Card
     with col2.expander("🌐 Web Traffic"):
         enabled = st.checkbox("Enable Web Traffic Score", value=st.session_state.altdata_settings["WebTraffic"]["enabled"], key="web_toggle")
         weight = st.slider("Weight", 0, 100, st.session_state.altdata_settings["WebTraffic"]["weight"], key="web_weight")
-        threshold = st.number_input("Change Threshold (%)", 0.0, 100.0, float(st.session_state.altdata_settings["WebTraffic"]["threshold"]), key="web_thresh")
+        threshold = st.number_input(
+            "Change Threshold (%)",
+            min_value=0.0,
+            max_value=100.0,
+            value=float(st.session_state.altdata_settings["WebTraffic"]["threshold"]),
+            step=1.0,
+            key="web_thresh"
+        )
 
     # GEX Card
     with col3.expander("📊 GEX Signal"):
         enabled = st.checkbox("Enable GEX Score", value=st.session_state.altdata_settings["GEX"]["enabled"], key="gex_toggle")
         weight = st.slider("Weight", 0, 100, st.session_state.altdata_settings["GEX"]["weight"], key="gex_weight")
-        threshold = st.number_input("Gamma Threshold", 0.0, 5.0, float(st.session_state.altdata_settings["GEX"]["threshold"]), key="gex_thresh")
+        threshold = st.number_input(
+            "Gamma Threshold",
+            min_value=0.0,
+            max_value=5.0,
+            value=float(st.session_state.altdata_settings["GEX"]["threshold"]),
+            step=0.1,
+            key="gex_thresh"
+        )
 
     # Apply Button
     if st.button("✅ Apply Alt-Data Scoring"):
