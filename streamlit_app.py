@@ -108,6 +108,48 @@ with tab1:
     st.markdown("Mock HTML table output or AG Grid.")
 
 with tab2:
+
+    st.title("Alt-Data Control Panel")
+
+    st.markdown("Use the sliders and toggles below to tune the signal thresholds and weights for each alt-data input. Settings will be saved when you click **Apply Settings**.")
+
+    # --- Helper Function to Render Signal Cards ---
+    def render_signal_card(col, title, key_prefix, default_enabled, default_thresh, range_thresh, default_weight):
+        with col:
+            st.markdown(f"#### {title}")
+            if "altdata_settings" not in st.session_state:
+                st.session_state.altdata_settings = {}
+            if key_prefix not in st.session_state.altdata_settings:
+                st.session_state.altdata_settings[key_prefix] = {
+                    "enabled": default_enabled,
+                    "threshold": default_thresh,
+                    "weight": default_weight
+                }
+            enabled = st.checkbox("Enable", value=st.session_state.altdata_settings[key_prefix]["enabled"], key=f"{key_prefix}_toggle_{key_prefix}")
+            threshold = st.number_input("Change Threshold (%)", range_thresh[0], range_thresh[1], float(st.session_state.altdata_settings[key_prefix]["threshold"]), key=f"{key_prefix}_thresh_{key_prefix}")
+            weight = st.slider("Weight", 0.0, 1.0, float(st.session_state.altdata_settings[key_prefix]["weight"]), 0.01, key=f"{key_prefix}_weight_{key_prefix}")
+            st.session_state.altdata_settings[key_prefix] = {
+                "enabled": enabled,
+                "threshold": threshold,
+                "weight": weight
+            }
+
+    st.markdown("### ð¦ Alt-Data Signals")
+
+    col1, col2, col3 = st.columns(3)
+    render_signal_card(col1, "ð Web Traffic", "web", True, 10, (0.0, 100.0), 0.25)
+    render_signal_card(col2, "ð± Mobile App Usage", "app", True, 15, (0.0, 100.0), 0.20)
+    render_signal_card(col3, "ð¦ Institutional Spend", "spend", True, 20, (0.0, 100.0), 0.20)
+
+    col4, col5, col6 = st.columns(3)
+    render_signal_card(col4, "ð¼ Job Postings", "jobs", True, 5, (0.0, 100.0), 0.10)
+    render_signal_card(col5, "ð§µ Reddit Sentiment", "reddit", True, 10, (0.0, 100.0), 0.10)
+    render_signal_card(col6, "ð¦ Shipping / Inventory", "ship", True, 8, (0.0, 100.0), 0.10)
+
+    st.divider()
+    if st.button("â Apply Alt-Data Settings"):
+        st.success("Alt-data weights and thresholds applied.")
+
     st.title("ð§ª Alt-Data Control Panel")
 
     st.markdown("Adjust signal inputs and weights per alt-data source. Coming next:")
