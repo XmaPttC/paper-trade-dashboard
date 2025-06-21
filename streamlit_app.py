@@ -1,68 +1,34 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 
-# --- Streamlit Page Setup ---
+# --- Page Setup ---
 st.set_page_config(layout="wide", page_title="Terminal")
 
-# --- Load and Format Data ---
-@st.cache_data
-def load_data():
-    df = pd.read_csv("mock_stock_data.csv")
-    df["AltDataScore"] = (
-        df["InsiderSc"] * 0.3 +
-        df["SentSc"] * 0.3 +
-        df["RedditSc"] * 0.3 +
-        df["TrgtUpside"] * 0.1
-    ).round(2)
-    df["TerminalScore"] = (
-        (1 / df["PEG"].clip(lower=0.01)) * 0.2 +
-        df["EPSGr"] * 0.15 +
-        (5 - df["AnalystSc"]) * 0.2 +
-        df["TrgtUpside"] * 0.15 +
-        df["SentSc"] * 0.15 +
-        df["InsiderSc"] * 0.15 +
-        df["AltDataScore"]
-    ).round(2)
-    return df
-
-df = load_data()
+# --- Sample Data ---
+data = {
+    "Ticker": ["AAPL", "MSFT", "GOOGL"],
+    "Price": [192.3, 338.1, 142.8],
+    "TerminalScore": [78.2, 80.4, 76.1],
+    "PEG": [1.25, 1.19, 1.45],
+    "PE": [28.5, 32.3, 27.9],
+    "EPSGr": [15.2, 13.6, 14.3],
+    "MktCap": [2.7e12, 2.8e12, 1.85e12],
+    "30DayVol": [125e6, 180e6, 145e6],
+    "AnalystSc": [2.1, 2.0, 2.4],
+    "TrgtUpside": [18.5, 15.2, 22.4],
+    "Sector": ["Technology", "Technology", "Technology"],
+    "InsiderSc": [0.72, 0.68, 0.63],
+    "SentSc": [0.61, 0.59, 0.55],
+    "RedditSc": [0.74, 0.70, 0.62],
+    "52wH": [91, 88, 85]
+}
+df = pd.DataFrame(data)
 
 # --- CSS Styling ---
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Lato&display=swap');
-html, body, .stApp, .block-container {
-    font-family: 'Lato', sans-serif;
-    background-color: #1e293b !important;
-    color: #f1f5f9 !important;
-}
-section[data-testid="stSidebar"] {
-    background-color: #0f172a !important;
-    color: #f1f5f9 !important;
-    font-size: 13px;
-    padding: 8px;
-    width: 320px !important;
-}
-.sidebar-label {
-    font-size: 13px;
-    margin-bottom: 4px;
-    border-bottom: 0.5px solid #334155;
-}
-.filter-row {
-    display: flex;
-    justify-content: space-between;
-    gap: 6px;
-    margin-bottom: 10px;
-}
-.custom-table {
-    background-color: #1e293b;
-    color: #f1f5f9;
-    border-collapse: collapse;
-    font-size: 13px;
-    width: 100%;
-}
+.custom-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .custom-table th, .custom-table td {
     border: 1px solid #334155;
     padding: 6px 10px;
@@ -70,118 +36,81 @@ section[data-testid="stSidebar"] {
 }
 .custom-table th {
     background-color: #334155;
+    color: white;
+    cursor: pointer;
 }
-.custom-table tr:nth-child(even) {
-    background-color: #3d5975;
-}
-.custom-table tr:nth-child(odd) {
-    background-color: #466686;
-}
-.custom-table tr:hover {
-    background-color: #64748b;
-}
+.custom-table tr:nth-child(even) { background-color: #3d5975; }
+.custom-table tr:nth-child(odd) { background-color: #466686; }
+.custom-table tr:hover { background-color: #64748b; }
 a.ticker-link {
     color: #93c5fd;
     text-decoration: none;
 }
-a.ticker-link:hover {
-    text-decoration: underline;
-}
-.suffix-M { color: #c084fc; font-weight: bold; }
-.suffix-B { color: #86efac; font-weight: bold; }
-.suffix-T { color: #f87171; font-weight: bold; }
+a.ticker-link:hover { text-decoration: underline; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- Header ---
-st.title("📈 Harbourne Terminal")
-st.markdown(f"""
-<div style='display: flex; gap: 20px; margin-bottom: 4px;'>
-  <div style='border:1px solid #ccc; font-size: 10px; padding:4px 8px;'><strong>Total Results:</strong> {len(df)}</div>
-  <div style='border:1px solid #ccc; font-size: 10px; padding:4px 8px;'><strong>Date:</strong> {datetime.now().strftime('%Y-%m-%d')}</div>
-</div>
-<hr style='border-top: 1px solid #ccc; margin-bottom: 8px;' />
-""", unsafe_allow_html=True)
+# --- Tabs ---
+tab1, tab2 = st.tabs(["ð Terminal", "ð§  Alt-Data Control Panel"])
 
-# --- Format Helpers ---
-def format_mktcap(val):
-    if val >= 1e12:
-        return f"{val/1e12:.2f}<span class='suffix-T'>T</span>"
-    elif val >= 1e9:
-        return f"{val/1e9:.2f}<span class='suffix-B'>B</span>"
-    else:
-        return f"{val/1e6:.2f}<span class='suffix-M'>M</span>"
+with tab1:
+    st.title("Terminal")
 
-def format_volume(val):
-    return f"{val/1e6:.2f}M"
+    if "selected_ticker" not in st.session_state:
+        st.session_state.selected_ticker = None
 
-def format_upside(val):
-    return f"{val:.1f}%"
+    # Table rendering with clickable links that update state
+    def render_table():
+        st.markdown("<table class='custom-table'><thead><tr>" +
+                    "".join([f"<th>{col}</th>" for col in df.columns]) +
+                    "</tr></thead><tbody>", unsafe_allow_html=True)
 
-# --- Render Custom HTML Table ---
-columns = ["Ticker", "Price", "TerminalScore", "PEG", "PE", "EPSGr", "MktCap",
-           "30DayVol", "AnalystSc", "TrgtUpside", "AltDataScore"]
+        for _, row in df.iterrows():
+            ticker = row["Ticker"]
+            cells = ""
+            for col in df.columns:
+                val = row[col]
+                if col == "Ticker":
+                    val = f"<a href='?selected={ticker}' class='ticker-link'>{ticker}</a>"
+                elif col == "TrgtUpside":
+                    val = f"{val:.1f}%"
+                elif col == "MktCap":
+                    if val >= 1e12:
+                        val = f"{val/1e12:.2f}T"
+                    elif val >= 1e9:
+                        val = f"{val/1e9:.2f}B"
+                    else:
+                        val = f"{val/1e6:.2f}M"
+                elif col == "30DayVol":
+                    val = f"{val/1e6:.1f}M"
+                cells += f"<td>{val}</td>"
+            st.markdown(f"<tr>{cells}</tr>", unsafe_allow_html=True)
+        st.markdown("</tbody></table>", unsafe_allow_html=True)
 
-header_html = ''.join(f"<th>{col}</th>" for col in columns)
-rows_html = ""
-for _, row in df.iterrows():
-    row_cells = ""
-    for col in columns:
-        val = row[col]
-        if col == "Ticker":
-            val = f"<a class='ticker-link' href='https://finance.yahoo.com/quote/{val}' target='_blank'>{val}</a>"
-        elif col == "MktCap":
-            val = format_mktcap(val)
-        elif col == "30DayVol":
-            val = format_volume(val)
-        elif col == "TrgtUpside":
-            val = format_upside(val)
-        row_cells += f"<td>{val}</td>"
-    rows_html += f"<tr>{row_cells}</tr>"
+    # Capture ticker from query params
+    query_params = st.experimental_get_query_params()
+    if "selected" in query_params:
+        st.session_state.selected_ticker = query_params["selected"][0]
 
-st.markdown(f"""
-<table class="custom-table">
-<thead><tr>{header_html}</tr></thead>
-<tbody>{rows_html}</tbody>
-</table>
-""", unsafe_allow_html=True)
+    # Display table
+    render_table()
 
-# --- Hidden AG Grid to Capture Row Clicks ---
-with st.container():
-    st.markdown(
-        "<div style='height: 0px; overflow: hidden;'>", unsafe_allow_html=True
-    )
+    # Right-side inspector
+    if st.session_state.selected_ticker:
+        selected_row = df[df["Ticker"] == st.session_state.selected_ticker]
+        if not selected_row.empty:
+            row = selected_row.iloc[0]
+            st.markdown("---")
+            with st.container():
+                st.markdown(f"### ð§ª Signal Inspector: {row['Ticker']}")
+                st.write(f"**Terminal Score**: {row['TerminalScore']}")
+                st.write(f"**PEG**: {row['PEG']}")
+                st.write(f"**EPS Growth**: {row['EPSGr']}%")
+                st.write(f"**Analyst Score**: {row['AnalystSc']}")
+                st.write(f"**Target Upside**: {row['TrgtUpside']}%")
+                st.write(f"**Reddit Sentiment**: {row['RedditSc']}")
+                st.write(f"**Sector**: {row['Sector']}")
 
-    ag_df = df[["Ticker", "Price", "AltDataScore"]].copy()
-    gb = GridOptionsBuilder.from_dataframe(ag_df)
-    gb.configure_selection("single", use_checkbox=False)
-    grid_options = gb.build()
-
-    grid_response = AgGrid(
-        ag_df,
-        gridOptions=grid_options,
-        update_mode=GridUpdateMode.SELECTION_CHANGED,
-        height=200,  # Needs visible height to work
-        fit_columns_on_grid_load=True,
-        theme="streamlit"
-    )
-
-    st.markdown("</div>", unsafe_allow_html=True)
-
-# --- Store Selection
-selected_rows = grid_response.get("selected_rows", [])
-if selected_rows:
-    st.session_state.selected_ticker = selected_rows[0]["Ticker"]
-    
-# --- Right Sidebar: Signal Summary ---
-if st.session_state.selected_ticker:
-    selected = df[df["Ticker"] == st.session_state.selected_ticker].iloc[0]
-    with st.sidebar:
-        st.markdown(f"### 🧪 Signal Summary: {selected['Ticker']}")
-        st.markdown("---")
-        st.markdown(f"**AltDataScore**: {selected['AltDataScore']}")
-        st.markdown(f"**Sentiment**: {selected['SentSc']}")
-        st.markdown(f"**Reddit**: {selected['RedditSc']}")
-        st.markdown(f"**Insider**: {selected['InsiderSc']}")
-        st.markdown(f"**Target Upside**: {selected['TrgtUpside']}%")
-        st.markdown(f"**Analyst Score**: {selected['AnalystSc']}")
+with tab2:
+    st.title("ð§  Alt-Data Control Panel")
+    st.info("This tab will be extended with alt-data sliders and controls.")
