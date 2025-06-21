@@ -15,7 +15,7 @@ column_order = [
 ]
 df = df[[col for col in column_order if col in df.columns]]
 
-# --- CSS Styling ---
+# Shared Styling
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Lato&display=swap');
@@ -24,76 +24,103 @@ html, body, .stApp, .block-container {
     background-color: #1e293b !important;
     color: #f1f5f9 !important;
 }
-.custom-panel {
-    background-color: #334155;
-    padding: 12px 16px;
-    margin-bottom: 14px;
-    border-radius: 4px;
+.custom-table {
+    background-color: #1e293b;
+    color: #f1f5f9;
+    border-collapse: collapse;
     font-size: 13px;
+    width: 100%;
 }
-.custom-panel h5 {
-    margin: 0 0 8px 0;
+.custom-table th, .custom-table td {
+    border: 1px solid #334155;
+    padding: 6px 10px;
+    text-align: left;
+}
+.custom-table th {
+    background-color: #334155;
+}
+.custom-table tr:nth-child(even) {
+    background-color: #3d5975;
+}
+.custom-table tr:nth-child(odd) {
+    background-color: #466686;
+}
+a.ticker-link {
     color: #93c5fd;
+    text-decoration: none;
 }
-.inline-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+a.ticker-link:hover {
+    text-decoration: underline;
 }
-.inline-row label {
-    flex: 1;
-}
-.inline-row input, .inline-row .stSlider {
-    flex: 2;
-}
-.apply-btn {
-    background-color: #2563eb;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    font-size: 14px;
-    border-radius: 4px;
-    cursor: pointer;
-}
-.apply-btn:hover {
-    background-color: #1d4ed8;
-}
+.suffix-M { color: #c084fc; font-weight: bold; }
+.suffix-B { color: #86efac; font-weight: bold; }
+.suffix-T { color: #f87171; font-weight: bold; }
 </style>
 """, unsafe_allow_html=True)
 
-# Tabs
-tab1, tab2 = st.tabs(["Terminal", "Control Panel"])
+def format_mktcap(val):
+    if val >= 1e12:
+        return f"{val/1e12:.2f}<span class='suffix-T'>T</span>"
+    elif val >= 1e9:
+        return f"{val/1e9:.2f}<span class='suffix-B'>B</span>"
+    else:
+        return f"{val/1e6:.2f}<span class='suffix-M'>M</span>"
+
+def format_volume(val):
+    return f"{val/1e6:.2f}M"
+
+tab1, tab2 = st.tabs(["ð Terminal", "ð§  Alt-Data Control Panel"])
+
+with tab1:
+    st.title("Terminal")
+    st.markdown(f"""
+    <div style='display: flex; gap: 20px; margin-bottom: 4px;'>
+      <div style='border:1px solid #ccc; font-size: 10px; padding:4px 8px;'><strong>Total Results:</strong> {len(df)}</div>
+      <div style='border:1px solid #ccc; font-size: 10px; padding:4px 8px;'><strong>Date:</strong> {datetime.now().strftime('%Y-%m-%d')}</div>
+    </div>
+    <hr style='border-top: 1px solid #ccc; margin-bottom: 8px;' />
+    """, unsafe_allow_html=True)
+
+    header_html = ''.join(f"<th>{col}</th>" for col in df.columns)
+    row_html = ""
+    for _, row in df.iterrows():
+        row_cells = ""
+        for col in df.columns:
+            val = row[col]
+            if col == "Ticker":
+                val = f"<a class='ticker-link' href='https://finance.yahoo.com/quote/{val}' target='_blank'>{val}</a>"
+            elif col == "MktCap":
+                val = format_mktcap(val)
+            elif col == "30DayVol":
+                val = format_volume(val)
+            elif col == "TrgtUpside":
+                val = f"{val:.1f}%"
+            row_cells += f"<td>{val}</td>"
+        row_html += f"<tr>{row_cells}</tr>"
+
+    st.markdown(f"<table class='custom-table'><thead><tr>{header_html}</tr></thead><tbody>{row_html}</tbody></table>", unsafe_allow_html=True)
 
 with tab2:
-    st.markdown("<h3 style='margin-bottom: 20px;'>Signal Settings</h3>", unsafe_allow_html=True)
+    st.title("Alt-Data Control Panel")
+    st.markdown("Use sliders and toggles below to configure alt-data signals.")
 
-    signals = [
-        ("Web Traffic", "web", 0.25, 10),
-        ("Mobile App Usage", "app", 0.20, 15),
-        ("Institutional Spend", "spend", 0.20, 20),
-        ("Job Postings", "jobs", 0.10, 5),
-        ("Reddit Sentiment", "reddit", 0.10, 10),
-        ("Shipping / Inventory", "ship", 0.10, 8),
-        ("Options Flow", "options", 0.10, 20),
-        ("Dark Pool Activity", "darkpool", 0.10, 20),
-        ("Gamma Exposure (GEX)", "gex", 0.05, 1.5)
-    ]
-
-    cols = st.columns(3)
-    for i, (label, key, default_weight, default_thresh) in enumerate(signals):
-        col = cols[i % 3]
+    def render_signal_card(col, title, key_prefix, default_enabled, default_thresh, range_thresh, default_weight):
         with col:
-            st.markdown(f"<div class='custom-panel'>", unsafe_allow_html=True)
-            st.markdown(f"<h5>{label}</h5>", unsafe_allow_html=True)
+            st.markdown(f"#### {title}")
+            enabled = st.checkbox("Enable", value=default_enabled, key=f"{key_prefix}_toggle")
+            threshold = st.number_input("Threshold", range_thresh[0], range_thresh[1], default_thresh, key=f"{key_prefix}_thresh")
+            weight = st.slider("Weight", 0.0, 1.0, default_weight, 0.01, key=f"{key_prefix}_weight")
 
-            enabled = st.checkbox("Enable", key=f"{key}_enabled", value=True)
-            weight = st.slider("Weight", 0.0, 1.0, value=default_weight, step=0.05, key=f"{key}_weight")
-            threshold = st.number_input("Threshold", value=default_thresh, key=f"{key}_threshold")
+    col1, col2, col3 = st.columns(3)
+    render_signal_card(col1, "ð Options Flow", "options", True, 10, (0.0, 100.0), 0.2)
+    render_signal_card(col2, "ð Dark Pool Activity", "darkpool", True, 5, (0.0, 100.0), 0.2)
+    render_signal_card(col3, "ðº GEX Exposure", "gex", True, 1.5, (0.0, 5.0), 0.1)
 
-            st.markdown("</div>", unsafe_allow_html=True)
+    col4, col5, col6 = st.columns(3)
+    render_signal_card(col4, "ð Reddit Sentiment", "reddit", True, 10, (0.0, 100.0), 0.15)
+    render_signal_card(col5, "ð¬ News Sentiment", "sent", True, 20, (0.0, 100.0), 0.15)
+    render_signal_card(col6, "ðµï¸ Insider Buying", "insider", True, 5, (0.0, 100.0), 0.2)
 
-    st.markdown("<div style='text-align: center; margin-top: 24px;'>", unsafe_allow_html=True)
+    st.divider()
     if st.button("â Apply Settings"):
-        st.success("Alt-data settings applied.")
-    st.markdown("</div>", unsafe_allow_html=True)
+        st.success("Alt-data settings saved.")
