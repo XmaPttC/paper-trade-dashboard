@@ -147,28 +147,32 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # --- Hidden AG Grid to Capture Row Clicks ---
-ag_df = df[["Ticker", "Price", "AltDataScore"]].copy()
-gb = GridOptionsBuilder.from_dataframe(ag_df)
-gb.configure_selection("single", use_checkbox=False)
-grid_options = gb.build()
+with st.container():
+    st.markdown(
+        "<div style='height: 0px; overflow: hidden;'>", unsafe_allow_html=True
+    )
 
-grid_response = AgGrid(
-    ag_df,
-    gridOptions=grid_options,
-    update_mode=GridUpdateMode.SELECTION_CHANGED,
-    height=1,  # Minimized
-    fit_columns_on_grid_load=True,
-    theme="streamlit"
-)
+    ag_df = df[["Ticker", "Price", "AltDataScore"]].copy()
+    gb = GridOptionsBuilder.from_dataframe(ag_df)
+    gb.configure_selection("single", use_checkbox=False)
+    grid_options = gb.build()
 
-# --- Store Selected Ticker ---
-if "selected_ticker" not in st.session_state:
-    st.session_state.selected_ticker = None
+    grid_response = AgGrid(
+        ag_df,
+        gridOptions=grid_options,
+        update_mode=GridUpdateMode.SELECTION_CHANGED,
+        height=200,  # Needs visible height to work
+        fit_columns_on_grid_load=True,
+        theme="streamlit"
+    )
 
+    st.markdown("</div>", unsafe_allow_html=True)
+
+# --- Store Selection
 selected_rows = grid_response.get("selected_rows", [])
-if isinstance(selected_rows, list) and selected_rows:
+if selected_rows:
     st.session_state.selected_ticker = selected_rows[0]["Ticker"]
-
+    
 # --- Right Sidebar: Signal Summary ---
 if st.session_state.selected_ticker:
     selected = df[df["Ticker"] == st.session_state.selected_ticker].iloc[0]
