@@ -105,54 +105,50 @@ with tab2:
 
     st.markdown("""
     <style>
-    .signal-grid {
+    .altdata-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 12px;
+        gap: 14px;
+        margin-top: 10px;
     }
-    .signal-card {
+    .altdata-card {
         background-color: #263142;
         border: 1px solid #3b4454;
-        border-radius: 4px;
+        border-radius: 5px;
         padding: 10px 12px;
         font-size: 12px;
     }
-    .signal-card h4 {
+    .altdata-card h4 {
         font-size: 13px;
-        margin: 0 0 6px 0;
+        margin: 0 0 8px 0;
         color: #f8fafc;
-    }
-    .signal-card label {
-        font-size: 11px !important;
-        margin-bottom: 2px !important;
-    }
-    .signal-card .stSlider,
-    .signal-card .stNumberInput,
-    .signal-card .stCheckbox {
-        padding: 0 !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
     st.markdown("Use the controls below to configure which alt-data signals are enabled and how much weight they carry.")
 
-    def render_signal_card(title, key_prefix, default_enabled, default_thresh, range_thresh, default_weight):
-        with st.container():
-            st.markdown("<div class='signal-card'>", unsafe_allow_html=True)
-            st.markdown(f"<h4>{title}</h4>", unsafe_allow_html=True)
-            st.checkbox("Enable", value=default_enabled, key=f"{key_prefix}_toggle")
-            st.number_input("Threshold", range_thresh[0], range_thresh[1], default_thresh, key=f"{key_prefix}_thresh")
-            st.slider("Weight", 0.0, 1.0, default_weight, 0.01, key=f"{key_prefix}_weight")
-            st.markdown("</div>", unsafe_allow_html=True)
+    signals = [
+        {"title": "📊 Options Flow", "key": "options", "default_thresh": 10.0, "range": (0.0, 100.0), "weight": 0.2},
+        {"title": "🔒 Dark Pool Activity", "key": "darkpool", "default_thresh": 5.0, "range": (0.0, 100.0), "weight": 0.2},
+        {"title": "⚛️ GEX Exposure", "key": "gex", "default_thresh": 1.5, "range": (0.0, 5.0), "weight": 0.1},
+        {"title": "📢 Reddit Sentiment", "key": "reddit", "default_thresh": 10.0, "range": (0.0, 100.0), "weight": 0.15},
+        {"title": "📰 News Sentiment", "key": "sent", "default_thresh": 20.0, "range": (0.0, 100.0), "weight": 0.15},
+        {"title": "🧑‍💼 Insider Buying", "key": "insider", "default_thresh": 5.0, "range": (0.0, 100.0), "weight": 0.2},
+    ]
 
-    # Render the grid manually
-    st.markdown('<div class="signal-grid">', unsafe_allow_html=True)
-    render_signal_card("📊 Options Flow", "options", True, 10.0, (0.0, 100.0), 0.2)
-    render_signal_card("🔒 Dark Pool Activity", "darkpool", True, 5.0, (0.0, 100.0), 0.2)
-    render_signal_card("⚛️ GEX Exposure", "gex", True, 1.5, (0.0, 5.0), 0.1)
-    render_signal_card("📢 Reddit Sentiment", "reddit", True, 10.0, (0.0, 100.0), 0.15)
-    render_signal_card("📰 News Sentiment", "sent", True, 20.0, (0.0, 100.0), 0.15)
-    render_signal_card("🧑‍💼 Insider Buying", "insider", True, 5.0, (0.0, 100.0), 0.2)
+    st.markdown('<div class="altdata-grid">', unsafe_allow_html=True)
+
+    # Render each card
+    for signal in signals:
+        with st.container():
+            st.markdown('<div class="altdata-card">', unsafe_allow_html=True)
+            st.markdown(f"<h4>{signal['title']}</h4>", unsafe_allow_html=True)
+            st.checkbox("Enable", value=True, key=f"{signal['key']}_toggle")
+            st.number_input("Threshold", signal["range"][0], signal["range"][1], signal["default_thresh"], key=f"{signal['key']}_thresh")
+            st.slider("Weight", 0.0, 1.0, signal["weight"], 0.01, key=f"{signal['key']}_weight")
+            st.markdown('</div>', unsafe_allow_html=True)
+
     st.markdown('</div>', unsafe_allow_html=True)
 
     st.divider()
