@@ -114,35 +114,55 @@ with tab1:
 
 with tab2:
     st.title("Alt-Data Control Panel")
-    st.markdown("Preview of a fully-contained and styled signal card:")
+    st.markdown("Use the cards below to configure signal thresholds and weights.")
 
-    # Card Styling via native Streamlit markdown + container
+    # Custom styles for expander "cards"
     st.markdown("""
     <style>
-    .signal-card {
-        background-color: #2a3b4d;
+    .streamlit-expanderHeader {
+        background-color: #2b3b50 !important;
+        color: #f1f5f9 !important;
+        font-weight: 600;
+        padding: 6px 10px;
+        border-bottom: 1px solid #475569;
+    }
+    div[data-testid="stExpander"] {
         border: 1px solid #475569;
         border-radius: 6px;
-        padding: 16px;
-        margin-bottom: 20px;
-    }
-    .signal-card h5 {
-        font-size: 16px;
-        color: #f1f5f9;
+        background-color: #1f2d3d;
         margin-bottom: 12px;
+        padding: 0px;
     }
-    .signal-card .stNumberInput, .signal-card .stSlider, .signal-card .stCheckbox {
-        padding: 4px 0;
+    div[data-testid="stExpander"] > div:nth-child(1) {
+        padding: 4px 12px;
     }
     </style>
     """, unsafe_allow_html=True)
 
-    # One test card rendered with a Streamlit container
-    card_container = st.container()
-    with card_container:
-        st.markdown('<div class="signal-card">', unsafe_allow_html=True)
-        st.markdown("<h5>📊 Options Flow</h5>", unsafe_allow_html=True)
-        st.checkbox("Enable", value=True, key="opt_toggle")
-        st.number_input("Threshold", 0.0, 100.0, 10.0, key="opt_thresh")
-        st.slider("Weight", 0.0, 1.0, 0.2, 0.01, key="opt_weight")
-        st.markdown("</div>", unsafe_allow_html=True)
+    # Helper to render one card
+    def render_expander_card(title, key_prefix, default_enabled, default_thresh, range_thresh, default_weight):
+        with st.expander(title, expanded=True):
+            st.checkbox("Enable", value=default_enabled, key=f"{key_prefix}_toggle")
+            st.number_input("Threshold", range_thresh[0], range_thresh[1], default_thresh, key=f"{key_prefix}_thresh")
+            st.slider("Weight", 0.0, 1.0, default_weight, 0.01, key=f"{key_prefix}_weight")
+
+    # Layout in 3x2 format
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        render_expander_card("📊 Options Flow", "options", True, 10.0, (0.0, 100.0), 0.2)
+    with col2:
+        render_expander_card("🕳️ Dark Pool Activity", "darkpool", True, 5.0, (0.0, 100.0), 0.2)
+    with col3:
+        render_expander_card("⚡ GEX Exposure", "gex", True, 1.5, (0.0, 5.0), 0.1)
+
+    col4, col5, col6 = st.columns(3)
+    with col4:
+        render_expander_card("💬 Reddit Sentiment", "reddit", True, 10.0, (0.0, 100.0), 0.15)
+    with col5:
+        render_expander_card("📰 News Sentiment", "sent", True, 20.0, (0.0, 100.0), 0.15)
+    with col6:
+        render_expander_card("📈 Insider Buying", "insider", True, 5.0, (0.0, 100.0), 0.2)
+
+    st.divider()
+    if st.button("✅ Apply Settings"):
+        st.success("Alt-data settings saved.")
