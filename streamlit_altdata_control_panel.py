@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 
 st.set_page_config(layout="wide", page_title="Alt-Data Screener")
 
@@ -34,39 +33,39 @@ with tab2:
     # Reddit Mentions Card
     with col1.expander("📣 Reddit Mentions"):
         enabled = st.checkbox("Enable Reddit Score", value=st.session_state.altdata_settings["Reddit"]["enabled"], key="reddit_toggle")
-        weight = st.slider("Weight", 0, 100, st.session_state.altdata_settings["Reddit"]["weight"], key="reddit_weight")
+        weight = st.slider("Weight", 0, 100, int(st.session_state.altdata_settings["Reddit"]["weight"]), key="reddit_weight")
         threshold = st.number_input(
             "Sentiment Threshold",
-            min_value=0.0,
-            max_value=1.0,
+            min_value=float(0.0),
+            max_value=float(1.0),
             value=float(st.session_state.altdata_settings["Reddit"]["threshold"]),
-            step=0.01,
+            step=float(0.01),
             key="reddit_thresh"
         )
 
     # Web Traffic Card
     with col2.expander("🌐 Web Traffic"):
         enabled = st.checkbox("Enable Web Traffic Score", value=st.session_state.altdata_settings["WebTraffic"]["enabled"], key="web_toggle")
-        weight = st.slider("Weight", 0, 100, st.session_state.altdata_settings["WebTraffic"]["weight"], key="web_weight")
+        weight = st.slider("Weight", 0, 100, int(st.session_state.altdata_settings["WebTraffic"]["weight"]), key="web_weight")
         threshold = st.number_input(
             "Change Threshold (%)",
-            min_value=0.0,
-            max_value=100.0,
+            min_value=float(0.0),
+            max_value=float(100.0),
             value=float(st.session_state.altdata_settings["WebTraffic"]["threshold"]),
-            step=1.0,
+            step=float(1.0),
             key="web_thresh"
         )
 
     # GEX Card
     with col3.expander("📊 GEX Signal"):
         enabled = st.checkbox("Enable GEX Score", value=st.session_state.altdata_settings["GEX"]["enabled"], key="gex_toggle")
-        weight = st.slider("Weight", 0, 100, st.session_state.altdata_settings["GEX"]["weight"], key="gex_weight")
+        weight = st.slider("Weight", 0, 100, int(st.session_state.altdata_settings["GEX"]["weight"]), key="gex_weight")
         threshold = st.number_input(
             "Gamma Threshold",
-            min_value=0.0,
-            max_value=5.0,
+            min_value=float(0.0),
+            max_value=float(5.0),
             value=float(st.session_state.altdata_settings["GEX"]["threshold"]),
-            step=0.1,
+            step=float(0.1),
             key="gex_thresh"
         )
 
