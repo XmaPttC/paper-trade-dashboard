@@ -105,51 +105,44 @@ with tab2:
 
     st.markdown("""
     <style>
-    .altdata-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 14px;
-        margin-top: 10px;
-    }
-    .altdata-card {
+    .signal-box {
         background-color: #263142;
         border: 1px solid #3b4454;
         border-radius: 5px;
-        padding: 10px 12px;
-        font-size: 12px;
-    }
-    .altdata-card h4 {
+        padding: 10px 14px;
+        margin-bottom: 10px;
         font-size: 13px;
-        margin: 0 0 8px 0;
-        color: #f8fafc;
+    }
+    .signal-title {
+        font-weight: bold;
+        font-size: 13px;
+        margin-bottom: 6px;
+        color: #f1f5f9;
     }
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown("Use the controls below to configure which alt-data signals are enabled and how much weight they carry.")
-
     signals = [
-        {"title": "📊 Options Flow", "key": "options", "default_thresh": 10.0, "range": (0.0, 100.0), "weight": 0.2},
-        {"title": "🔒 Dark Pool Activity", "key": "darkpool", "default_thresh": 5.0, "range": (0.0, 100.0), "weight": 0.2},
-        {"title": "⚛️ GEX Exposure", "key": "gex", "default_thresh": 1.5, "range": (0.0, 5.0), "weight": 0.1},
-        {"title": "📢 Reddit Sentiment", "key": "reddit", "default_thresh": 10.0, "range": (0.0, 100.0), "weight": 0.15},
-        {"title": "📰 News Sentiment", "key": "sent", "default_thresh": 20.0, "range": (0.0, 100.0), "weight": 0.15},
-        {"title": "🧑‍💼 Insider Buying", "key": "insider", "default_thresh": 5.0, "range": (0.0, 100.0), "weight": 0.2},
+        {"title": "📊 Options Flow", "key": "options", "thresh": 10.0, "range": (0.0, 100.0), "weight": 0.2},
+        {"title": "🔒 Dark Pool Activity", "key": "darkpool", "thresh": 5.0, "range": (0.0, 100.0), "weight": 0.2},
+        {"title": "⚛️ GEX Exposure", "key": "gex", "thresh": 1.5, "range": (0.0, 5.0), "weight": 0.1},
+        {"title": "📢 Reddit Sentiment", "key": "reddit", "thresh": 10.0, "range": (0.0, 100.0), "weight": 0.15},
+        {"title": "📰 News Sentiment", "key": "sent", "thresh": 20.0, "range": (0.0, 100.0), "weight": 0.15},
+        {"title": "🧑‍💼 Insider Buying", "key": "insider", "thresh": 5.0, "range": (0.0, 100.0), "weight": 0.2},
     ]
 
-    st.markdown('<div class="altdata-grid">', unsafe_allow_html=True)
-
-    # Render each card
-    for signal in signals:
-        with st.container():
-            st.markdown('<div class="altdata-card">', unsafe_allow_html=True)
-            st.markdown(f"<h4>{signal['title']}</h4>", unsafe_allow_html=True)
-            st.checkbox("Enable", value=True, key=f"{signal['key']}_toggle")
-            st.number_input("Threshold", signal["range"][0], signal["range"][1], signal["default_thresh"], key=f"{signal['key']}_thresh")
-            st.slider("Weight", 0.0, 1.0, signal["weight"], 0.01, key=f"{signal['key']}_weight")
-            st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown('</div>', unsafe_allow_html=True)
+    for i in range(0, len(signals), 3):
+        cols = st.columns(3)
+        for j, signal in enumerate(signals[i:i+3]):
+            with cols[j]:
+                st.markdown(f"<div class='signal-box'>", unsafe_allow_html=True)
+                st.markdown(f"<div class='signal-title'>{signal['title']}</div>", unsafe_allow_html=True)
+                st.checkbox("Enable", value=True, key=f"{signal['key']}_toggle")
+                st.number_input("Threshold", min_value=signal["range"][0], max_value=signal["range"][1],
+                                value=signal["thresh"], key=f"{signal['key']}_thresh")
+                st.slider("Weight", min_value=0.0, max_value=1.0, value=signal["weight"],
+                          step=0.01, key=f"{signal['key']}_weight")
+                st.markdown("</div>", unsafe_allow_html=True)
 
     st.divider()
     if st.button("✅ Apply Settings"):
