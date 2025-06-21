@@ -15,7 +15,7 @@ column_order = [
 ]
 df = df[[col for col in column_order if col in df.columns]]
 
-# --- Sidebar Styling ---
+# --- CSS Styling ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Lato&display=swap');
@@ -36,25 +36,6 @@ section[data-testid="stSidebar"] {
     color: #f1f5f9 !important;
     margin-bottom: 4px;
     border-bottom: 0.5px solid #262a32;
-}
-.filter-row {
-    display: flex;
-    justify-content: space-between;
-    gap: 6px;
-    margin-bottom: 10px;
-}
-.filter-row input {
-    background-color: #1e293b;
-    color: #f1f5f9;
-    border: 1px solid #475569;
-    border-radius: 2px;
-    padding: 4px;
-    width: 100%;
-    font-size: 12px;
-}
-input:focus {
-    outline: none;
-    border: 1px solid #38bdf8;
 }
 .custom-table {
     background-color: #1e293b;
@@ -91,101 +72,86 @@ a.ticker-link:hover {
 .suffix-M { color: #c084fc; font-weight: bold; }
 .suffix-B { color: #86efac; font-weight: bold; }
 .suffix-T { color: #f87171; font-weight: bold; }
-
-[data-baseweb="base-input"]{
-background-color: #1e293b !important;
-border: 0px !important;
-}
-
-input[class]{
-font-size:14px;
-color: #f1f5f9;
-border: 0px !important;
-}
-
-[data-testid="stForm"] {border: 0px}
 </style>
 """, unsafe_allow_html=True)
 
-# ----- Default Weight Setup -----
-default_weights = {
-    "Retail": {"Web": 0.25, "App": 0.15, "Spend": 0.30, "Jobs": 0.10, "Buzz": 0.10, "Ship": 0.10},
-    "Software": {"Web": 0.15, "App": 0.20, "Spend": 0.10, "Jobs": 0.30, "Buzz": 0.20, "Ship": 0.05},
-    "Fintech": {"Web": 0.20, "App": 0.25, "Spend": 0.20, "Jobs": 0.15, "Buzz": 0.15, "Ship": 0.05},
-}
+# --- Tabs ---
+tab1, tab2 = st.tabs(["ð Terminal Dashboard", "ð§  Alt-Data Control Panel"])
 
-if "weights" not in st.session_state:
-    st.session_state.weights = default_weights.copy()
+# --- Terminal Dashboard ---
+with tab1:
+    st.title("Terminal Dashboard")
+    st.markdown(f"""
+    <div style='display: flex; gap: 20px; margin-bottom: 4px;'>
+      <div style='border:1px solid #ccc; font-size: 10px; padding:4px 8px;'><strong>Total Results:</strong> {len(df)}</div>
+      <div style='border:1px solid #ccc; font-size: 10px; padding:4px 8px;'><strong>Date:</strong> {datetime.now().strftime('%Y-%m-%d')}</div>
+    </div>
+    <hr style='border-top: 1px solid #ccc; margin-bottom: 8px;' />
+    """, unsafe_allow_html=True)
 
-with st.sidebar:
-    def filter_input(label, min_default=0, max_default=10000000):
-        st.markdown(f'<div class="sidebar-label">{label}</div>', unsafe_allow_html=True)
-        col1, col2 = st.columns(2)
-        with col1:
-            min_val = st.number_input(f"{label}_min", label_visibility="collapsed", value=min_default, key=f"{label}_min")
-        with col2:
-            max_val = st.number_input(f"{label}_max", label_visibility="collapsed", value=max_default, key=f"{label}_max")
-        return min_val, max_val
+    def format_mktcap(val):
+        if val >= 1e12:
+            return f"{val/1e12:.2f}<span class='suffix-T'>T</span>"
+        elif val >= 1e9:
+            return f"{val/1e9:.2f}<span class='suffix-B'>B</span>"
+        else:
+            return f"{val/1e6:.2f}<span class='suffix-M'>M</span>"
 
-    with st.expander("Filters", expanded=False):
-        price_min, price_max = filter_input("Price", 0, 2000)
-        peg_min, peg_max = filter_input("PEG", 0.0, 5.0)
-        pe_min, pe_max = filter_input("PE", 0.0, 50.0)
-        eps_min, eps_max = filter_input("EPSGr", 0, 100)
-        rating_min, rating_max = filter_input("AnalystSc", 1.0, 5.0)
-        upside_min, upside_max = filter_input("TrgtUpside", 0, 200)
-        mcap_min, mcap_max = filter_input("MktCap", 0, 10_000_000_000_000)
-        vol_min, vol_max = filter_input("30DayVol", 0, 1_000_000_000)
+    def format_volume(val):
+        return f"{val/1e6:.2f}M"
 
-    with st.expander("Geography | Exchange", expanded=False):
-        st.toggle("US Only")
-        st.toggle("Nasdaq Only")
-        st.toggle("NYSE Only")
-        st.divider()
+    header_html = ''.join(f"<th>{col}</th>" for col in df.columns)
+    row_html = ""
+    for _, row in df.iterrows():
+        row_cells = ""
+        for col in df.columns:
+            val = row[col]
+            if col == "Ticker":
+                val = f"<a class='ticker-link' href='https://finance.yahoo.com/quote/{val}' target='_blank'>{val}</a>"
+            elif col == "MktCap":
+                val = format_mktcap(val)
+            elif col == "30DayVol":
+                val = format_volume(val)
+            elif col == "TrgtUpside":
+                val = f"{val:.1f}%"
+            row_cells += f"<td>{val}</td>"
+        row_html += f"<tr>{row_cells}</tr>"
 
-# --- Display Header ---
-st.title("Terminal")
-st.markdown(f"""
-<div style='display: flex; gap: 20px; margin-bottom: 4px;'>
-  <div style='border:1px solid #ccc; font-size: 10px; padding:4px 8px;'><strong>Total Results:</strong> {len(df)}</div>
-  <div style='border:1px solid #ccc; font-size: 10px; padding:4px 8px;'><strong>Date:</strong> {datetime.now().strftime('%Y-%m-%d')}</div>
-</div>
-<hr style='border-top: 1px solid #ccc; margin-bottom: 8px;' />
-""", unsafe_allow_html=True)
+    st.markdown(f"""
+    <table class="custom-table">
+        <thead><tr>{header_html}</tr></thead>
+        <tbody>{row_html}</tbody>
+    </table>
+    """, unsafe_allow_html=True)
 
-# --- Format Helpers ---
-def format_mktcap(val):
-    if val >= 1e12:
-        return f"{val/1e12:.2f}<span class='suffix-T'>T</span>"
-    elif val >= 1e9:
-        return f"{val/1e9:.2f}<span class='suffix-B'>B</span>"
-    else:
-        return f"{val/1e6:.2f}<span class='suffix-M'>M</span>"
+# --- Alt-Data Control Panel ---
+with tab2:
+    st.title("ð§  Alt-Data Control Panel")
 
-def format_volume(val):
-    return f"{val/1e6:.2f}M"
+    if "altdata_settings" not in st.session_state:
+        st.session_state.altdata_settings = {}
 
-# --- Render HTML Table ---
-header_html = ''.join(f"<th>{col}</th>" for col in df.columns)
-row_html = ""
-for _, row in df.iterrows():
-    row_cells = ""
-    for col in df.columns:
-        val = row[col]
-        if col == "Ticker":
-            val = f"<a class='ticker-link' href='https://finance.yahoo.com/quote/{val}' target='_blank'>{val}</a>"
-        elif col == "MktCap":
-            val = format_mktcap(val)
-        elif col == "30DayVol":
-            val = format_volume(val)
-        elif col == "TrgtUpside":
-            val = f"{val:.1f}%"
-        row_cells += f"<td>{val}</td>"
-    row_html += f"<tr>{row_cells}</tr>"
+    def render_signal_card(title, key_prefix, default_weight):
+        if key_prefix not in st.session_state.altdata_settings:
+            st.session_state.altdata_settings[key_prefix] = {
+                "enabled": True,
+                "weight": default_weight
+            }
+        with st.expander(f"{title}", expanded=True):
+            enabled = st.checkbox("Enable", value=st.session_state.altdata_settings[key_prefix]["enabled"], key=f"{key_prefix}_toggle")
+            weight = st.slider("Weight", 0.0, 1.0, float(st.session_state.altdata_settings[key_prefix]["weight"]), 0.01, key=f"{key_prefix}_weight")
+            st.session_state.altdata_settings[key_prefix] = {
+                "enabled": enabled,
+                "weight": weight
+            }
 
-st.markdown(f"""
-<table class="custom-table">
-    <thead><tr>{header_html}</tr></thead>
-    <tbody>{row_html}</tbody>
-</table>
-""", unsafe_allow_html=True) 
+    st.markdown("### Tune Weights and Enable Signals")
+    render_signal_card("ð° Options Flow", "options", 0.2)
+    render_signal_card("ð¦ Dark Pool Activity", "darkpool", 0.15)
+    render_signal_card("ð Gamma Exposure (GEX)", "gex", 0.1)
+    render_signal_card("ð¬ Sentiment Score", "sentiment", 0.2)
+    render_signal_card("ð§µ Reddit Buzz", "reddit", 0.15)
+
+    st.divider()
+    if st.button("â Apply Alt-Data Settings"):
+        st.success("Alt-data signal settings saved.")
