@@ -69,7 +69,7 @@ def format_mktcap(val):
 def format_volume(val):
     return f"{val/1e6:.2f}M"
 
-tab1, tab2 = st.tabs(["ð Terminal", "ð§  Alt-Data Control Panel"])
+tab1, tab2 = st.tabs(["Terminal", "Control Panel"])
 
 with tab1:
     st.title("Terminal")
